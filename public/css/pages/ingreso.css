@@ -1,0 +1,69 @@
+/* ---------- Pantalla completa ---------- */
+.pagina-ingreso {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    padding: 20px;
+}
+
+/* ---------- Caja de acceso ---------- */
+.caja-ingreso {
+    background: var(--blanco);
+    border: 1px solid var(--panel-borde);
+    width: 100%;
+    max-width: 580px;
+    box-shadow: 0 8px 30px rgb(0 0 0 / 30%);
+}
+
+.cabecera-caja-ingreso {
+    background: var(--azul);
+    color: #FFF;
+    padding: 26px 30px;
+    text-align: center;
+    font-size: 23px;
+    font-weight: bold;
+}
+
+.cuerpo-caja-ingreso {
+    padding: 36px 34px;
+}
+
+.logo-caja-ingreso {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.logo-caja-ingreso img {
+    max-height: 100px;
+}
+
+.titulo-caja-ingreso {
+    text-align: center;
+    font-size: 23px;
+    font-weight: bold;
+    color: var(--texto);
+    margin-bottom: 6px;
+}
+
+/* ---------- Formulario de la caja ---------- */
+.caja-ingreso .grupo-formulario {
+    margin-bottom: 22px;
+}
+
+.caja-ingreso .entrada-formulario {
+    width: 100%;
+    height: 52px;
+    padding: 12px 16px;
+    font-size: var(--fuente-md);
+}
+
+.caja-ingreso .btn-primary {
+    width: 100%;
+    justify-content: center;
+    padding: 16px 12px;
+    font-size: 19px;
+}

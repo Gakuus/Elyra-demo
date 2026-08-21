@@ -1,0 +1,256 @@
+/* ---------- Barra de navegación ---------- */
+body {
+    background: #fff;
+}
+
+.navegacion-publica {
+    background: linear-gradient(135deg, #2A4780, #3B5998);
+    border-bottom: 2px solid #1A3560;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.navegacion-interior {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0;
+}
+
+.marca-navegacion {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: bold;
+    color: #fff;
+    text-decoration: none;
+    font-size: 27px;
+}
+
+.enlaces-navegacion {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.enlaces-navegacion a {
+    color: #CCD9F0;
+    text-decoration: none;
+    font-size: 20px;
+    transition: color 0.2s;
+}
+
+.enlaces-navegacion a:hover { color: #fff; }
+
+.boton-menu-movil {
+    display: none;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 32px;
+    cursor: pointer;
+    padding: 8px 10px;
+    line-height: 1;
+}
+
+/* ---------- Portada---------- */
+.seccion-portada {
+    background: url('/img/hospital-de-clinicas.jpg') center/cover no-repeat;
+    padding: 150px 0 120px;
+    text-align: center;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+}
+
+.seccion-portada::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.6) 100%);
+}
+
+.seccion-portada .container { position: relative; z-index: 1; }
+
+.seccion-portada h1 {
+    font-size: 50px;
+    font-weight: 800;
+    margin: 18px 0 10px;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.seccion-portada .lead {
+    font-size: 23px;
+    margin-bottom: 32px;
+    color: rgba(255,255,255,0.85);
+    font-weight: 300;
+}
+
+.seccion-portada .btn {
+    border-radius: 6px;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.seccion-portada .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+
+/* ---------- Secciones genéricas ---------- */
+.seccion { padding: 90px 0; }
+
+.titulo-seccion {
+    font-size: 36px;
+    font-weight: 700;
+    color: #2A4780;
+    margin-bottom: 10px;
+    letter-spacing: -0.3px;
+}
+
+.subtitulo-seccion {
+    font-size: 19px;
+    color: #888;
+    margin-bottom: 44px;
+}
+
+/* ---------- Tarjetas de servicios ---------- */
+.tarjeta-servicio {
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    text-align: center;
+    padding: 36px 22px;
+    border-radius: 8px;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.tarjeta-servicio:hover {
+    border-color: #3B5998;
+    box-shadow: 0 4px 16px rgba(59,89,152,0.12);
+    transform: translateY(-2px);
+}
+
+.tarjeta-servicio h6 { font-size: 20px !important; margin: 0 0 8px; }
+.tarjeta-servicio p { font-size: 16px !important; margin: 0; }
+
+.icono-servicio {
+    font-size: 52px;
+    color: #3B5998;
+    margin-bottom: 16px;
+}
+
+.tarjeta-acerca {
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    padding: 26px;
+    border-radius: 8px;
+    height: 100%;
+}
+
+.seccion-contacto { background: #f8f9fa; border-top: 1px solid #e5e7eb; }
+
+.pie-publico {
+    background: linear-gradient(135deg, #1A3560, #2A4780);
+    color: #99AACC;
+    padding: 30px 0;
+    font-size: 17px;
+    text-align: center;
+}
+
+/* ---------- Enlaces rápidos ---------- */
+.enlace-rapido {
+    display: block;
+    padding: 11px 16px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    font-size: 17px;
+    color: #3B5998;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.enlace-rapido:hover {
+    border-color: #3B5998;
+    background: #EEF2FA;
+    text-decoration: none;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+    .boton-menu-movil { display: block; }
+    .navegacion-interior { padding: 14px 0; }
+
+    .enlaces-navegacion {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, #2A4780, #3B5998);
+        flex-direction: column;
+        gap: 0;
+        padding: 8px 0;
+        border-top: 1px solid #4F74B8;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+
+    .enlaces-navegacion.open { display: flex; }
+    .enlaces-navegacion li { width: 100%; }
+
+    .enlaces-navegacion li a {
+        display: block;
+        padding: 14px 24px;
+        font-size: 17px;
+        color: #CCD9F0;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        transition: background 0.2s, color 0.2s;
+    }
+
+    .enlaces-navegacion li a:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .enlaces-navegacion li:last-child a { border-bottom: none; }
+
+    .seccion-portada { padding: 90px 0 70px; }
+    .seccion-portada h1 { font-size: 36px; }
+    .seccion-portada .lead { font-size: 18px; margin-bottom: 26px; }
+    .seccion-portada img { height: 80px; }
+
+    .seccion { padding: 56px 0; }
+    .titulo-seccion { font-size: 27px; }
+    .subtitulo-seccion { font-size: 16px; margin-bottom: 28px; }
+    .tarjeta-servicio { padding: 26px 16px; }
+    .icono-servicio { font-size: 38px; }
+    .tarjeta-acerca { padding: 20px; }
+}
+
+@media (max-width: 575px) {
+    .seccion-portada { padding: 70px 0 56px; }
+    .seccion-portada h1 { font-size: 28px; margin: 12px 0 6px; }
+    .seccion-portada .lead { font-size: 16px; color: rgba(255,255,255,0.75); }
+    .seccion-portada img { height: 64px; }
+
+    .botones-portada {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px !important;
+    }
+
+    .botones-portada .btn {
+        width: 100%;
+        max-width: 280px;
+        padding: 14px 20px !important;
+        font-size: 17px !important;
+    }
+
+    .seccion { padding: 42px 0; }
+    .titulo-seccion { font-size: 24px; }
+    .tarjeta-servicio { padding: 22px 14px; border-radius: 6px; }
+    .tarjeta-servicio h6 { font-size: 16px !important; }
+    .tarjeta-servicio p { font-size: 14px !important; }
+    .icono-servicio { font-size: 34px; margin-bottom: 10px; }
+}

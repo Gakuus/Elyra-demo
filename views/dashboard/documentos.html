@@ -1,0 +1,16 @@
+<div class="panel">
+    <div class="cabecera-panel d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-folder2-open me-1"></i> Documentos generales</span>
+        <a href="documentos/subir" class="btn btn-primary btn-sm"><i class="bi bi-upload me-1"></i> Subir</a>
+    </div>
+    <div class="cuerpo-panel">
+        <form method="get" class="d-flex gap-2 mb-3">
+            <select name="tipo" class="form-select" style="max-width:280px;" onchange="this.form.submit()">
+                {{opciones_tipo}}
+            </select>
+            <input type="text" name="q" class="form-control" placeholder="Buscar por t&iacute;tulo..." value="{{q}}">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i> Buscar</button>
+        </form>
+        {{contenido_documentos}}
+    </div>
+</div>

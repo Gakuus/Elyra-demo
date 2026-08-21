@@ -1,0 +1,200 @@
+/* ---------- Colores y tipografía ---------- */
+:root {
+    --azul-oscuro: #2A4780;
+    --azul: #3B5998;
+    --blanco: #FFF;
+    --gris-claro: #DDD;
+    --gris-medio: #BBB;
+    --gris: #999;
+    --gris-oscuro: #555;
+    --gris-mas-oscuro: #333;
+
+    --peligro: #D9534F;
+
+    --texto: #333;
+    --texto-atenuado: #666;
+    --panel-borde: #CCC;
+    --input-borde: #CCC;
+    --input-enfoque: #6D84B4;
+    --cuerpo-fondo: #E9EAED;
+
+    --fuente-familia: tahoma, verdana, arial, helvetica, sans-serif;
+    --fuente-xs: 15px;
+    --fuente-sm: 17px;
+    --fuente-md: 19px;
+    --radio-btn: 3px;
+}
+
+/* ---------- Base ---------- */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+body {
+    font-family: var(--fuente-familia);
+    font-size: var(--fuente-sm);
+    color: var(--texto);
+    background: var(--cuerpo-fondo);
+    line-height: 1.5;
+}
+
+a {
+    color: var(--azul);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--azul-oscuro);
+    text-decoration: underline;
+}
+
+img {
+    max-width: 100%;
+    vertical-align: middle;
+}
+
+:focus-visible {
+    outline: 2px solid var(--azul);
+    outline-offset: 1px;
+}
+
+/* ---------- Botones ---------- */
+.btn {
+    display: inline-block;
+    padding: 10px 22px;
+    font-family: var(--fuente-familia);
+    font-size: var(--fuente-sm);
+    line-height: 1.5;
+    border: 1px solid var(--gris-medio);
+    border-radius: var(--radio-btn);
+    cursor: pointer;
+    text-decoration: none;
+    background: linear-gradient(to bottom, #FFF 0%, #E0E0E0 100%);
+    color: var(--texto);
+    white-space: nowrap;
+}
+
+.btn:hover {
+    background: linear-gradient(to bottom, #F5F5F5 0%, #D5D5D5 100%);
+    text-decoration: none;
+    color: var(--texto);
+}
+
+.btn:focus-visible {
+    outline: 2px solid var(--azul-oscuro);
+    outline-offset: 2px;
+}
+
+.btn-primary {
+    background: linear-gradient(to bottom, #6D84B4 0%, #3B5998 100%);
+    color: #FFF;
+    border-color: #2A4780;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(to bottom, #7D94C4 0%, #4B69A8 100%);
+    color: #FFF;
+}
+
+.btn-primary:active {
+    background: linear-gradient(to bottom, #3B5998 0%, #2A4780 100%);
+    color: #FFF;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: var(--fuente-sm);
+}
+
+.btn-lg {
+    padding: 12px 28px;
+    font-size: var(--fuente-md);
+}
+
+/* ---------- Formularios ---------- */
+.entrada-formulario {
+    font-family: var(--fuente-familia);
+    font-size: var(--fuente-sm);
+    padding: 11px 14px;
+    border: 1px solid var(--input-borde);
+    background: var(--blanco);
+    color: var(--texto);
+    border-radius: 3px;
+    line-height: 1.5;
+    height: 48px;
+}
+
+.entrada-formulario:focus {
+    outline: none;
+    border-color: var(--input-enfoque);
+    box-shadow: 0 0 3px rgb(79 116 184 / 40%);
+}
+
+.etiqueta-formulario {
+    display: block;
+    font-size: var(--fuente-md);
+    font-weight: bold;
+    margin-bottom: 6px;
+    color: var(--texto);
+}
+
+.grupo-formulario {
+    margin-bottom: 20px;
+}
+
+/* ---------- Texto ---------- */
+.texto-centrado { text-align: center; }
+.texto-atenuado { color: var(--texto-atenuado); }
+.texto-peligro { color: var(--peligro); }
+.texto-pequeno { font-size: var(--fuente-xs); }
+.fuente-semibold { font-weight: 600; }
+
+/* ---------- Disposición ---------- */
+.flexible { display: flex; }
+.centrar-vertical { align-items: center; }
+.centrar-horizontal { justify-content: center; }
+.espacio-1 { gap: 4px; }
+.espacio-2 { gap: 6px; }
+.espacio-3 { gap: 10px; }
+
+/* ---------- Márgenes ---------- */
+.margen-superior-2 { margin-top: 6px; }
+.margen-superior-3 { margin-top: 10px; }
+.margen-inferior-0 { margin-bottom: 0; }
+.margen-inferior-2 { margin-bottom: 6px; }
+.margen-inferior-3 { margin-bottom: 10px; }
+
+/* ---------- Otros ---------- */
+.ancho-completo { width: 100%; }
+
+.lista-sin-estilo {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* ---------- Móviles ---------- */
+@media (width <= 575.98px) {
+    .entrada-formulario {
+        height: 44px;
+        font-size: var(--fuente-md);
+    }
+
+    .btn {
+        padding: 10px 16px;
+        font-size: var(--fuente-md);
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    input, select, textarea, button {
+        font-size: 17px;
+    }
+}
