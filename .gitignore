@@ -1,0 +1,18 @@
+# Entorno / credenciales
+.env
+
+# phpMyAdmin (instalación local de terceros)
+phpmyadmin/
+
+# Backups de base de datos (contienen datos reales)
+database/backups/
+
+# Archivos generados en runtime
+storage/qrcodes/*
+public/uploads/*
+!storage/qrcodes/.gitkeep
+!public/uploads/.gitkeep
+
+# Sistema
+.DS_Store
+Thumbs.db
