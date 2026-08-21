@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PHP_VERSION: '8.5'
+  NODE_VERSION: '24'
+
+jobs:
+  php:
+    if: ${{ hashFiles('composer.json') != '' }}
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: elyra_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Configurar mirror de Docker Hub
+        run: |
+          echo '{"registry-mirrors": ["https://mirror.gcr.io"]}' | sudo tee /etc/docker/daemon.json
+          sudo systemctl restart docker
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          tools: composer, phpstan, phpunit
+
+      - name: Cache Composer
+        uses: actions/cache@v6
+        with:
+          path: vendor/
+          key: composer-${{ hashFiles('composer.json') }}
+          restore-keys: composer-
+
+      - name: Instalar dependencias PHP
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Validar sintaxis PHP
+        run: find . -name "*.php" -not -path "./vendor/*" -not -path "./node_modules/*" -exec php -l {} \;
+
+  frontend:
+    if: ${{ hashFiles('package.json') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint JavaScript
+        run: npx eslint "public/js/**/*.js"
+
+      - name: Lint CSS
+        run: npx stylelint "public/css/**/*.css"
