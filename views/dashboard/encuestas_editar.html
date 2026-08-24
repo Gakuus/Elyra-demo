@@ -1,0 +1,54 @@
+<div class="panel">
+    <div class="cabecera-panel"><i class="bi bi-pencil-square me-1"></i> Editar encuesta</div>
+    <div class="cuerpo-panel">
+
+        {{error}}
+
+        <form method="post" id="encuestaForm">
+            <input type="hidden" name="id" value="{{encuesta_id}}">
+
+            <div class="mb-3">
+                <label for="titulo" class="etiqueta-formulario">T&iacute;tulo de la encuesta <span class="text-danger">*</span></label>
+                <input type="text" name="titulo" id="titulo" class="entrada-formulario" required
+                       minlength="3" maxlength="200"
+                       placeholder="Ej: Satisfacci&oacute;n general del paciente"
+                       value="{{valor_titulo}}">
+            </div>
+
+            <div class="mb-3">
+                <label for="descripcion" class="etiqueta-formulario">Descripci&oacute;n (opcional)</label>
+                <textarea name="descripcion" id="descripcion" class="entrada-formulario" rows="2"
+                          maxlength="500" placeholder="Breve descripci&oacute;n de la encuesta...">{{valor_descripcion}}</textarea>
+            </div>
+
+            <hr>
+
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="mb-0 fw-semibold"><i class="bi bi-question-circle me-1"></i>Preguntas</h6>
+                <button type="button" class="btn btn-sm btn-primary" id="addQuestion">
+                    <i class="bi bi-plus-lg me-1"></i>Agregar pregunta
+                </button>
+            </div>
+
+            <p class="text-muted small mb-2">
+                <i class="bi bi-info-circle me-1"></i>Al quitar una pregunta se borran tambi&eacute;n sus respuestas registradas.
+            </p>
+
+            <div id="questionsContainer">
+                <p class="text-muted small mb-0" id="noQuestions">No hay preguntas. Hac&eacute; clic en &quot;Agregar pregunta&quot; para empezar.</p>
+            </div>
+
+            <hr>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <i class="bi bi-check-lg me-1"></i> Guardar cambios
+                </button>
+                <a href="encuestas" class="btn">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>window.ENCUESTA_INICIAL = {{preguntas_json}};</script>
+<script src="js/pages/encuesta-formulario.js?v=1" defer></script>
