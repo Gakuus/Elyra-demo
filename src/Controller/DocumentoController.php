@@ -31,8 +31,8 @@ final class DocumentoController
             $path === '/documentos/subir' && $method === 'GET' => self::formulario(),
             $path === '/documentos/editar' && $method === 'GET' => self::formularioEditar(),
             $path === '/documentos/editar' && $method === 'POST' => self::editar(),
-            // Activa/desactiva un documento (borrado lógico, igual que el
-            // proyecto original pero sin eliminar la fila ni el archivo).
+            // Activa/desactiva un documento (borrado lógico: no se elimina
+            // la fila ni el archivo, solo deja de mostrarse al público).
             $path === '/documentos/estado' && $method === 'POST' => self::estado(),
             $path === '/documentos/ver' && $method === 'GET' => self::ver(),
             $path === '/documentos/archivo' && $method === 'GET' => self::archivo(),
@@ -223,7 +223,7 @@ final class DocumentoController
      * Formulario de edición (GET a /documentos/editar?id=N).
      * Muestra los datos actuales del documento para modificarlos.
      * El archivo PDF NO se reemplaza: solo se editan título, tipo y
-     * descripción (igual que el EditarDocumentoUseCase del proyecto original).
+     * descripción.
      */
     public static function formularioEditar(): void
     {
@@ -257,8 +257,8 @@ final class DocumentoController
 
     /**
      * Guarda los cambios del formulario de edición (POST a /documentos/editar).
-     * Equivale al EditarDocumentoUseCase: actualiza título, descripción y
-     * tipo; mantiene el archivo, el QR y el resto de relaciones intactas.
+     * Actualiza título, descripción y tipo; mantiene el archivo, el QR y el
+     * resto de relaciones intactas.
      */
     public static function editar(): void
     {
@@ -414,7 +414,7 @@ final class DocumentoController
      * Solo se muestran documentos ACTIVOS y generales.
      * Incluye el acceso a la encuesta de satisfacción vinculada al documento
      * (documento.encuesta_id) o, si no tiene ninguna, la primera encuesta
-     * activa — igual que hacía el proyecto original.
+     * activa disponible.
      */
     public static function publicoDoc(): void
     {

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 /**
  * EncuestaController: controlador del módulo de encuestas generales.
- * Portado desde el proyecto inicial Elyra (Documentos/Elyra), adaptado a la
- * arquitectura simple de esta demo (métodos estáticos + vistas HTML con
- * marcadores {{}}) y al esquema normalizado de la base de datos, donde las
- * opciones de una pregunta viven en la tabla pregunta_opcion y las respuestas
- * se guardan en respuesta_sesion + respuesta_pregunta.
+ * Adaptado a la arquitectura simple de esta demo (métodos estáticos +
+ * vistas HTML con marcadores {{}}) y al esquema normalizado de la base
+ * de datos, donde las opciones de una pregunta viven en la tabla
+ * pregunta_opcion y las respuestas se guardan en respuesta_sesion +
+ * respuesta_pregunta.
  *
  * Funcionalidad:
  *   - Listado de encuestas (con toggle activa/inactiva y acciones).
@@ -152,9 +152,9 @@ final class EncuestaController
     }
 
     /**
-     * Guarda la encuesta con sus preguntas y opciones (POST a /encuestas/crear).
-     * Adaptación del CrearEncuestaUseCase original a consultas PDO directas
-     * sobre el esquema normalizado (pregunta_opcion como tabla aparte).
+     * Guarda la encuesta con sus preguntas y opciones (POST a /encuestas/crear),
+     * con consultas PDO directas sobre el esquema normalizado
+     * (pregunta_opcion como tabla aparte).
      */
     public static function crear(): void
     {
@@ -167,7 +167,7 @@ final class EncuestaController
         /** @var array<int, array<string, mixed>> $preguntasInput */
         $preguntasInput = (array) ($_POST['preguntas'] ?? []);
 
-        // ==== Validaciones (mismas reglas que el UseCase original) ====
+        // ==== Validaciones: título dentro de rango y preguntas bien formadas ====
         $errores = [];
         if (strlen($titulo) < 3 || strlen($titulo) > 200) {
             $errores[] = 'El t&iacute;tulo debe tener entre 3 y 200 caracteres.';
@@ -496,8 +496,9 @@ final class EncuestaController
     // ================================================================
 
     /**
-     * Activa o desactiva una encuesta (POST a /encuestas/toggle).
-     * Equivale al PublicarEncuestaUseCase del proyecto original.
+     * Activa o desactiva una encuesta (POST a /encuestas/toggle):
+     * publicarla para que los pacientes puedan responderla o sacarla
+     * del aire sin borrar nada.
      */
     public static function toggle(): void
     {
@@ -747,7 +748,7 @@ final class EncuestaController
     /**
      * Guarda las respuestas enviadas (POST a /publico/encuesta?id=N).
      * Crea una sesión de respuesta (respuesta_sesion) y guarda cada valor en
-     * respuesta_pregunta. Adaptación del ResponderEncuestaUseCase original.
+     * respuesta_pregunta.
      */
     public static function publicaResponder(): void
     {
@@ -763,8 +764,8 @@ final class EncuestaController
         $pdo = db_connect();
         /** @var array<string, mixed> $respuestasInput */
         $respuestasInput = (array) ($_POST['respuestas'] ?? []);
-        // Índice posicional (igual que en el proyecto original): respuestas[i]
-        // corresponde a la i-ésima pregunta en orden.
+        // Índice posicional: respuestas[i] corresponde a la i-ésima pregunta
+        // en orden.
         $respuestasPosicionales = array_values($respuestasInput);
 
         $erroresValidacion = [];
