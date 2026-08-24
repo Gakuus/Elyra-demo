@@ -270,3 +270,33 @@
         max-width: calc(100% - 220px);
     }
 }
+
+/* ---------- Impresión del QR ----------
+   #qrPrintArea está oculto en pantalla. Al imprimir un QR se agrega la
+   clase 'imprimiendo-qr' al <body>: todo lo demás se oculta y el área
+   muestra únicamente el código QR, bien grande y centrado en la hoja. */
+#qrPrintArea {
+    display: none;
+}
+
+@media print {
+    body.imprimiendo-qr > *:not(#qrPrintArea) {
+        display: none !important;
+    }
+
+    body.imprimiendo-qr #qrPrintArea {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+    }
+
+    body.imprimiendo-qr .qr-imprimible canvas,
+    body.imprimiendo-qr .qr-imprimible img,
+    body.imprimiendo-qr .qr-imprimible table {
+        width: 90vmin !important;
+        height: auto !important;
+        /* Mantiene los bordes del QR nítidos al agrandarlo. */
+        image-rendering: pixelated;
+    }
+}

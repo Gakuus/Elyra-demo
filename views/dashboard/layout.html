@@ -34,9 +34,12 @@
     <div class="barra-lateral" role="navigation" aria-label="Menú principal">
         <div class="seccion-barra">
             <div class="titulo-seccion">Gestión</div>
-            <a href="dashboard" class="enlace-barra{{activo_inicio}}"><img src="img/silk/house.png" width="16" height="16" alt=""> Inicio</a>
-            <a href="encuestas" class="enlace-barra{{activo_encuestas}}"><img src="img/silk/chart_bar.png" width="16" height="16" alt=""> Encuestas generales</a>
-            <a href="documentos" class="enlace-barra{{activo_documentos}}"><img src="img/silk/page_white_text.png" width="16" height="16" alt=""> Documentos generales</a>
+            <a href="dashboard" class="enlace-barra{{activo_inicio}}">
+                <img src="img/silk/house.png" width="16" height="16" alt=""> Inicio</a>
+            <a href="encuestas" class="enlace-barra{{activo_encuestas}}">
+                <img src="img/silk/chart_bar.png" width="16" height="16" alt=""> Encuestas</a>
+            <a href="documentos" class="enlace-barra{{activo_documentos}}">
+                <img src="img/silk/page_white_text.png" width="16" height="16" alt=""> Documentos</a>
         </div>
     </div>
 
@@ -61,8 +64,12 @@
     </div>
 </div>
 
+<!-- Área exclusiva para imprimir el QR grande (oculta en pantalla,
+     visible solo durante la impresión vía CSS @media print). -->
+<div id="qrPrintArea"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
 <script>window.BASE_PATH = '{{base_path}}';</script>
-<script src="js/pages/documentos.js?v=1" defer></script>
+<script src="js/pages/documentos.js?v=2" defer></script>
 </body>
 </html>

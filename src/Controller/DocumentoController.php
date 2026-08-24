@@ -29,6 +29,11 @@ final class DocumentoController
             $path === '/documentos' && $method === 'GET' => self::listar(),
             $path === '/documentos/subir' && $method === 'POST' => self::subir(),
             $path === '/documentos/subir' && $method === 'GET' => self::formulario(),
+            $path === '/documentos/editar' && $method === 'GET' => self::formularioEditar(),
+            $path === '/documentos/editar' && $method === 'POST' => self::editar(),
+            // Activa/desactiva un documento (borrado lógico, igual que el
+            // proyecto original pero sin eliminar la fila ni el archivo).
+            $path === '/documentos/estado' && $method === 'POST' => self::estado(),
             $path === '/documentos/ver' && $method === 'GET' => self::ver(),
             $path === '/documentos/archivo' && $method === 'GET' => self::archivo(),
             $path === '/publico/doc' && $method === 'GET' => self::publicoDoc(),
@@ -93,7 +98,7 @@ final class DocumentoController
                 . '<i class="bi bi-inbox d-block mb-2" style="font-size:28px;"></i>No hay documentos generales.</div>'
             : '<div class="table-responsive"><table class="tabla-panel"><thead><tr>'
                 . '<th style="width:50px;">QR</th><th>T&iacute;tulo</th><th>Tipo</th><th>Estado</th><th>Subido</th>'
-                . '<th style="width:90px;">Acciones</th></tr></thead><tbody>' . $filas . '</tbody></table></div>';
+                . '<th style="width:130px;">Acciones</th></tr></thead><tbody>' . $filas . '</tbody></table></div>';
 
         // Renderiza la vista con: opciones del selector de tipo, texto de
         // búsqueda conservado y el HTML de la tabla ya armado.
@@ -215,6 +220,133 @@ final class DocumentoController
     }
 
     /**
+     * Formulario de edición (GET a /documentos/editar?id=N).
+     * Muestra los datos actuales del documento para modificarlos.
+     * El archivo PDF NO se reemplaza: solo se editan título, tipo y
+     * descripción (igual que el EditarDocumentoUseCase del proyecto original).
+     */
+    public static function formularioEditar(): void
+    {
+        requerir_login();
+
+        $pdo = db_connect();
+        $id = (int) ($_GET['id'] ?? 0);
+
+        // Busca el documento general; si no existe vuelve al listado.
+        $stmt = $pdo->prepare(
+            'SELECT id, titulo, descripcion, tipo_documento_id
+             FROM documento
+             WHERE id = :id AND paciente_id IS NULL'
+        );
+        $stmt->execute(['id' => $id]);
+        $doc = $stmt->fetch();
+
+        if (!$doc) {
+            header('Location: ' . base_path() . '/documentos');
+            exit;
+        }
+
+        render_dashboard('documentos_editar', 'Editar documento', 'documentos', [
+            'mensaje_error' => '',
+            'id' => (string) $id,
+            'valor_titulo' => htmlspecialchars((string) $doc['titulo']),
+            'valor_descripcion' => htmlspecialchars((string) ($doc['descripcion'] ?? '')),
+            'opciones_tipo_editar' => self::opcionesTipo((int) $doc['tipo_documento_id']),
+        ]);
+    }
+
+    /**
+     * Guarda los cambios del formulario de edición (POST a /documentos/editar).
+     * Equivale al EditarDocumentoUseCase: actualiza título, descripción y
+     * tipo; mantiene el archivo, el QR y el resto de relaciones intactas.
+     */
+    public static function editar(): void
+    {
+        requerir_login();
+
+        $pdo = db_connect();
+        $id = (int) ($_POST['id'] ?? 0);
+
+        if ($id <= 0) {
+            header('Location: ' . base_path() . '/documentos');
+            exit;
+        }
+
+        $titulo = trim((string) ($_POST['titulo'] ?? ''));
+        $descripcion = trim((string) ($_POST['descripcion'] ?? ''));
+        $tipoId = (int) ($_POST['tipo'] ?? 0);
+
+        // Mismas reglas de validación que en la subida.
+        $error = null;
+        if (strlen($titulo) < 3 || strlen($titulo) > 200) {
+            $error = 'El t&iacute;tulo debe tener entre 3 y 200 caracteres.';
+        } elseif ($tipoId <= 0) {
+            $error = 'Seleccion&aacute; un tipo de documento.';
+        } else {
+            // Verifica que el tipo exista (evita romper la clave foránea).
+            $stmtT = $pdo->prepare('SELECT COUNT(*) FROM tipo_documento WHERE id = :id');
+            $stmtT->execute(['id' => $tipoId]);
+            if ((int) $stmtT->fetchColumn() === 0) {
+                $error = 'El tipo de documento seleccionado no existe.';
+            }
+        }
+
+        if ($error !== null) {
+            // Vuelve al formulario conservando lo escrito por el usuario.
+            render_dashboard('documentos_editar', 'Editar documento', 'documentos', [
+                'mensaje_error' => '<div class="mensaje-error">' . $error . '</div>',
+                'id' => (string) $id,
+                'valor_titulo' => htmlspecialchars($titulo),
+                'valor_descripcion' => htmlspecialchars($descripcion),
+                'opciones_tipo_editar' => self::opcionesTipo($tipoId > 0 ? $tipoId : null),
+            ]);
+            return;
+        }
+
+        // UPDATE acotado: solo metadatos. Nunca toca archivo ni estado.
+        $stmt = $pdo->prepare(
+            'UPDATE documento
+             SET titulo = :titulo, descripcion = :descripcion, tipo_documento_id = :tipo
+             WHERE id = :id AND paciente_id IS NULL'
+        );
+        $stmt->execute([
+            'titulo' => $titulo,
+            'descripcion' => $descripcion !== '' ? $descripcion : null,
+            'tipo' => $tipoId,
+            'id' => $id,
+        ]);
+
+        header('Location: ' . base_path() . '/documentos?editado=1');
+        exit;
+    }
+
+    /**
+     * Activa o desactiva un documento (POST a /documentos/estado).
+     * Es el "desactivar" del CRUD: borrado lógico. Un documento inactivo
+     * deja de verse en la vista pública (el QR da 404) pero conserva su
+     * archivo y sus datos.
+     */
+    public static function estado(): void
+    {
+        requerir_login();
+
+        $id = (int) ($_POST['id'] ?? 0);
+        $activo = (($_POST['activo'] ?? '') === '1');
+
+        if ($id > 0) {
+            $pdo = db_connect();
+            $stmt = $pdo->prepare(
+                'UPDATE documento SET activo = :activo WHERE id = :id AND paciente_id IS NULL'
+            );
+            $stmt->execute(['activo' => $activo ? 1 : 0, 'id' => $id]);
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode(['ok' => true]);
+        exit;
+    }
+
+    /**
      * Página de detalle de un documento (GET a /documentos/ver?id=N).
      * Muestra el título, tipo, fecha, descripción y el PDF embebido.
      */
@@ -280,6 +412,9 @@ final class DocumentoController
      * Vista pública de un documento (GET a /publico/doc?id=N).
      * Es lo que ve el paciente al escanear el QR: no requiere sesión.
      * Solo se muestran documentos ACTIVOS y generales.
+     * Incluye el acceso a la encuesta de satisfacción vinculada al documento
+     * (documento.encuesta_id) o, si no tiene ninguna, la primera encuesta
+     * activa — igual que hacía el proyecto original.
      */
     public static function publicoDoc(): void
     {
@@ -289,7 +424,8 @@ final class DocumentoController
         // Misma consulta que ver(), pero exigiendo activo = 1 (seguridad:
         // un documento desactivado no se puede abrir por QR).
         $stmt = $pdo->prepare(
-            'SELECT d.id, d.titulo, d.descripcion, d.activo, d.created_at, t.nombre AS tipo_nombre
+            'SELECT d.id, d.titulo, d.descripcion, d.activo, d.created_at,
+                    d.encuesta_id, t.nombre AS tipo_nombre
              FROM documento d
              LEFT JOIN tipo_documento t ON t.id = d.tipo_documento_id
              WHERE d.id = :id AND d.activo = 1 AND d.paciente_id IS NULL'
@@ -302,6 +438,12 @@ final class DocumentoController
             return;
         }
 
+        // Resuelve la encuesta de satisfacción a mostrar:
+        // 1) la vinculada al documento (si existe y está activa);
+        // 2) si no, la primera encuesta activa;
+        // 3) si no hay ninguna, no se muestra el botón.
+        $encuestaId = self::resolverEncuestaPublica($pdo, $doc['encuesta_id'] !== null ? (int) $doc['encuesta_id'] : null);
+
         // Renderiza la vista pública (sin el layout del dashboard).
         render_vista(__DIR__ . '/../../views/publico/documento.html', [
             'titulo' => htmlspecialchars((string) $doc['titulo']),
@@ -311,7 +453,33 @@ final class DocumentoController
                 ? '<p class="text-muted mt-2">' . htmlspecialchars((string) $doc['descripcion']) . '</p>'
                 : '',
             'id' => (string) $id,
+            'bloque_encuesta' => $encuestaId !== null
+                ? '<a href="' . base_path() . '/publico/encuesta?id=' . $encuestaId . '" class="btn btn-info">'
+                    . '<i class="bi bi-chat-square-text me-1"></i> Encuesta de satisfacci&oacute;n</a>'
+                : '',
         ]);
+    }
+
+    /**
+     * Devuelve el ID de la encuesta pública a ofrecer desde la vista de un
+     * documento: prioriza la vinculada ($vinculadaId) y cae a la primera
+     * activa. Devuelve null si no hay encuestas disponibles.
+     */
+    private static function resolverEncuestaPublica(PDO $pdo, ?int $vinculadaId): ?int
+    {
+        if ($vinculadaId !== null && $vinculadaId > 0) {
+            $stmt = $pdo->prepare('SELECT id FROM encuesta WHERE id = :id AND activa = 1');
+            $stmt->execute(['id' => $vinculadaId]);
+            $encontrada = $stmt->fetchColumn();
+            if ($encontrada !== false) {
+                return (int) $encontrada;
+            }
+        }
+
+        // Fallback: primera encuesta activa (la "de satisfacción general").
+        $stmt = $pdo->query('SELECT id FROM encuesta WHERE activa = 1 ORDER BY id LIMIT 1');
+        $primera = $stmt->fetchColumn();
+        return $primera !== false ? (int) $primera : null;
     }
 
     /**
@@ -377,8 +545,20 @@ final class DocumentoController
         $clase = $doc['activo'] ? 'estado-activo' : 'estado-inactivo';
         $id = (int) $doc['id'];
 
+        // Botón de estado: cambia de texto según si está activo o no.
+        // Llama a ElyraDoc.cambiarEstado(id, activo) definido en documentos.js.
+        $btnEstado = $doc['activo']
+            ? '<button type="button" class="btn btn-sm btn-outline-secondary"'
+                . ' title="Desactivar documento"'
+                . ' onclick="ElyraDoc.cambiarEstado(' . $id . ', 0, this)">'
+                . '<i class="bi bi-slash-circle"></i></button>'
+            : '<button type="button" class="btn btn-sm btn-outline-success"'
+                . ' title="Reactivar documento"'
+                . ' onclick="ElyraDoc.cambiarEstado(' . $id . ', 1, this)">'
+                . '<i class="bi bi-arrow-counterclockwise"></i></button>';
+
         // El botón QR llama a ElyraDoc.verQR(id) definido en documentos.js.
-        return '<tr>'
+        return '<tr data-doc-id="' . $id . '" data-doc-activo="' . ($doc['activo'] ? '1' : '0') . '">'
             . '<td><button type="button" class="btn btn-sm btn-outline-secondary" onclick="ElyraDoc.verQR(' . $id . ')" title="Ver QR"><i class="bi bi-qr-code"></i></button></td>'
             . '<td class="fw-semibold">' . $titulo . $inactivo . '</td>'
             . '<td><span class="insignia">' . $tipo . '</span></td>'
@@ -386,6 +566,8 @@ final class DocumentoController
             . '<td class="text-muted small">' . $fecha . '</td>'
             . '<td><div class="d-flex gap-1">'
             . '<a href="documentos/ver?id=' . $id . '" class="btn btn-sm btn-outline-secondary" title="Ver detalle"><i class="bi bi-eye"></i></a>'
+            . '<a href="documentos/editar?id=' . $id . '" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>'
+            . $btnEstado
             . '</div></td>'
             . '</tr>';
     }
