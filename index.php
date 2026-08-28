@@ -82,6 +82,7 @@ require_once __DIR__ . '/src/helpers.php';          // Funciones auxiliares (bas
 require_once __DIR__ . '/src/Controller/AuthController.php';
 require_once __DIR__ . '/src/Controller/DashboardController.php';
 require_once __DIR__ . '/src/Controller/DocumentoController.php';
+require_once __DIR__ . '/src/Controller/EncuestaController.php';
 
 // ==== 4) Sesión ====
 // Inicia (o reanuda) la sesión para que $_SESSION esté disponible en todo.
@@ -128,8 +129,15 @@ switch (true) {
         DashboardController::inicio();
         break;
 
-    case $path === '/encuestas':
-        DashboardController::encuestas();
+    // Módulo de encuestas: delega en el dispatch interno del controlador
+    // (listado, crear, toggle, resultados). El listado requiere sesión;
+    // la vista pública (/publico/encuesta) NO requiere sesión.
+    case str_starts_with($path, '/encuestas'):
+        EncuestaController::dispatch($path, $method);
+        break;
+
+    case str_starts_with($path, '/publico/encuesta'):
+        EncuestaController::dispatch($path, $method);
         break;
 
     // Módulo de documentos: delega en el dispatch interno del controlador,
