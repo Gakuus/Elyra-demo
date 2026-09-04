@@ -6,15 +6,14 @@ declare(strict_types=1);
  * index.php: PUNTO DE ENTRADA ÚNICO de la aplicación (front controller).
  *
  * Todas las peticiones pasan por acá (el servidor dev PHP redirige todo a
- * este archivo). Sus responsabilidades son, en orden:
- *   1. Cargar las variables del archivo .env.
- *   2. Servir archivos estáticos (CSS, JS, imágenes) de la carpeta public/.
- *   3. Cargar las clases y funciones del proyecto.
- *   4. Iniciar la sesión.
- *   5. Mirar la URL y delegar a la acción (controlador) que corresponde.
+ * este archivo). En orden, hace: carga el .env, sirve los estáticos de
+ * public/, carga las clases del proyecto, inicia la sesión y por último
+ * mira la URL para llamar al controlador que corresponda.
  */
 
-// ==== 1) Carga de .env ====
+// ------------------------------------------------------------------
+// 1) Carga de .env
+// ------------------------------------------------------------------
 // El archivo .env tiene las configuraciones (URL, datos de la base de datos).
 // Se lee línea por línea y cada variable queda disponible en $_ENV.
 $envFile = __DIR__ . '/.env';
@@ -31,7 +30,9 @@ if (file_exists($envFile)) {
     }
 }
 
-// ==== 2) Archivos estáticos (public/) ====
+// ------------------------------------------------------------------
+// 2) Archivos estáticos (public/)
+// ------------------------------------------------------------------
 // URL pedida por el navegador, solo la parte de ruta (sin dominio ni query).
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
@@ -81,7 +82,9 @@ if ($staticRel !== '/' && !str_contains($staticRel, '.php')) {
     }
 }
 
-// ==== 3) Carga de dependencias ====
+// ------------------------------------------------------------------
+// 3) Carga de dependencias
+// ------------------------------------------------------------------
 // Los require_once incluyen cada archivo una sola vez (evita redefiniciones).
 require_once __DIR__ . '/config/database.php';      // Función db_connect().
 require_once __DIR__ . '/src/Auth.php';             // Clase Auth (login, registro).
@@ -91,12 +94,17 @@ require_once __DIR__ . '/src/Controller/DashboardController.php';
 require_once __DIR__ . '/src/Controller/DocumentoController.php';
 require_once __DIR__ . '/src/Controller/EncuestaController.php';
 require_once __DIR__ . '/src/Controller/VehiculoController.php';
+require_once __DIR__ . '/src/Controller/UsuarioController.php';
 
-// ==== 4) Sesión ====
+// ------------------------------------------------------------------
+// 4) Sesión
+// ------------------------------------------------------------------
 // Inicia (o reanuda) la sesión para que $_SESSION esté disponible en todo.
 Auth::iniciarSesion();
 
-// ==== 5) Rutas ====
+// ------------------------------------------------------------------
+// 5) Rutas
+// ------------------------------------------------------------------
 // Datos de la petición actual: método HTTP (GET/POST...) y ruta.
 $method = $_SERVER['REQUEST_METHOD'];
 $path = $staticRel;
@@ -137,9 +145,9 @@ switch (true) {
         DashboardController::inicio();
         break;
 
-    // Módulo de encuestas: delega en el dispatch interno del controlador
-    // (listado, crear, toggle, resultados). El listado requiere sesión;
-    // la vista pública (/publico/encuesta) NO requiere sesión.
+    // Módulo de encuestas: le pasamos la ruta y el método al dispatch del
+    // controlador (listado, crear, toggle, resultados). El listado requiere
+    // sesión; la vista pública (/publico/encuesta) NO requiere sesión.
     case str_starts_with($path, '/encuestas'):
         EncuestaController::dispatch($path, $method);
         break;
@@ -148,7 +156,7 @@ switch (true) {
         EncuestaController::dispatch($path, $method);
         break;
 
-    // Módulo de vehículos: delega en el dispatch interno del controlador
+// Módulo de vehículos: delega en el dispatch interno del controlador
     // (listado, alta, baja y edición). Requiere sesión iniciada.
     case str_starts_with($path, '/vehiculos'):
         VehiculoController::dispatch($path, $method);
@@ -158,6 +166,12 @@ switch (true) {
     // que decide la acción según la ruta exacta y el método.
     case str_starts_with($path, '/documentos') || str_starts_with($path, '/publico/doc') || str_starts_with($path, '/publico/archivo'):
         DocumentoController::dispatch($path, $method);
+        break;
+
+    // Módulo de usuarios (personas): búsqueda por cédula/nombre, ficha,
+    // edición y desactivación. Requiere sesión (guards internos).
+    case str_starts_with($path, '/usuarios'):
+        UsuarioController::dispatch($path, $method);
         break;
 
     // Ninguna ruta coincidió → página 404.

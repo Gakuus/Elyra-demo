@@ -1,58 +1,27 @@
 /**
- * documentos.js: comportamiento de la página "Documentos generales" del
- * dashboard. Se carga con el layout del dashboard, así que también está
- * disponible en el resto de las páginas (por eso su API vive en window.ElyraDoc
- * y se invoca desde atributos onclick del HTML que genera el controlador).
+ * documentos.js: comportamiento de la página "Documentos" del dashboard.
+ * Se carga con el layout del dashboard, así que sus funciones quedan
+ * disponibles en todo el panel vía window.ElyraDoc (los onclick que arma el
+ * controlador las invocan).
  *
- * Responsabilidades:
- *   - Modal de código QR público de cada documento (ver/copiar/imprimir).
- *   - Activar / desactivar documentos (borrado lógico) sin recargar.
- *   - Copiar enlaces públicos al portapapeles.
+ * Se encarga del modal de QR público de cada documento (ver/copiar/imprimir)
+ * y de activar/desactivar documentos sin recargar la página.
  */
 (function () {
     'use strict';
 
-    // ================================================================
-    // URL pública absoluta
     // El QR necesita la URL COMPLETA (protocolo + dominio + ruta). Antes se
-    // generaba con una ruta relativa ("/publico/doc?id=N"), por lo que al
-    // escanearlo no abría nada y el enlace copiado tampoco funcionaba.
-    // ================================================================
+    // generaba con una ruta relativa, por lo que al escanear no abría nada.
     function urlPublica(id) {
-        return window.location.origin + (window.BASE_PATH || '') + '/publico/doc?id=' + id;
-    }
-
-    // ================================================================
-    // Generación del QR
-    // Carga la librería qrcodejs bajo demanda y dibuja el código en el
-    // contenedor indicado, con el tamaño pedido.
-    // ================================================================
-    function generarEn(contenedor, texto, tamano) {
-        contenedor.innerHTML = '';
-        if (typeof window.QRCode !== 'undefined') {
-            new window.QRCode(contenedor, { text: texto, width: tamano, height: tamano });
-            return;
-        }
-        // La librería todavía no está cargada (primera vez en la sesión):
-        // se inyecta el <script> desde CDN y se dibuja cuando termine.
-        var script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
-        script.onload = function () {
-            new window.QRCode(contenedor, { text: texto, width: tamano, height: tamano });
-        };
-        script.onerror = function () {
-            contenedor.innerHTML = '<p class="text-muted small mb-0">No se pudo generar el c&oacute;digo QR.</p>';
-        };
-        document.head.appendChild(script);
+        return window.Elyra.util.urlAbsoluta('/publico/doc?id=' + id);
     }
 
     /**
-     * abrirModal: abre el modal de QR público de un documento.
-     * Llamado por ElyraDoc.verQR(id) desde el botón QR de cada fila.
-     *
-     * Reconstruye el contenido del modal en cada apertura porque el QR y los
-     * botones dependen del documento elegido, y les cuelga los listeners
-     * recién acá (el modal es HTML estático del layout).
+     * abrirModal: abre el modal de QR público de un documento. Lo llama
+     * ElyraDoc.verQR(id) desde el botón QR de cada fila. Se reconstruye el
+     * contenido en cada apertura porque el QR y los botones dependen del
+     * documento elegido, y los listeners se cuelgan recién acá (el modal es
+     * HTML estático del layout).
      */
     function abrirModal(id) {
         var modal = document.getElementById('qrModal');
@@ -75,49 +44,13 @@
         }
         var imprimir = document.getElementById('imprimirQr');
         if (imprimir) {
-            imprimir.addEventListener('click', function () { imprimirQR(url); });
+            imprimir.addEventListener('click', function () { window.Elyra.util.imprimeQR(url); });
         }
-        generarEn(document.getElementById('qrcode'), url, 180);
+        window.Elyra.util.generaQR(document.getElementById('qrcode'), url, 180);
     }
 
-    // ================================================================
-    // Impresión del QR
-    // Dibuja un QR GRANDE en un área exclusiva de impresión (#qrPrintArea)
-    // y oculta todo lo demás vía @media print: la hoja sale solo con el QR.
-    // ================================================================
-    function imprimirQR(url) {
-        var area = document.getElementById('qrPrintArea');
-        if (!area) { window.print(); return; }
-
-        area.innerHTML = '';
-        var caja = document.createElement('div');
-        caja.className = 'qr-imprimible';
-        area.appendChild(caja);
-
-        // Se genera directamente en grande (mejor calidad que agrandar el chico).
-        generarEn(caja, url, 480);
-
-        // La clase .imprimiendo-qr activa el CSS @media print que oculta
-        // todo excepto #qrPrintArea.
-        document.body.classList.add('imprimiendo-qr');
-
-        // Limpia el modo impresión cuando termina (afterprint) o como
-        // respaldo a los 8 segundos por si el navegador no dispara el evento.
-        var limpiar = function () {
-            document.body.classList.remove('imprimiendo-qr');
-            window.removeEventListener('afterprint', limpiar);
-        };
-        window.addEventListener('afterprint', limpiar);
-        setTimeout(limpiar, 8000);
-
-        // Pequeña espera para que el QR termine de renderizarse antes de imprimir.
-        setTimeout(function () { window.print(); }, 80);
-    }
-
-    // ================================================================
-    // Activar / desactivar documento (POST /documentos/estado)
+    // Activar / desactivar documento (POST /documentos/estado).
     // Actualiza la fila de la tabla sin recargar la página.
-    // ================================================================
     function cambiarEstado(id, activo, btn) {
         btn.disabled = true;
 
@@ -168,42 +101,17 @@
             .catch(function () { btn.disabled = false; });
     }
 
-    // ================================================================
-    // Copiar al portapapeles
-    // Usa la API moderna (navigator.clipboard) y cae a execCommand para
-    // navegadores viejos o contextos sin permiso (ej: http simple).
-    // ================================================================
+    // Copiar al portapapeles: usa la utilidad compartida (Elyra.util) y solo
+    // agrega el feedback visual del botón (cambia a "Copiado" un momento).
     function copiarEnlace(texto, btn) {
-        var hecho = function () {
+        window.Elyra.util.copiaAlPortapapeles(texto, function () {
             var anterior = btn.innerHTML;
             btn.innerHTML = '<i class="bi bi-check me-1"></i>Copiado';
             setTimeout(function () { btn.innerHTML = anterior; }, 1800);
-        };
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(texto).then(hecho).catch(function () { caer(texto, hecho); });
-        } else {
-            caer(texto, hecho);
-        }
+        });
     }
 
-    /**
-     * Fallback de copiado: crea un <textarea> fuera de pantalla, selecciona
-     * su contenido y ejecuta el comando copy del navegador.
-     */
-    function caer(texto, hecho) {
-        var aux = document.createElement('textarea');
-        aux.value = texto;
-        document.body.appendChild(aux);
-        aux.select();
-        try { document.execCommand('copy'); hecho(); } catch (e) { /* noop */ }
-        document.body.removeChild(aux);
-    }
-
-    // ================================================================
-    // API pública: window.ElyraDoc
-    // Los onclick inline del listado (generado por DocumentoController)
-    // llaman a estas funciones.
-    // ================================================================
+    // Expone lo que usan los onclick del listado generado por DocumentoController.
     window.ElyraDoc = {
         verQR: abrirModal,
         copiarEnlace: copiarEnlace,

@@ -4,10 +4,21 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    background-image: linear-gradient(rgb(0 0 0 / 45%), rgb(0 0 0 / 45%)), url('../../img/hospital-de-clinicas.jpg');
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
     padding: 20px;
+}
+
+/* Botón para mostrar/ocultar contraseña */
+.btn-ojo {
+    flex-shrink: 0;
+}
+
+/* Caja de registro más ancha que la de login */
+.caja-registro {
+    max-width: 640px;
 }
 
 /* ---------- Caja de acceso ---------- */

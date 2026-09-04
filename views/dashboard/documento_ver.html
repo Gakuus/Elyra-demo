@@ -2,7 +2,7 @@
     <div class="cuerpo-panel">
         <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
             <div>
-                <h5 style="margin:0 0 6px;color:#2A4780;">{{titulo}}</h5>
+                <h5 class="titulo-ficha">{{titulo}}</h5>
                 <div class="d-flex align-items-center gap-2">
                     <span class="insignia">{{tipo}}</span>
                     <small class="text-muted">Subido el {{fecha}}</small>
@@ -17,8 +17,8 @@
 
         {{descripcion_bloque}}
 
-        <div class="border rounded" style="overflow:hidden;">
-            <embed src="documentos/archivo?id={{id}}" type="application/pdf" class="w-100" style="height:70vh;border:none;">
+        <div class="visor-pdf">
+            <embed src="documentos/archivo?id={{id}}" type="application/pdf">
         </div>
     </div>
 </div>

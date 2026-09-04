@@ -39,10 +39,8 @@
 
     /**
      * agregarPregunta: agrega un bloque de pregunta al formulario.
-     *
-     * @param {object|null} data Datos para precargar el bloque
-     *                           {id?, tipo?, texto?, opciones?}.
-     *                           null/undefined → bloque vacío.
+     * data puede venir con {id?, tipo?, texto?, opciones?} para precargar
+     * (edición); si es null/undefined deja el bloque vacío.
      */
     function agregarPregunta(data) {
         data = data || {};
@@ -101,10 +99,10 @@
      * según su tipo. Solo multiple_choice muestra editor de opciones; para
      * escala y texto_libre lo limpia porque no aplican.
      *
-     * @param {number}     idx               Índice del bloque.
-     * @param {string}     tipo              Tipo seleccionado.
-     * @param {array|null} opcionesIniciales Textos a precargar (edición);
-     *                                       null → dos opciones vacías.
+     * idx: índice del bloque.
+     * tipo: tipo seleccionado.
+     * opcionesIniciales: si viene, precarga esos textos (edición); si no,
+     * deja dos opciones vacías.
      */
     function actualizarOpciones(idx, tipo, opcionesIniciales) {
         var cont = document.getElementById('opciones-' + idx);
@@ -126,11 +124,10 @@
          */
         function agregarOpcion(textoInicial) {
             var item = document.createElement('span');
-            item.className = 'd-inline-flex align-items-center input-group input-group-sm';
-            item.style.width = 'auto';
+            item.className = 'd-inline-flex align-items-center input-group input-group-sm opcion-item';
             item.innerHTML =
                 '<input type="text" name="preguntas[' + idx + '][opciones][]"'
-                + ' class="form-control" placeholder="Opci\u00f3n" style="width:140px" required maxlength="200">'
+                + ' class="form-control opcion-ancho" placeholder="Opci\u00f3n" required maxlength="200">'
                 + '<button type="button" class="btn btn-outline-secondary opcion-remove" title="Quitar opci\u00f3n">'
                 + '<i class="bi bi-x"></i></button>';
             item.querySelector('.opcion-remove').addEventListener('click', function () {
@@ -152,10 +149,9 @@
         cont.appendChild(envoltorio);
     }
 
-    // ================================================================
-    // Delegación de eventos dentro del contenedor (los bloques se crean
-    // y destruyen dinámicamente, así que los listeners van en el padre).
-    // ================================================================
+    // Delegación de eventos en el contenedor: los bloques de preguntas se
+    // crean y destruyen dinámicamente, así que los listeners viven en el
+    // padre y se resuelven según el elemento que disparó el evento.
 
     // Cambiar el tipo de pregunta reconstruye la zona de opciones.
     contenedor.addEventListener('change', function (e) {
@@ -178,11 +174,8 @@
 
     btnAgregar.addEventListener('click', function () { agregarPregunta(null); });
 
-    // ================================================================
-    // Arranque según la vista:
-    //   - Edición: precarga cada pregunta existente (con su id).
-    //   - Creación: deja un bloque vacío listo para completar.
-    // ================================================================
+    // Arranque según la vista: en edición se precarga cada pregunta
+    // existente (con su id) y en creación se deja un bloque vacío.
     var inicial = (typeof window.ENCUESTA_INICIAL !== 'undefined' && window.ENCUESTA_INICIAL)
         ? window.ENCUESTA_INICIAL
         : [];

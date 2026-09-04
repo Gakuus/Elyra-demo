@@ -13,8 +13,8 @@
 </head>
 <body>
 
-<div class="pagina-ingreso" style="background-image: linear-gradient(rgb(0 0 0 / 45%), rgb(0 0 0 / 45%)), url('public/img/hospital-de-clinicas.jpg'); background-position: center; background-size: cover; background-repeat: no-repeat;">
-    <div class="caja-ingreso" style="max-width: 640px;">
+<div class="pagina-ingreso">
+    <div class="caja-ingreso caja-registro">
         <div class="cabecera-caja-ingreso">
             Hospital de Clínicas
         </div>
@@ -58,12 +58,19 @@
                     </div>
                 </div>
 
+                <div class="grupo-formulario">
+                    <label for="codigo_funcionario" class="etiqueta-formulario">Código de funcionario <span class="texto-atenuado">(opcional)</span></label>
+                    <input type="text" id="codigo_funcionario" name="codigo_funcionario" class="entrada-formulario ancho-completo"
+                           maxlength="32" autocapitalize="characters" autocomplete="off" placeholder="Ej: ELY-4F2A98C1D2">
+                    <p class="texto-atenuado texto-pequeno">Solo para personal del hospital. Si tenés un código de acceso, tu cuenta se creará como funcionario.</p>
+                </div>
+
                 <div class="flexible espacio-2">
                     <div class="grupo-formulario ancho-completo">
                         <label for="password" class="etiqueta-formulario">Contraseña <span class="texto-peligro">*</span></label>
                         <div class="flexible centrar-vertical espacio-1">
                             <input type="password" id="password" name="password" class="entrada-formulario ancho-completo" required minlength="8" placeholder="Mín. 8 caracteres">
-                            <button type="button" class="btn btn-sm ver-contrasena" tabindex="-1" onclick="togglePw('password', 'pwIcon')" style="flex-shrink:0;">
+                            <button type="button" class="btn btn-sm ver-contrasena btn-ojo" tabindex="-1" onclick="togglePassword('password', 'pwIcon')">
                                 <i class="bi bi-eye-slash" id="pwIcon"></i>
                             </button>
                         </div>
@@ -73,7 +80,7 @@
                         <label for="password2" class="etiqueta-formulario">Repetir contraseña <span class="texto-peligro">*</span></label>
                         <div class="flexible centrar-vertical espacio-1">
                             <input type="password" id="password2" name="password2" class="entrada-formulario ancho-completo" required minlength="8" placeholder="Repetir contraseña">
-                            <button type="button" class="btn btn-sm ver-contrasena" tabindex="-1" onclick="togglePw('password2', 'pwIcon2')" style="flex-shrink:0;">
+                            <button type="button" class="btn btn-sm ver-contrasena btn-ojo" tabindex="-1" onclick="togglePassword('password2', 'pwIcon2')">
                                 <i class="bi bi-eye-slash" id="pwIcon2"></i>
                             </button>
                         </div>
@@ -95,18 +102,5 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
 <script src="js/elyra.js?v=2" defer></script>
-<script>
-function togglePw(id, iconId) {
-    var pw = document.getElementById(id);
-    var icon = document.getElementById(iconId);
-    if (pw.type === 'password') {
-        pw.type = 'text';
-        icon.className = 'bi bi-eye';
-    } else {
-        pw.type = 'password';
-        icon.className = 'bi bi-eye-slash';
-    }
-}
-</script>
 </body>
 </html>
