@@ -1,0 +1,34 @@
+<div class="panel">
+    <div class="cabecera-panel"><i class="bi bi-pencil-square me-1"></i> Editar veh&iacute;culo</div>
+    <div class="cuerpo-panel">
+        {{mensaje_error}}
+        <form method="post" action="vehiculos/editar" id="vehiculoForm">
+            <input type="hidden" name="id" value="{{id}}">
+
+            <div class="mb-3">
+                <label for="patente" class="form-label">Patente <span style="color:#C00;">*</span></label>
+                <input type="text" name="patente" id="patente" class="form-control" required maxlength="20"
+                       placeholder="Ej: ABC123 / AB123CD" value="{{valor_patente}}"
+                       style="text-transform:uppercase;">
+                <div class="form-text">Formato Mercosur (ABC123) o patente tradicional (AB123CD).</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="modelo" class="form-label">Modelo</label>
+                <input type="text" name="modelo" id="modelo" class="form-control" maxlength="100"
+                       placeholder="Ej: Toyota Hilux 2020" value="{{valor_modelo}}">
+            </div>
+
+            <div class="mb-4">
+                <label for="anio" class="form-label">A&ntilde;o</label>
+                <input type="text" name="anio" id="anio" class="form-control" maxlength="4"
+                       placeholder="Ej: 2021" value="{{valor_anio}}">
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Guardar cambios</button>
+                <a href="vehiculos" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>

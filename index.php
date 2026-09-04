@@ -43,10 +43,17 @@ $basePath = rtrim(is_string($appUrlPath) ? $appUrlPath : '', '/');
 $staticRel = $basePath !== '' && str_starts_with($uri, $basePath) ? substr($uri, strlen($basePath)) : $uri;
 $staticRel = $staticRel === '' ? '/' : $staticRel;
 
-// Si la ruta NO es la raíz y NO contiene ".php", puede ser un archivo estático.
+// Los archivos estáticos viven dentro de public/. Las URL se escriben con el
+// prefijo public/ (ej: /public/css/base.css), tanto en Linux como en Windows.
+// Normaliza la ruta por si viene con o sin ese segmento y la resuelve dentro
+// de la carpeta public/ del proyecto (portable a cualquier docroot).
 if ($staticRel !== '/' && !str_contains($staticRel, '.php')) {
-    // Busca el archivo dentro de public/.
-    $file = __DIR__ . '/public' . $staticRel;
+    // Si la ruta ya empieza con /public, lo quitamos para buscar dentro de
+    // la carpeta public/ (el prefijo es solo de URL, no del filesystem).
+    $rel = str_starts_with($staticRel, '/public')
+        ? substr($staticRel, strlen('/public'))
+        : $staticRel;
+    $file = __DIR__ . '/public' . $rel;
     if (is_file($file)) {
         // Detecta el tipo MIME según la extensión del archivo.
         $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
@@ -86,6 +93,7 @@ require_once __DIR__ . '/src/Controller/AuthController.php';
 require_once __DIR__ . '/src/Controller/DashboardController.php';
 require_once __DIR__ . '/src/Controller/DocumentoController.php';
 require_once __DIR__ . '/src/Controller/EncuestaController.php';
+require_once __DIR__ . '/src/Controller/VehiculoController.php';
 require_once __DIR__ . '/src/Controller/UsuarioController.php';
 
 // ------------------------------------------------------------------
@@ -148,7 +156,13 @@ switch (true) {
         EncuestaController::dispatch($path, $method);
         break;
 
-    // Módulo de documentos: se lo pasamos al dispatch del controlador,
+// Módulo de vehículos: delega en el dispatch interno del controlador
+    // (listado, alta, baja y edición). Requiere sesión iniciada.
+    case str_starts_with($path, '/vehiculos'):
+        VehiculoController::dispatch($path, $method);
+        break;
+
+    // Módulo de documentos: delega en el dispatch interno del controlador,
     // que decide la acción según la ruta exacta y el método.
     case str_starts_with($path, '/documentos') || str_starts_with($path, '/publico/doc') || str_starts_with($path, '/publico/archivo'):
         DocumentoController::dispatch($path, $method);

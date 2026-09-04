@@ -66,6 +66,9 @@ function render_vista(string $archivo, array $datos): void
         echo 'Vista no encontrada: ' . htmlspecialchars($archivo);
         return;
     }
+    // El path base se inyecta siempre: el layout de las vistas públicas lo
+    // necesita para resolver URLs de recursos/enlaces en cualquier entorno.
+    $datos = ['base_path' => base_path()] + $datos;
     // Recorre cada dato y reemplaza su marcador correspondiente en el HTML.
     foreach ($datos as $clave => $valor) {
         $html = str_replace('{{' . $clave . '}}', (string) $valor, $html);
@@ -128,10 +131,11 @@ function render_dashboard(string $vista, string $titulo, string $seccion, array 
     // Resalta en el menú la sección en la que el usuario está parado: según
     // $seccion, un enlace lleva ' active' y los demás van con cadena vacía.
     $activo = [
-        'inicio'     => ['activo_inicio' => ' active', 'activo_encuestas' => '', 'activo_documentos' => '', 'activo_usuarios' => ''],
-        'encuestas'  => ['activo_inicio' => '', 'activo_encuestas' => ' active', 'activo_documentos' => '', 'activo_usuarios' => ''],
-        'documentos' => ['activo_inicio' => '', 'activo_encuestas' => '', 'activo_documentos' => ' active', 'activo_usuarios' => ''],
-        'usuarios'   => ['activo_inicio' => '', 'activo_encuestas' => '', 'activo_documentos' => '', 'activo_usuarios' => ' active'],
+        'inicio'     => ['activo_inicio' => ' active', 'activo_encuestas' => '', 'activo_documentos' => '', 'activo_vehiculos' => '', 'activo_usuarios' => ''],
+        'encuestas'  => ['activo_inicio' => '', 'activo_encuestas' => ' active', 'activo_documentos' => '', 'activo_vehiculos' => '', 'activo_usuarios' => ''],
+        'documentos' => ['activo_inicio' => '', 'activo_encuestas' => '', 'activo_documentos' => ' active', 'activo_vehiculos' => '', 'activo_usuarios' => ''],
+        'vehiculos'  => ['activo_inicio' => '', 'activo_encuestas' => '', 'activo_documentos' => '', 'activo_vehiculos' => ' active', 'activo_usuarios' => ''],
+        'usuarios'   => ['activo_inicio' => '', 'activo_encuestas' => '', 'activo_documentos' => '', 'activo_vehiculos' => '', 'activo_usuarios' => ' active'],
     ][$seccion] ?? [];
 
     // Renderiza el layout con: título de pestaña, usuario, contenido ya

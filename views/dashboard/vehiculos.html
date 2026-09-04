@@ -1,0 +1,13 @@
+<div class="panel">
+    <div class="cabecera-panel d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-truck me-1"></i> Veh&iacute;culos</span>
+        <a href="vehiculos/agregar" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Agregar</a>
+    </div>
+    <div class="cuerpo-panel">
+        <form method="get" class="d-flex gap-2 mb-3">
+            <input type="text" name="q" class="form-control" placeholder="Buscar por patente o modelo..." value="{{q}}">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i> Buscar</button>
+        </form>
+        {{contenido_vehiculos}}
+    </div>
+</div>
