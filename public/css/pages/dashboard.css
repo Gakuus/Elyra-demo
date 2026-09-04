@@ -15,15 +15,11 @@
     gap: 12px;
 }
 
-.logo-encabezado {
+.logo-encabezado,
+.logo-encabezado:hover {
     display: flex;
     align-items: center;
     gap: 10px;
-    text-decoration: none;
-    color: #FFF;
-}
-
-.logo-encabezado:hover {
     text-decoration: none;
     color: #FFF;
 }
@@ -115,7 +111,6 @@
 .contenido-principal {
     flex: 1;
     padding: 30px 38px;
-    max-width: calc(100% - 280px);
     overflow-x: auto;
 }
 
@@ -184,6 +179,200 @@
     padding: 2px 8px;
     font-size: 13px;
     font-weight: 600;
+}
+
+/* ---------- Buscador de usuarios (busca en vivo) ---------- */
+.buscador-usuario {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    justify-content: center;
+}
+
+.buscador-usuario .campo-busqueda {
+    position: relative;
+    max-width: 520px;
+    width: 100%;
+}
+
+.buscador-usuario .campo-busqueda .input-busqueda {
+    font-size: 1.15rem;
+    padding: 12px 20px;
+    padding-right: 46px;
+}
+
+.buscador-usuario .icono-lupa {
+    position: absolute;
+    top: 50%;
+    right: 18px;
+    transform: translateY(-50%);
+    color: #6c757d;
+    font-size: 1.2rem;
+    pointer-events: none;
+}
+
+/* ---------- Campo obligatorio (asterisco rojo) ---------- */
+.requerido {
+    color: #C00;
+}
+
+/* ---------- Título de ficha (nombre grande en las fichas) ---------- */
+.titulo-ficha {
+    margin: 0 0 6px;
+    color: #2A4780;
+}
+
+/* ---------- Select de filtro (Documentos) ---------- */
+.select-filtro {
+    max-width: 280px;
+}
+
+/* ---------- Visor de PDF embebido (Documento ver) ---------- */
+.visor-pdf {
+    border: 1px solid #CCC;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.visor-pdf embed {
+    display: block;
+    width: 100%;
+    height: 70vh;
+    border: none;
+}
+
+/* ---------- Bienvenida (Inicio) ---------- */
+.titulo-bienvenida {
+    margin: 0 0 8px;
+    color: #2A4780;
+}
+
+.subtitulo-bienvenida {
+    margin: 0;
+    font-size: 19px;
+}
+
+/* ---------- Botón compacto (Encuestas) ---------- */
+.btn-compacto {
+    padding: 0 12px;
+    font-size: 11px;
+}
+
+/* ---------- Mensaje y estado vacío ---------- */
+.mensaje-vacio {
+    font-size: 15px;
+}
+
+.mensaje-vacio-sm {
+    font-size: 14px;
+}
+
+.icono-vacio {
+    font-size: 28px;
+}
+
+.icono-vacio-sm {
+    font-size: 24px;
+}
+
+/* Columnas de tabla con ancho fijo */
+.th-acciones {
+    width: 170px;
+}
+
+.th-acciones-sm {
+    width: 130px;
+}
+
+.th-acciones-min {
+    width: 100px;
+}
+
+.th-qr {
+    width: 50px;
+}
+
+/* Celdas sin salto de línea */
+.celda-nowrap {
+    white-space: nowrap;
+}
+
+/* Iconos vacíos grandes (Encuestas) */
+.icono-vacio-lg {
+    font-size: 32px;
+}
+
+/* Alertas compactas (más pequeñas que las de Bootstrap) */
+.alert-chico {
+    font-size: 13px;
+}
+
+/* Contenedores de gráficos (resultados de encuesta) */
+.contenedor-chart,
+.contenedor-chart-alto {
+    position: relative;
+}
+
+.contenedor-chart {
+    height: 220px;
+}
+
+.contenedor-chart canvas,
+.contenedor-chart-alto canvas {
+    width: 100% !important;
+    height: auto !important;
+}
+
+/* Iconos de estado en encuestas */
+.icono-pregunta {
+    font-size: 40px;
+    color: #98A6C4;
+}
+
+.icono-exito {
+    font-size: 36px;
+    color: #198754;
+    margin-bottom: 10px;
+}
+
+.icono-grafico {
+    font-size: 30px;
+    color: #3B5998;
+}
+
+/* Textarea de ancho completo */
+.textarea-ancho {
+    width: 100%;
+}
+
+/* Opciones dinámicas del formulario de encuesta */
+.opcion-item {
+    width: auto;
+}
+
+.opcion-item .opcion-ancho {
+    width: 140px;
+}
+
+/* ---------- Logout en la barra superior ---------- */
+.form-en-linea {
+    display: inline;
+}
+
+.btn-logout,
+.btn-logout:hover {
+    color: #FFF;
+    text-decoration: none;
+}
+
+/* ---------- Modal QR compacto ---------- */
+.modal-box-qr {
+    max-width: 400px;
+}
+
+.modal-box .modal-encabezado-titulo {
+    margin: 0;
 }
 
 .mensaje-error {
@@ -267,7 +456,6 @@
 
     .contenido-principal {
         padding: 18px;
-        max-width: calc(100% - 220px);
     }
 }
 
@@ -299,4 +487,29 @@
         /* Mantiene los bordes del QR nítidos al agrandarlo. */
         image-rendering: pixelated;
     }
+}
+
+/* ---------- Códigos de funcionario ---------- */
+.mensaje-exito {
+    background: #E8F5E9;
+    color: #1B5E20;
+    border: 1px solid #C8E6C9;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+
+.codigo-generado {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.info-codigos {
+    background: #F7F9FC;
+    border: 1px solid #E3E9F2;
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: #4A5A73;
 }

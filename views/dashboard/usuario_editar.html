@@ -1,0 +1,42 @@
+<div class="panel">
+    <div class="cabecera-panel"><i class="bi bi-pencil-square me-1"></i> Editar usuario</div>
+    <div class="cuerpo-panel">
+        {{mensaje_error}}
+        <form method="post" action="usuarios/editar" id="editUserForm">
+            <input type="hidden" name="id" value="{{id}}">
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="nombre" class="form-label">Nombre <span class="requerido">*</span></label>
+                    <input type="text" name="nombre" id="nombre" class="form-control" required minlength="2" maxlength="100"
+                           placeholder="Ej: Carlos" value="{{valor_nombre}}">
+                </div>
+                <div class="col-md-6">
+                    <label for="apellido" class="form-label">Apellido <span class="requerido">*</span></label>
+                    <input type="text" name="apellido" id="apellido" class="form-control" required minlength="2" maxlength="100"
+                           placeholder="Ej: Martinez" value="{{valor_apellido}}">
+                </div>
+                <div class="col-md-6">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" name="email" id="email" class="form-control" maxlength="150"
+                           placeholder="Ej: carlos@ejemplo.com" value="{{valor_email}}">
+                </div>
+                <div class="col-md-6">
+                    <label for="documento" class="form-label">Cédula (8 dígitos)</label>
+                    <input type="text" name="documento" id="documento" class="form-control" maxlength="20"
+                           placeholder="Ej: 44556677" value="{{valor_cedula}}">
+                </div>
+                <div class="col-md-6">
+                    <label for="telefono" class="form-label">Teléfono</label>
+                    <input type="text" name="telefono" id="telefono" class="form-control" maxlength="9"
+                           placeholder="Ej: 99123456" value="{{valor_telefono}}">
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Guardar cambios</button>
+                <a href="usuarios" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>

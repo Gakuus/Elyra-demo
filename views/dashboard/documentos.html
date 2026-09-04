@@ -5,10 +5,10 @@
     </div>
     <div class="cuerpo-panel">
         <form method="get" class="d-flex gap-2 mb-3">
-            <select name="tipo" class="form-select" style="max-width:280px;" onchange="this.form.submit()">
+            <select name="tipo" class="form-select select-filtro" onchange="this.form.submit()">
                 {{opciones_tipo}}
             </select>
-            <input type="text" name="q" class="form-control" placeholder="Buscar por t&iacute;tulo..." value="{{q}}">
+            <input type="text" name="q" class="form-control" placeholder="Buscar por título..." value="{{q}}">
             <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i> Buscar</button>
         </form>
         {{contenido_documentos}}

@@ -10,22 +10,17 @@
     <link href="css/base.css?v=5" rel="stylesheet">
     <link href="css/pages/home.css?v=5" rel="stylesheet">
     <meta name="theme-color" content="#3B5998">
-    <style>
-        .doc-publico { max-width: 720px; margin: 50px auto; padding: 0 16px; }
-        .tarjeta-doc { background: #FFF; border: 1px solid #DDD; border-radius: 8px; padding: 30px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
-        .tarjeta-doc h1 { font-size: 26px; color: #2A4780; }
-    </style>
 </head>
 <body>
 
 <div class="doc-publico">
     <div class="tarjeta-doc">
-        <div style="font-size:52px;color:#3B5998;margin-bottom:12px;">
+        <div class="icono-doc">
             <i class="bi bi-file-earmark-pdf"></i>
         </div>
         <h1>{{titulo}}</h1>
         <div class="mb-3">
-            <span class="badge" style="background:#4F74B8;color:#FFF;">{{tipo}}</span>
+            <span class="badge insignia-doc">{{tipo}}</span>
         </div>
         <p class="text-muted small">Subido el {{fecha}}</p>
         {{descripcion_bloque}}
@@ -34,7 +29,7 @@
             <a href="publico/archivo?id={{id}}&descargar=1" class="btn btn-outline-secondary"><i class="bi bi-download me-1"></i> Descargar PDF</a>
             {{bloque_encuesta}}
         </div>
-        <p class="text-muted small text-center mt-3 mb-0">&iquest;Nos ayud&aacute;s con tu opini&oacute;n? Contanos c&oacute;mo fue tu experiencia.</p>
+        <p class="text-muted small text-center mt-3 mb-0">¿Nos ayudás con tu opinión? Contanos cómo fue tu experiencia.</p>
     </div>
 </div>
 

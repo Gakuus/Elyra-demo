@@ -3,19 +3,16 @@
 declare(strict_types=1);
 
 /**
- * helpers.php: funciones auxiliares compartidas por todos los controladores.
- * Son globales (no están dentro de una clase) para que se puedan llamar desde
- * cualquier controlador sin importar nada más.
+ * helpers.php: funciones que comparten todos los controladores.
+ * Son globales (no viven en una clase) para poder llamarlas desde cualquier
+ * controlador sin importar nada: base_path(), requerir_login(), etc.
  */
 
 /**
- * Devuelve el "path base" de la aplicación según APP_URL.
- * Ejemplo: si APP_URL = http://localhost:8000, devuelve ''.
- *          si APP_URL = http://localhost:8000/elyra, devuelve '/elyra'.
- *
- * Sirve para construir rutas absolutas correctas aunque la app viva en
- * una subcarpeta. El resultado se guarda en una variable estática para
- * calcularlo solo una vez (mejora de rendimiento).
+ * Ruta base de la aplicación según APP_URL, sin dominio.
+ * Con APP_URL = http://localhost:8000 devuelve ''; si la app cuelga de una
+ * subcarpeta (/elyra) devuelve '/elyra'. Así los enlaces y redirecciones
+ * quedan bien sin depender de dónde se haya montado el sistema.
  */
 function base_path(): string
 {
@@ -29,8 +26,8 @@ function base_path(): string
 }
 
 /**
- * Protege una página: si el usuario no tiene sesión iniciada, lo redirige
- * a /login y detiene la ejecución. Es el "guard" de las páginas privadas.
+ * Guard de las páginas privadas del hospital: si quien entra no tiene sesión,
+ * lo manda a /login y corta la ejecución para que no siga procesando nada.
  */
 function requerir_login(): void
 {
@@ -41,8 +38,8 @@ function requerir_login(): void
 }
 
 /**
- * Devuelve la URL completa de la aplicación (ej: http://localhost:8000).
- * Se usa por ejemplo para construir el enlace que lleva el código QR.
+ * URL completa de la aplicación (ej: http://localhost:8000). La usamos por
+ * ejemplo para armar el enlace que se imprime en el código QR del paciente.
  */
 function app_url(): string
 {
@@ -50,14 +47,14 @@ function app_url(): string
 }
 
 /**
- * Renderiza una vista HTML reemplazando los marcadores {{clave}} por valores.
+ * Pinta una vista reemplazando los marcadores {{clave}} por sus valores.
  *
- * El sistema de plantillas es muy simple: las vistas son archivos HTML puro
- * con marcadores como {{titulo}}. Este helper lee el archivo y cambia cada
- * {{clave}} por el valor correspondiente del array $datos.
+ * El sistema de plantillas es deliberadamente simple: las vistas son HTML
+ * plano con marcadores tipo {{titulo}}; acá se lee el archivo y se cambia
+ * cada marcador por el valor correspondiente de $datos.
  *
- * @param string $archivo Ruta al archivo .html de la vista.
- * @param array  $datos   Pares clave => valor que reemplazan los {{clave}}.
+ * $archivo: ruta al .html de la vista.
+ * $datos:   pares clave => valor que reemplazan los {{clave}}.
  */
 function render_vista(string $archivo, array $datos): void
 {
@@ -78,26 +75,34 @@ function render_vista(string $archivo, array $datos): void
 }
 
 /**
- * Muestra una página de error 404.
+ * Página de error 404 del sistema.
  */
 function pagina_404(): void
 {
     http_response_code(404);
-    echo '<h1 style="font-family:tahoma;padding:40px;text-align:center;">404 — Página no encontrada</h1>';
+    $html = '<!DOCTYPE html><html lang="es"><head>'
+        . '<meta charset="UTF-8">'
+        . '<base href="' . htmlspecialchars(base_path() . '/') . '">'
+        . '<title>404 — Página no encontrada</title>'
+        . '<link href="css/base.css?v=' . time() . '" rel="stylesheet">'
+        . '</head><body>'
+        . '<h1 class="pagina-404">404 — Página no encontrada</h1>'
+        . '</body></html>';
+    echo $html;
 }
 
 /**
- * Renderiza una vista del dashboard envuelta en el layout compartido
- * (encabezado, barra lateral, pie, modal QR y scripts).
+ * Pinta una página del dashboard dentro del layout compartido (encabezado,
+ * barra lateral, pie, modal del QR y scripts).
  *
- * Así evitamos repetir el mismo HTML en todas las páginas del dashboard:
- * el layout se escribe UNA vez en views/dashboard/layout.html y cada vista
- * solo aporta su contenido principal.
+ * Así el armado de todo el panel no se repite en cada controlador: el layout
+ * se escribe una sola vez en views/dashboard/layout.html y cada vista solo
+ * aporta su bloque central.
  *
- * @param string $vista   Nombre de la vista en views/dashboard/ (sin extensión).
- * @param string $titulo  Título para el <title>.
- * @param string $seccion Sección activa del menú: 'inicio' | 'encuestas' | 'documentos'.
- * @param array  $datos   Marcadores {{clave}} para la vista.
+ * $vista:   nombre de la vista en views/dashboard/ (sin extensión).
+ * $titulo:  texto para el <title>.
+ * $seccion: sección activa del menú: 'inicio' | 'encuestas' | 'documentos' | 'usuarios'.
+ * $datos:   marcadores {{clave}} para la vista.
  */
 function render_dashboard(string $vista, string $titulo, string $seccion, array $datos): void
 {
@@ -120,13 +125,13 @@ function render_dashboard(string $vista, string $titulo, string $seccion, array 
         $contenido = str_replace('{{' . $clave . '}}', (string) $valor, $contenido);
     }
 
-    // Tabla que indica qué enlace del menú debe verse como "activo".
-    // La sección pasada elige el array correcto: el enlace correspondiente
-    // lleva la clase ' active' (que lo resalta) y los demás van vacíos.
+    // Resalta en el menú la sección en la que el usuario está parado: según
+    // $seccion, un enlace lleva ' active' y los demás van con cadena vacía.
     $activo = [
-        'inicio'     => ['activo_inicio' => ' active', 'activo_encuestas' => '', 'activo_documentos' => ''],
-        'encuestas'  => ['activo_inicio' => '', 'activo_encuestas' => ' active', 'activo_documentos' => ''],
-        'documentos' => ['activo_inicio' => '', 'activo_encuestas' => '', 'activo_documentos' => ' active'],
+        'inicio'     => ['activo_inicio' => ' active', 'activo_encuestas' => '', 'activo_documentos' => '', 'activo_usuarios' => ''],
+        'encuestas'  => ['activo_inicio' => '', 'activo_encuestas' => ' active', 'activo_documentos' => '', 'activo_usuarios' => ''],
+        'documentos' => ['activo_inicio' => '', 'activo_encuestas' => '', 'activo_documentos' => ' active', 'activo_usuarios' => ''],
+        'usuarios'   => ['activo_inicio' => '', 'activo_encuestas' => '', 'activo_documentos' => '', 'activo_usuarios' => ' active'],
     ][$seccion] ?? [];
 
     // Renderiza el layout con: título de pestaña, usuario, contenido ya

@@ -7,15 +7,14 @@ declare(strict_types=1);
  * Adaptado a la arquitectura simple de esta demo (métodos estáticos +
  * vistas HTML con marcadores {{}}) y al esquema normalizado de la base
  * de datos, donde las opciones de una pregunta viven en la tabla
- * pregunta_opcion y las respuestas se guardan en respuesta_sesion +
- * respuesta_pregunta.
+ * pregunta_opcion y las respuestas se guardan en una sola tabla
+ * respuesta (una fila por pregunta respondida; la sesión anónima se
+ * identifica por sesion_token).
  *
- * Funcionalidad:
- *   - Listado de encuestas (con toggle activa/inactiva y acciones).
- *   - Creación con preguntas dinámicas (opción múltiple, escala 1-5, texto).
- *   - Publicar / despublicar (activar/desactivar).
- *   - Resultados con estadísticas y gráficos (Chart.js).
- *   - Página pública para responder (la que abren los pacientes por QR/enlace).
+ * Cubre el listado (con toggle activa/inactiva), la creación y edición
+ * con preguntas dinámicas (opción múltiple, escala 1-5 y texto), la
+ * publicación, los resultados con gráficos Chart.js y la página pública
+ * que responden los pacientes por QR/enlace.
  */
 final class EncuestaController
 {
@@ -24,8 +23,8 @@ final class EncuestaController
      * index.php delega acá toda ruta que empiece con /encuestas o
      * /publico/encuesta.
      *
-     * @param string $path   Ruta (ej: '/encuestas/crear').
-     * @param string $method Método HTTP ('GET' o 'POST').
+     * $path:   ruta (ej: '/encuestas/crear').
+     * $method: método HTTP ('GET' o 'POST').
      */
     public static function dispatch(string $path, string $method): void
     {
@@ -43,14 +42,14 @@ final class EncuestaController
         };
     }
 
-    // ================================================================
+    // ------------------------------------------------------------------
     // LISTADO
-    // ================================================================
+    // ------------------------------------------------------------------
 
     /**
-     * Listado de encuestas (GET a /encuestas). Muestra tabla con título,
-     * cantidad de preguntas, switch de estado y acciones (resultados,
-     * copiar enlace público).
+     * Panel de encuestas de satisfacción (GET a /encuestas). Muestra la tabla
+     * con título, cantidad de preguntas y de respuestas, el switch de
+     * activa/inactiva y las acciones (resultados, QR, copiar enlace público).
      */
     public static function listar(): void
     {
@@ -62,9 +61,9 @@ final class EncuestaController
         $stmt = $pdo->query("
             SELECT e.id, e.titulo, e.descripcion, e.activa, e.created_at,
                    (SELECT COUNT(*) FROM pregunta p WHERE p.encuesta_id = e.id) AS cant_preguntas,
-                   (SELECT COUNT(DISTINCT rs.id)
-                      FROM respuesta_sesion rs
-                     WHERE rs.encuesta_id = e.id) AS cant_respuestas
+                   (SELECT COUNT(DISTINCT rt.sesion_token)
+                      FROM respuesta rt
+                     WHERE rt.encuesta_id = e.id) AS cant_respuestas
             FROM encuesta e
             ORDER BY e.created_at DESC
         ");
@@ -96,8 +95,8 @@ final class EncuestaController
                 . '<td>' . (int) $fila['cant_respuestas'] . '</td>'
                 . '<td>' . $switch . '</td>'
                 . '<td>' . htmlspecialchars($creada) . '</td>'
-                . '<td style="white-space:nowrap;">'
-                . '<button type="button" class="btn btn-sm" title="Ver QR p&uacute;blico"'
+                . '<td class="celda-nowrap">'
+                . '<button type="button" class="btn btn-sm" title="Ver QR público"'
                 . ' onclick="ElyraEnc.verQR(' . $id . ')"><i class="bi bi-qr-code"></i></button> '
                 . '<a href="' . base_path() . '/encuestas/resultados?id=' . $id . '"'
                 . ' class="btn btn-sm" title="Ver resultados"><i class="bi bi-bar-chart"></i></a> '
@@ -107,26 +106,26 @@ final class EncuestaController
                 . ' title="' . ($activa ? 'Desactivar' : 'Reactivar') . '"'
                 . ' onclick="ElyraEnc.cambiarEstado(' . $id . ', ' . ($activa ? '0' : '1') . ', this)">'
                 . '<i class="bi bi-' . ($activa ? 'toggle-off' : 'arrow-counterclockwise') . '"></i></button> '
-                . '<button type="button" class="btn btn-sm" title="Copiar enlace p&uacute;blico"'
+                . '<button type="button" class="btn btn-sm" title="Copiar enlace público"'
                 . ' onclick="ElyraEnc.copiarEnlace(' . $id . ', this)"><i class="bi bi-link-45deg"></i></button>'
                 . '</td></tr>';
         }
 
         $contenido = $filas === ''
-            ? '<div class="text-center text-muted p-4" style="font-size:15px;">'
-                . '<i class="bi bi-bar-chart d-block mb-2" style="font-size:32px;"></i>No hay encuestas.</div>'
+            ? '<div class="text-center text-muted p-4 mensaje-vacio">'
+                . '<i class="bi bi-bar-chart d-block mb-2 icono-vacio-lg"></i>No hay encuestas.</div>'
             : '<div class="table-responsive"><table class="tabla-panel"><thead><tr>'
-                . '<th>T&iacute;tulo</th><th>Preguntas</th><th>Respuestas</th><th>Estado</th>'
-                . '<th>Creada</th><th style="width:170px;">Acciones</th>'
+                . '<th>Título</th><th>Preguntas</th><th>Respuestas</th><th>Estado</th>'
+                . '<th>Creada</th><th class="th-acciones">Acciones</th>'
                 . '</tr></thead><tbody>' . $filas . '</tbody></table></div>';
 
         // Avisos de éxito tras crear o guardar cambios.
         $aviso = '';
         if (isset($_GET['creada'])) {
-            $aviso = '<div class="alert alert-success py-2" style="font-size:13px;">'
+            $aviso = '<div class="alert alert-success py-2 alert-chico">'
                 . '<i class="bi bi-check-lg me-1"></i>Encuesta creada correctamente.</div>';
         } elseif (isset($_GET['editada'])) {
-            $aviso = '<div class="alert alert-success py-2" style="font-size:13px;">'
+            $aviso = '<div class="alert alert-success py-2 alert-chico">'
                 . '<i class="bi bi-check-lg me-1"></i>Cambios guardados.</div>';
         }
 
@@ -136,12 +135,12 @@ final class EncuestaController
         ]);
     }
 
-    // ================================================================
+    // ------------------------------------------------------------------
     // CREACIÓN
-    // ================================================================
+    // ------------------------------------------------------------------
 
     /**
-     * Formulario de creación (GET a /encuestas/crear).
+     * Formulario vacío para crear una encuesta (GET a /encuestas/crear).
      */
     public static function formulario(): void
     {
@@ -153,8 +152,8 @@ final class EncuestaController
 
     /**
      * Guarda la encuesta con sus preguntas y opciones (POST a /encuestas/crear),
-     * con consultas PDO directas sobre el esquema normalizado
-     * (pregunta_opcion como tabla aparte).
+     * escribiendo con PDO directo sobre el esquema normalizado (las opciones de
+     * cada pregunta van en su propia tabla, pregunta_opcion).
      */
     public static function crear(): void
     {
@@ -167,10 +166,10 @@ final class EncuestaController
         /** @var array<int, array<string, mixed>> $preguntasInput */
         $preguntasInput = (array) ($_POST['preguntas'] ?? []);
 
-        // ==== Validaciones: título dentro de rango y preguntas bien formadas ====
+        // Validaciones: título dentro de rango y preguntas bien formadas.
         $errores = [];
         if (strlen($titulo) < 3 || strlen($titulo) > 200) {
-            $errores[] = 'El t&iacute;tulo debe tener entre 3 y 200 caracteres.';
+            $errores[] = 'El título debe tener entre 3 y 200 caracteres.';
         }
 
         $normalizado = self::normalizarPreguntas($preguntasInput);
@@ -178,19 +177,19 @@ final class EncuestaController
         $errores = array_merge($errores, $normalizado['errores']);
 
         if ($preguntasData === []) {
-            $errores[] = 'Agreg&aacute; al menos una pregunta v&aacute;lida.';
+            $errores[] = 'Agregá al menos una pregunta válida.';
         }
 
         if ($errores !== []) {
             render_dashboard('encuestas_crear', 'Nueva encuesta', 'encuestas', [
-                'error' => '<div class="alert alert-danger py-2" style="font-size:13px;"><ul class="mb-0 ps-3">'
+                'error' => '<div class="alert alert-danger py-2 alert-chico"><ul class="mb-0 ps-3">'
                     . implode('', array_map(fn($e) => '<li>' . $e . '</li>', $errores))
                     . '</ul></div>',
             ]);
             return;
         }
 
-        // ==== Inserción transaccional: encuesta → preguntas → opciones ====
+        // Inserción transaccional: encuesta → preguntas → opciones.
         try {
             $pdo->beginTransaction();
 
@@ -226,7 +225,7 @@ final class EncuestaController
                 $pdo->rollBack();
             }
             render_dashboard('encuestas_crear', 'Nueva encuesta', 'encuestas', [
-                'error' => '<div class="alert alert-danger py-2" style="font-size:13px;">Error al guardar la encuesta.</div>',
+                'error' => '<div class="alert alert-danger py-2 alert-chico">Error al guardar la encuesta.</div>',
             ]);
             return;
         }
@@ -235,14 +234,14 @@ final class EncuestaController
         exit;
     }
 
-    // ================================================================
+    // ------------------------------------------------------------------
     // EDICIÓN
-    // ================================================================
+    // ------------------------------------------------------------------
 
     /**
-     * Formulario de edición (GET a /encuestas/editar?id=N).
-     * Precarga título, descripción y preguntas con sus opciones; el editor
-     * dinámico (encuesta-formulario.js) arranca desde esos datos.
+     * Formulario de edición (GET a /encuestas/editar?id=N). Precarga título,
+     * descripción y preguntas con sus opciones; el editor dinámico
+     * (encuesta-formulario.js) arranca desde esos datos.
      */
     public static function formularioEditar(): void
     {
@@ -266,12 +265,12 @@ final class EncuestaController
     }
 
     /**
-     * Guarda los cambios de una encuesta (POST a /encuestas/editar).
-     * Sincroniza transaccionalmente:
+     * Guarda los cambios de una encuesta (POST a /encuestas/editar). En una
+     * única transacción sincroniza:
      *   - título y descripción;
-     *   - preguntas existentes (texto/tipo/orden y sus opciones);
-     *   - preguntas nuevas;
-     *   - preguntas eliminadas (el FK en cascada borra sus respuestas).
+     *   - las preguntas existentes (texto/tipo/orden y sus opciones);
+     *   - las preguntas nuevas;
+     *   - las eliminadas (el FK en cascada se lleva sus respuestas).
      */
     public static function editar(): void
     {
@@ -295,7 +294,7 @@ final class EncuestaController
 
         $errores = [];
         if (strlen($titulo) < 3 || strlen($titulo) > 200) {
-            $errores[] = 'El t&iacute;tulo debe tener entre 3 y 200 caracteres.';
+            $errores[] = 'El título debe tener entre 3 y 200 caracteres.';
         }
 
         $normalizado = self::normalizarPreguntas($preguntasInput);
@@ -303,12 +302,12 @@ final class EncuestaController
         $errores = array_merge($errores, $normalizado['errores']);
 
         if ($preguntasData === []) {
-            $errores[] = 'La encuesta debe tener al menos una pregunta v&aacute;lida.';
+            $errores[] = 'La encuesta debe tener al menos una pregunta válida.';
         }
 
         if ($errores !== []) {
             self::renderFormularioEdicion($pdo, $id, [
-                'error' => '<div class="alert alert-danger py-2" style="font-size:13px;"><ul class="mb-0 ps-3">'
+                'error' => '<div class="alert alert-danger py-2 alert-chico"><ul class="mb-0 ps-3">'
                     . implode('', array_map(fn($e) => '<li>' . $e . '</li>', $errores))
                     . '</ul></div>',
                 'valor_titulo' => htmlspecialchars($titulo),
@@ -317,7 +316,7 @@ final class EncuestaController
             return;
         }
 
-        // ==== Sincronización transaccional ====
+        // Sincronización transaccional.
         try {
             $pdo->beginTransaction();
 
@@ -379,7 +378,7 @@ final class EncuestaController
             }
 
             // Eliminar las preguntas que el formulario ya no incluye.
-            // El FK respuesta_pregunta.pregunta_id ON DELETE CASCADE borra
+            // El FK respuesta.pregunta_id ON DELETE CASCADE borra
             // también sus respuestas registradas.
             // OJO: array_diff preserva las claves del array izquierdo, así que
             // hay que iterar los VALORES (los ids), no array_keys().
@@ -395,7 +394,7 @@ final class EncuestaController
                 $pdo->rollBack();
             }
             self::renderFormularioEdicion($pdo, $id, [
-                'error' => '<div class="alert alert-danger py-2" style="font-size:13px;">'
+                'error' => '<div class="alert alert-danger py-2 alert-chico">'
                     . 'Error al guardar los cambios.</div>',
             ]);
             return;
@@ -409,8 +408,6 @@ final class EncuestaController
      * Renderiza la vista de edición recargando las preguntas actuales de la BD
      * (así un error de validación no deja el editor desincronizado) y aplicando
      * overrides opcionales para título/descripción/error.
-     *
-     * @param array<string, string> $overrides
      */
     private static function renderFormularioEdicion(PDO $pdo, int $id, array $overrides): void
     {
@@ -449,8 +446,8 @@ final class EncuestaController
      * Devuelve ['datos' => [...], 'errores' => [...]]. Cada dato conserva el
      * 'id' cuando viene de una pregunta existente (edición).
      *
-     * @param array<int, array<string, mixed>> $preguntasInput
-     * @return array{datos: list<array{id?: int, tipo: string, texto: string, opciones: list<string>|null}>, errores: list<string>}
+     * $preguntasInput: el array que arma el JS del editor (preguntas con
+     *                  texto, tipo y opciones).
      */
     private static function normalizarPreguntas(array $preguntasInput): array
     {
@@ -467,7 +464,7 @@ final class EncuestaController
                 continue;
             }
             if (!in_array($tipo, ['multiple_choice', 'escala', 'texto_libre'], true)) {
-                $errores[] = 'Tipo inv&aacute;lido en la pregunta ' . ($i + 1) . '.';
+                $errores[] = 'Tipo inválido en la pregunta ' . ($i + 1) . '.';
                 continue;
             }
 
@@ -491,9 +488,9 @@ final class EncuestaController
         return ['datos' => $datos, 'errores' => $errores];
     }
 
-    // ================================================================
+    // ------------------------------------------------------------------
     // PUBLICAR / DESPUBLICAR
-    // ================================================================
+    // ------------------------------------------------------------------
 
     /**
      * Activa o desactiva una encuesta (POST a /encuestas/toggle):
@@ -518,9 +515,9 @@ final class EncuestaController
         exit;
     }
 
-    // ================================================================
+    // ------------------------------------------------------------------
     // RESULTADOS
-    // ================================================================
+    // ------------------------------------------------------------------
 
     /**
      * Resultados de una encuesta (GET a /encuestas/resultados?id=N).
@@ -577,7 +574,7 @@ final class EncuestaController
         $preguntas = array_values($preguntas);
 
         // Total de personas que respondieron (sesiones únicas de esta encuesta).
-        $stmtT = $pdo->prepare('SELECT COUNT(*) FROM respuesta_sesion WHERE encuesta_id = ?');
+        $stmtT = $pdo->prepare('SELECT COUNT(DISTINCT sesion_token) FROM respuesta WHERE encuesta_id = ?');
         $stmtT->execute([$id]);
         $totalRespuestas = (int) $stmtT->fetchColumn();
 
@@ -600,9 +597,9 @@ final class EncuestaController
                 $stat['conteo'] = array_fill_keys(array_values($p['opciones']), 0);
                 $stmtC = $pdo->prepare(
                     'SELECT po.texto AS opcion, COUNT(*) AS cant
-                     FROM respuesta_pregunta rp
-                     JOIN pregunta_opcion po ON po.id = rp.valor_opcion
-                     WHERE rp.pregunta_id = ?
+                     FROM respuesta rt
+                     JOIN pregunta_opcion po ON po.id = rt.valor_opcion
+                     WHERE rt.pregunta_id = ?
                      GROUP BY po.id, po.texto'
                 );
                 $stmtC->execute([$p['id']]);
@@ -615,7 +612,7 @@ final class EncuestaController
                 $stat['conteo'] = ['1' => 0, '2' => 0, '3' => 0, '4' => 0, '5' => 0];
                 $stmtC = $pdo->prepare(
                     'SELECT valor_numerico AS val, COUNT(*) AS cant
-                     FROM respuesta_pregunta
+                     FROM respuesta
                      WHERE pregunta_id = ? AND valor_numerico IS NOT NULL
                      GROUP BY valor_numerico'
                 );
@@ -634,7 +631,7 @@ final class EncuestaController
             } else { // texto_libre
                 $stmtC = $pdo->prepare(
                     'SELECT valor_texto
-                     FROM respuesta_pregunta
+                     FROM respuesta
                      WHERE pregunta_id = ? AND valor_texto IS NOT NULL AND TRIM(valor_texto) <> ""
                      ORDER BY created_at'
                 );
@@ -660,7 +657,7 @@ final class EncuestaController
      * Genera el HTML de cada bloque de resultado (uno por pregunta).
      * Los gráficos de barras/torta los dibuja Chart.js sobre <canvas>.
      *
-     * @param array<int, array<string, mixed>> $stats
+     * $stats: el array de estadísticas ya agrupado por pregunta.
      */
     private static function bloquesResultados(array $stats): string
     {
@@ -676,12 +673,12 @@ final class EncuestaController
 
             if ($s['tipo'] === 'multiple_choice') {
                 $alto = max(200, count($s['opciones']) * 50);
-                $html .= '<div style="position:relative;height:' . $alto . 'px;">'
-                    . '<canvas id="chart-' . $i . '"></canvas></div>';
+                $html .= '<div class="contenedor-chart-alto">'
+                    . '<canvas id="chart-' . $i . '" height="' . $alto . '"></canvas></div>';
 
             } elseif ($s['tipo'] === 'escala') {
                 $html .= '<div class="row g-3"><div class="col-md-8">'
-                    . '<div style="position:relative;height:220px;"><canvas id="chart-' . $i . '"></canvas></div>'
+                    . '<div class="contenedor-chart"><canvas id="chart-' . $i . '"></canvas></div>'
                     . '</div><div class="col-md-4 d-flex flex-column justify-content-center">'
                     . '<div class="text-center p-3 bg-light rounded-3">'
                     . '<div class="display-5 fw-bold text-primary">' . $s['promedio'] . '</div>'
@@ -711,9 +708,9 @@ final class EncuestaController
         return $html;
     }
 
-    // ================================================================
+    // ------------------------------------------------------------------
     // ENCUESTA PÚBLICA (pacientes, sin login)
-    // ================================================================
+    // ------------------------------------------------------------------
 
     /**
      * Muestra la encuesta activa para responder (GET a /publico/encuesta?id=N).
@@ -730,9 +727,9 @@ final class EncuestaController
                 'titulo'      => 'Encuesta',
                 'estado'      => '404',
                 'contenido_publico' => '<div class="panel"><div class="cuerpo-panel text-center py-5">'
-                    . '<div style="font-size:40px;color:#98A6C4;"><i class="bi bi-question-circle"></i></div>'
+                    . '<div class="icono-pregunta"><i class="bi bi-question-circle"></i></div>'
                     . '<h4 class="fw-semibold">Encuesta no encontrada</h4>'
-                    . '<p class="text-muted">La encuesta no existe o no est&aacute; disponible.</p>'
+                    . '<p class="text-muted">La encuesta no existe o no está disponible.</p>'
                     . '</div></div>',
             ]);
             return;
@@ -747,8 +744,8 @@ final class EncuestaController
 
     /**
      * Guarda las respuestas enviadas (POST a /publico/encuesta?id=N).
-     * Crea una sesión de respuesta (respuesta_sesion) y guarda cada valor en
-     * respuesta_pregunta.
+     * Inserta una fila en respuesta por cada pregunta respondida; todas
+     * comparten el mismo sesion_token (la "sesión" anónima del envío).
      */
     public static function publicaResponder(): void
     {
@@ -768,23 +765,18 @@ final class EncuestaController
         // en orden.
         $respuestasPosicionales = array_values($respuestasInput);
 
-        $erroresValidacion = [];
+        $faltanRequeridas = false;
 
         try {
             $pdo->beginTransaction();
 
             // Sesión anónima: token aleatorio único por envío.
             $tokenSesion = bin2hex(random_bytes(16));
-            $stmtSesion = $pdo->prepare(
-                'INSERT INTO respuesta_sesion (encuesta_id, sesion_token) VALUES (?, ?)'
-            );
-            $stmtSesion->execute([$id, $tokenSesion]);
-            $sesionId = (int) $pdo->lastInsertId();
 
             $stmtResp = $pdo->prepare(
-                'INSERT INTO respuesta_pregunta
-                 (respuesta_id, pregunta_id, valor_opcion, valor_texto, valor_numerico)
-                 VALUES (?, ?, ?, ?, ?)'
+                'INSERT INTO respuesta
+                 (encuesta_id, sesion_token, pregunta_id, valor_opcion, valor_texto, valor_numerico)
+                 VALUES (?, ?, ?, ?, ?, ?)'
             );
 
             foreach ($resultado['preguntas'] as $i => $p) {
@@ -792,7 +784,7 @@ final class EncuestaController
 
                 if ($valorRaw === '') {
                     if ($p['requerida']) {
-                        $erroresValidacion[] = $p['texto'];
+                        $faltanRequeridas = true;
                     }
                     continue;
                 }
@@ -807,23 +799,23 @@ final class EncuestaController
                         ? (int) $valorRaw
                         : null;
                     if ($valorOpcion === null) {
-                        throw new RuntimeException('Opción inválida.');
+                        throw new RuntimeException('Seleccionó una opción válida.');
                     }
                 } elseif ($p['tipo'] === 'escala') {
                     $valorNumerico = (int) $valorRaw;
                     if ($valorNumerico < 1 || $valorNumerico > 5) {
-                        throw new RuntimeException('Valor de escala fuera de rango.');
+                        throw new RuntimeException('La valoración debe estar entre 1 y 5.');
                     }
                 } else { // texto_libre
                     $valorTexto = mb_substr($valorRaw, 0, 500);
                 }
 
-                $stmtResp->execute([$sesionId, $p['id'], $valorOpcion, $valorTexto, $valorNumerico]);
+                $stmtResp->execute([$id, $tokenSesion, $p['id'], $valorOpcion, $valorTexto, $valorNumerico]);
             }
 
             // Faltan preguntas requeridas → deshace todo y vuelve al formulario.
-            if ($erroresValidacion !== []) {
-                throw new InvalidArgumentException('Faltan preguntas requeridas.');
+            if ($faltanRequeridas) {
+                throw new InvalidArgumentException('Faltan responder algunas preguntas obligatorias.');
             }
 
             $pdo->commit();
@@ -844,7 +836,7 @@ final class EncuestaController
             render_vista(__DIR__ . '/../../views/publico/encuesta.html', [
                 'titulo'      => $resultado['titulo'],
                 'estado'      => 'formulario',
-                'contenido_publico' => self::htmlFormularioPublico($resultado, 'Ocurri&oacute; un error al guardar tus respuestas. Prob&aacute; de nuevo.'),
+                'contenido_publico' => self::htmlFormularioPublico($resultado, 'Ocurrió un error al guardar tus respuestas. Probá de nuevo.'),
             ]);
             return;
         }
@@ -854,23 +846,22 @@ final class EncuestaController
             'titulo'      => $resultado['titulo'],
             'estado'      => 'gracias',
             'contenido_publico' => '<div class="panel text-center py-5 px-4">'
-                . '<div style="font-size:36px;color:#198754;margin-bottom:10px;"><i class="bi bi-check-circle-fill"></i></div>'
-                . '<h4 class="fw-semibold">&iexcl;Gracias por tu opini&oacute;n!</h4>'
+                . '<div class="icono-exito"><i class="bi bi-check-circle-fill"></i></div>'
+                . '<h4 class="fw-semibold">¡Gracias por tu opinión!</h4>'
                 . '<p class="text-muted mb-0">Tu respuesta ha sido registrada correctamente.</p>'
                 . '</div>',
         ]);
     }
 
-    // ================================================================
+    // ------------------------------------------------------------------
     // HELPERS PRIVADOS
-    // ================================================================
+    // ------------------------------------------------------------------
 
     /**
      * Carga una encuesta ACTIVA con sus preguntas y opciones, lista para
      * mostrar el formulario público. Devuelve null si no existe o no está
-     * activa.
-     *
-     * @return array{titulo: string, descripcion: string, preguntas: list<array{id: int, tipo: string, texto: string, requerida: bool, opciones: array<int, string>}>}|null
+     * activa. El array resultante trae: titulo, descripcion y preguntas
+     * (cada una con id, tipo, texto, requerida y opciones).
      */
     private static function cargarEncuestaPublica(int $id): ?array
     {
@@ -919,19 +910,21 @@ final class EncuestaController
     /**
      * Arma el HTML del formulario público de respuestas.
      *
-     * @param array{titulo: string, descripcion: string, preguntas: list<array{id: int, tipo: string, texto: string, requerida: bool, opciones: array<int, string>}>} $resultado
+     * $resultado: lo que devuelve cargarEncuestaPublica()
+     *             (titulo, descripcion y preguntas con opciones).
+     * $error:     mensaje opcional que se muestra arriba del formulario.
      */
     private static function htmlFormularioPublico(array $resultado, string $error = ''): string
     {
         $html = '';
 
         if ($error !== '') {
-            $html .= '<div class="alert alert-danger py-2" style="font-size:13px;">'
+            $html .= '<div class="alert alert-danger py-2 alert-chico">'
                 . '<i class="bi bi-exclamation-triangle-fill me-1"></i>' . $error . '</div>';
         }
 
         $html .= '<div class="text-center mb-4">'
-            . '<i class="bi bi-bar-chart" style="font-size:30px;color:#3B5998;"></i>'
+            . '<i class="bi bi-bar-chart icono-grafico"></i>'
             . '<h4 class="fw-semibold mt-2 mb-1">' . htmlspecialchars($resultado['titulo']) . '</h4>';
         if ($resultado['descripcion'] !== '') {
             $html .= '<p class="text-muted mb-0">' . htmlspecialchars($resultado['descripcion']) . '</p>';
@@ -971,8 +964,8 @@ final class EncuestaController
 
             } else { // texto_libre
                 $html .= '<textarea name="respuestas[' . $i . ']" rows="3" maxlength="500"'
-                    . ' placeholder="Escrib&iacute; tu respuesta..."' . $req
-                    . ' class="entrada-formulario" style="width:100%;"></textarea>';
+                    . ' placeholder="Escribí tu respuesta..."' . $req
+                    . ' class="entrada-formulario textarea-ancho"></textarea>';
             }
 
             $html .= '</div>';
