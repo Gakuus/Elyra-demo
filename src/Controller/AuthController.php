@@ -15,9 +15,8 @@ final class AuthController
      */
     public static function home(): void
     {
-        // require incluye el archivo de la vista, que imprime su HTML.
-        // __DIR__ es la carpeta de este controlador; ../.. sube hasta la raíz.
-        require __DIR__ . '/../../views/publico/home.html';
+        // Renderiza la vista pública (reemplaza {{base_path}} para las URLs).
+        render_vista(__DIR__ . '/../../views/publico/home.html', []);
     }
 
     /**
@@ -37,7 +36,7 @@ final class AuthController
             exit;
         }
         // Si falló, muestra el formulario de login otra vez.
-        require __DIR__ . '/../../views/auth/login.html';
+        render_vista(__DIR__ . '/../../views/auth/login.html', []);
     }
 
     /**
@@ -45,7 +44,7 @@ final class AuthController
      */
     public static function login(): void
     {
-        require __DIR__ . '/../../views/auth/login.html';
+        render_vista(__DIR__ . '/../../views/auth/login.html', []);
     }
 
     /**
@@ -63,7 +62,7 @@ final class AuthController
             exit;
         }
         // Si falló, vuelve a mostrar el formulario de registro.
-        require __DIR__ . '/../../views/auth/registro.html';
+        render_vista(__DIR__ . '/../../views/auth/registro.html', []);
     }
 
     /**
@@ -71,7 +70,7 @@ final class AuthController
      */
     public static function registro(): void
     {
-        require __DIR__ . '/../../views/auth/registro.html';
+        render_vista(__DIR__ . '/../../views/auth/registro.html', []);
     }
 
     /**
