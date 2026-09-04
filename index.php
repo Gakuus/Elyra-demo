@@ -42,10 +42,17 @@ $basePath = rtrim(is_string($appUrlPath) ? $appUrlPath : '', '/');
 $staticRel = $basePath !== '' && str_starts_with($uri, $basePath) ? substr($uri, strlen($basePath)) : $uri;
 $staticRel = $staticRel === '' ? '/' : $staticRel;
 
-// Si la ruta NO es la raíz y NO contiene ".php", puede ser un archivo estático.
+// Los archivos estáticos viven dentro de public/. Las URL se escriben con el
+// prefijo public/ (ej: /public/css/base.css), tanto en Linux como en Windows.
+// Normaliza la ruta por si viene con o sin ese segmento y la resuelve dentro
+// de la carpeta public/ del proyecto (portable a cualquier docroot).
 if ($staticRel !== '/' && !str_contains($staticRel, '.php')) {
-    // Busca el archivo dentro de public/.
-    $file = __DIR__ . '/public' . $staticRel;
+    // Si la ruta ya empieza con /public, lo quitamos para buscar dentro de
+    // la carpeta public/ (el prefijo es solo de URL, no del filesystem).
+    $rel = str_starts_with($staticRel, '/public')
+        ? substr($staticRel, strlen('/public'))
+        : $staticRel;
+    $file = __DIR__ . '/public' . $rel;
     if (is_file($file)) {
         // Detecta el tipo MIME según la extensión del archivo.
         $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
