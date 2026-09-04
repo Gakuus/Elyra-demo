@@ -57,6 +57,11 @@ body {
     line-height: 1;
 }
 
+/* Botón "Acceso interno" en la barra de navegación */
+.boton-acceso-nav {
+    margin: 6px 24px;
+}
+
 /* ---------- Portada---------- */
 .seccion-portada {
     background: url('/img/hospital-de-clinicas.jpg') center/cover no-repeat;
@@ -65,6 +70,17 @@ body {
     color: #fff;
     position: relative;
     overflow: hidden;
+}
+
+/* Botón grande de acceso en la portada */
+.boton-portada {
+    margin-top: 20px;
+}
+
+.boton-portada .btn {
+    font-size: 20px;
+    padding: 16px 36px;
+    border-radius: 6px;
 }
 
 .seccion-portada::before {
@@ -144,15 +160,64 @@ body {
     margin-bottom: 16px;
 }
 
-.tarjeta-acerca {
-    border: 1px solid #e5e7eb;
-    background: #fff;
-    padding: 26px;
-    border-radius: 8px;
-    height: 100%;
+.seccion-contacto { background: #f8f9fa; border-top: 1px solid #e5e7eb; }
+
+/* Sección de servicios con fondo gris */
+.seccion-servicios {
+    background: #f2f2f2;
+    border-top: 1px solid #ddd;
 }
 
-.seccion-contacto { background: #f8f9fa; border-top: 1px solid #e5e7eb; }
+/* Título de cada tarjeta de servicio */
+.titulo-tarjeta {
+    font-size: 12px;
+    margin: 0 0 4px;
+}
+
+/* Título de sección con margen inferior propio en contacto */
+.seccion-titulo-margen {
+    margin-bottom: 14px;
+}
+
+/* Lista de contacto */
+.lista-contacto {
+    font-size: 18px;
+    line-height: 2;
+}
+
+.lista-contacto i {
+    color: #3B5998;
+    margin-right: 8px;
+}
+
+/* ---------- Página pública de un documento ---------- */
+.doc-publico {
+    max-width: 720px;
+    margin: 50px auto;
+    padding: 0 16px;
+}
+
+.tarjeta-doc {
+    background: #FFF;
+    border: 1px solid #DDD;
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+
+.tarjeta-doc h1 { font-size: 26px; color: #2A4780; }
+
+.icono-doc {
+    font-size: 52px;
+    color: #3B5998;
+    margin-bottom: 12px;
+}
+
+.insignia-doc {
+    background: #4F74B8;
+    color: #FFF;
+}
 
 .pie-publico {
     background: linear-gradient(135deg, #1A3560, #2A4780);
@@ -225,7 +290,6 @@ body {
     .subtitulo-seccion { font-size: 16px; margin-bottom: 28px; }
     .tarjeta-servicio { padding: 26px 16px; }
     .icono-servicio { font-size: 38px; }
-    .tarjeta-acerca { padding: 20px; }
 }
 
 @media (max-width: 575px) {

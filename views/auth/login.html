@@ -13,7 +13,7 @@
 </head>
 <body>
 
-<div class="pagina-ingreso" style="background-image: linear-gradient(rgb(0 0 0 / 45%), rgb(0 0 0 / 45%)), url('/img/hospital-de-clinicas.jpg'); background-position: center; background-size: cover; background-repeat: no-repeat;">
+<div class="pagina-ingreso">
     <div class="caja-ingreso">
         <div class="cabecera-caja-ingreso">
             Hospital de Clínicas
@@ -35,7 +35,7 @@
                     <label for="password" class="etiqueta-formulario">Contraseña</label>
                     <div class="flexible centrar-vertical espacio-1">
                         <input type="password" id="password" name="password" class="entrada-formulario ancho-completo" required autocomplete="current-password" placeholder="Ingrese su contraseña">
-                        <button type="button" class="btn btn-sm" tabindex="-1" onclick="togglePassword()" style="flex-shrink:0;">
+                        <button type="button" class="btn btn-sm btn-ojo" tabindex="-1" onclick="togglePassword()">
                             <i class="bi bi-eye-slash" id="pwIcon"></i>
                         </button>
                     </div>
@@ -59,6 +59,5 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
 <script src="js/elyra.js?v=2" defer></script>
-<script src="js/pages/login-alternar.js?v=2" defer></script>
 </body>
 </html>

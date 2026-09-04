@@ -6,16 +6,19 @@ declare(strict_types=1);
 require_once __DIR__ . '/../config/database.php';
 
 /**
- * Clase Auth: maneja toda la autenticación del sistema.
- * Todas las funciones son estáticas, por lo que se llaman sin crear una
- * instancia: Auth::login(...), Auth::estaAutenticado(), etc.
+ * Clase Auth: autenticación del sistema del Hospital de Clínicas.
+ * Hay dos perfiles que entran por acá: el funcionario (admin o personal
+ * del hospital) y el paciente. Ambos comparten la tabla "usuario" y cada
+ * uno tiene sus credenciales en su propia tabla (funcionario / paciente).
+ * Los métodos son estáticos, así que se llaman sin instanciar:
+ * Auth::login(...), Auth::registrar(...), etc.
  */
 final class Auth
 {
     /**
-     * Inicia la sesión de PHP si todavía no está iniciada.
-     * Se llama al comienzo de cada petición (desde index.php) para que
-     * $_SESSION esté disponible en todos los controladores.
+     * Garantiza que $_SESSION exista al arrancar cada petición.
+     * Lo llamamos una sola vez desde index.php, antes de que cualquier
+     * controlador se fije si hay un funcionario o paciente logueado.
      */
     public static function iniciarSesion(): void
     {
@@ -26,9 +29,9 @@ final class Auth
     }
 
     /**
-     * Indica si el usuario actual está autenticado (es decir, si ya inició sesión).
-     * Al hacer login se guarda 'usuario_id' en $_SESSION, así que basta con
-     * comprobar que esa variable exista y no esté vacía.
+     * True si quien está navegando ya inició sesión (funcionario o paciente).
+     * En el login dejamos 'usuario_id' en $_SESSION, así que con comprobar
+     * que esa variable exista y no esté vacía alcanza.
      */
     public static function estaAutenticado(): bool
     {
@@ -36,12 +39,12 @@ final class Auth
     }
 
     /**
-     * Autentica al usuario con su nombre de usuario y contraseña.
+     * Acceso interno del hospital: entra un funcionario (admin, conductor,
+     * etc.) o un paciente con su usuario y contraseña.
      *
-     * @param string $username Nombre de usuario ingresado.
-     * @param string $password Contraseña ingresada (sin cifrar).
-     * @return array ['success' => true] si entró bien, o
-     *               ['success' => false, 'error' => 'mensaje'] si falló.
+     * La contraseña llega en texto plano y se compara contra el hash que
+     * guardamos con password_hash() en el registro. Devuelve
+     * ['success' => true] si entró, o ['success' => false, 'error' => ...].
      */
     public static function login(string $username, string $password): array
     {
@@ -50,18 +53,18 @@ final class Auth
             return ['success' => false, 'error' => 'Ingrese usuario y contraseña'];
         }
 
-        // Conecta a la base de datos y busca el usuario por su nombre de usuario.
+        // Buscamos al que pide entrar; la consulta une funcionario y paciente.
         $pdo = db_connect();
         $usuario = self::buscarUsuario($pdo, $username);
 
-        // Si el usuario no existe O la contraseña no coincide, falla.
-        // password_verify() compara la contraseña escrita con el hash guardado.
+        // Si no existe, está desactivado, o la contraseña no coincide, se
+        // rechaza igual para no revelar cuál de los casos fue.
         if ($usuario === null || !password_verify($password, $usuario['password_hash'])) {
             return ['success' => false, 'error' => 'Credenciales inválidas'];
         }
 
-        // Login correcto: guardamos los datos del usuario en la sesión.
-        // Estos datos se usarán luego en las vistas (p. ej. mostrar su nombre).
+        // Login correcto: guardamos en la sesión lo que las vistas van a
+        // necesitar (nombre para saludar, rol para el menú, etc.).
         $_SESSION['usuario_id'] = (int) $usuario['id'];
         $_SESSION['usuario_nombre'] = trim($usuario['nombre'] . ' ' . $usuario['apellido']);
         $_SESSION['usuario_rol'] = $usuario['rol'];
@@ -71,11 +74,12 @@ final class Auth
     }
 
     /**
-     * Registra un nuevo paciente en el sistema.
+     * Alta de un paciente. Es el registro desde la portada pública del
+     * hospital; el paciente queda con su usuario y, al iniciar sesión, podrá
+     * descargar sus documentos clínicos y ver el QR de su encuesta.
      *
-     * @param array $datos Datos del formulario de registro ($_POST).
-     * @return array ['success' => true] si se creó, o
-     *               ['success' => false, 'error' => 'mensaje'] si hubo error.
+     * $datos es el array del formulario ($_POST). Devuelve
+     * ['success' => true] si se creó, o ['success' => false, 'error' => ...].
      */
     public static function registrar(array $datos): array
     {
@@ -89,9 +93,12 @@ final class Auth
         $telefono = trim((string) ($datos['telefono'] ?? ''));
         $password = (string) ($datos['password'] ?? '');
         $password2 = (string) ($datos['password2'] ?? '');
+        // Código de funcionario (opcional): si viene un código válido, la cuenta
+        // se crea como funcionario con el rol que trae el código en vez de paciente.
+        $codigoFuncionario = strtoupper(trim((string) ($datos['codigo_funcionario'] ?? '')));
 
-        // Validaciones del lado del servidor. Cada una devuelve un mensaje de
-        // error si el dato no cumple el formato esperado.
+        // Cada campo se valida antes de tocar la base. Un dato mal formado
+        // corta acá con su mensaje, y el formulario lo vuelve a mostrar.
         if (mb_strlen($nombre) < 2) return ['success' => false, 'error' => 'Ingrese un nombre válido'];
         if (mb_strlen($apellido) < 2) return ['success' => false, 'error' => 'Ingrese un apellido válido'];
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return ['success' => false, 'error' => 'Ingrese un email válido'];
@@ -103,64 +110,122 @@ final class Auth
 
         $pdo = db_connect();
 
-        // Evita nombres de usuario duplicados (misma búsqueda que en el login).
+        // El usuario y el email son únicos en todo el sistema (un paciente no
+        // puede pisar el nombre de usuario de un funcionario ni viceversa).
         if (self::buscarUsuario($pdo, $username) !== null) {
             return ['success' => false, 'error' => 'El nombre de usuario ya está registrado'];
         }
 
-        // Evita correos electrónicos duplicados en la tabla usuario.
         $emailExiste = $pdo->prepare("SELECT id FROM usuario WHERE email = ?");
         $emailExiste->execute([$email]);
         if ($emailExiste->fetch()) {
             return ['success' => false, 'error' => 'El email ya está registrado'];
         }
 
-        // Cifra la contraseña. NUNCA se guarda la contraseña en texto plano.
+        // La contraseña se guarda SIEMPRE como hash, nunca en texto plano.
         // 'cost' => 12 es el factor de trabajo de bcrypt (más alto = más seguro).
         $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
-        // Genera un token aleatorio de acceso para el paciente (útil para el QR).
+        // Token anónimo para el paciente: es lo que después se imprime como
+        // QR junto a su documento, y con lo que se abre su encuesta de
+        // satisfacción sin tener que pedirle usuario.
         $token = bin2hex(random_bytes(16));
 
+        // Cuando llega un código de funcionario, la cuenta alta con ese rol;
+        // si no, se registra el paciente tradicional.
+        $esFuncionario = $codigoFuncionario !== '';
+
         try {
-            // Transacción: si falla un INSERT, no se queda a medias la operación.
+            // Si falla un paso, deshacemos todo para no dejar una cuenta a
+            // medias (usuario sin credenciales) ni un código marcado por error.
             $pdo->beginTransaction();
 
-            // 1) Crea la fila base en "usuario" con el tipo 'paciente'.
-            $stmt = $pdo->prepare("
-                INSERT INTO usuario (tipo, nombre, apellido, email, documento_identidad)
-                VALUES ('paciente', ?, ?, ?, ?)
-            ");
-            $stmt->execute([$nombre, $apellido, $email, $documento]);
-            // lastInsertId() nos da el id recién creado.
-            $id = (int) $pdo->lastInsertId();
+            if ($esFuncionario) {
+                // FOR UPDATE bloquea la fila del código mientras registramos:
+                // dos personas que manden el formulario a la vez no pueden
+                // usar el mismo código.
+                $stmtCod = $pdo->prepare(
+                    "SELECT id, rol, activo, usado
+                     FROM codigo_funcionario
+                     WHERE codigo = :codigo
+                     FOR UPDATE"
+                );
+                $stmtCod->execute(['codigo' => $codigoFuncionario]);
+                $codigo = $stmtCod->fetch();
 
-            // 2) Crea la fila de credenciales en "paciente" con el MISMO id
-            //    (relación 1 a 1 entre usuario y paciente).
-            $stmt = $pdo->prepare("
-                INSERT INTO paciente (id, token_acceso, username, password_hash, telefono, activo)
-                VALUES (?, ?, ?, ?, ?, 1)
-            ");
-            $stmt->execute([$id, $token, $username, $hash, $telefono]);
+                if (!$codigo || !$codigo['activo'] || $codigo['usado']) {
+                    $pdo->rollBack();
+                    return ['success' => false, 'error' => 'El código de funcionario no es válido o ya fue utilizado'];
+                }
 
-            // Confirma ambos INSERT.
+                // 1) La fila base en "usuario", ahora con tipo 'funcionario'.
+                $stmt = $pdo->prepare("
+                    INSERT INTO usuario (tipo, nombre, apellido, email, documento_identidad)
+                    VALUES ('funcionario', ?, ?, ?, ?)
+                ");
+                $stmt->execute([$nombre, $apellido, $email, $documento]);
+                $id = (int) $pdo->lastInsertId();
+
+                // 2) Las credenciales en "funcionario", con el rol del código.
+                $stmt = $pdo->prepare("
+                    INSERT INTO funcionario (id, username, password_hash, telefono, activo, rol)
+                    VALUES (?, ?, ?, ?, 1, ?)
+                ");
+                $stmt->execute([$id, $username, $hash, $telefono, $codigo['rol']]);
+
+                // 3) Consumir el código: queda marcado como usado y nadie más
+                //    puede registrarse con él.
+                $stmt = $pdo->prepare(
+                    "UPDATE codigo_funcionario
+                     SET usado = 1, usado_en = NOW(), usado_por = :id
+                     WHERE id = :cid"
+                );
+                $stmt->execute(['id' => $id, 'cid' => $codigo['id']]);
+
+                $rol = $codigo['rol'];
+            } else {
+                // 1) La fila base en "usuario", con su tipo 'paciente'.
+                $stmt = $pdo->prepare("
+                    INSERT INTO usuario (tipo, nombre, apellido, email, documento_identidad)
+                    VALUES ('paciente', ?, ?, ?, ?)
+                ");
+                $stmt->execute([$nombre, $apellido, $email, $documento]);
+                // lastInsertId() nos da el id recién creado.
+                $id = (int) $pdo->lastInsertId();
+
+                // 2) Las credenciales en "paciente", con el MISMO id
+                //    (relación 1 a 1 entre usuario y paciente).
+                $stmt = $pdo->prepare("
+                    INSERT INTO paciente (id, token_acceso, username, password_hash, telefono, activo)
+                    VALUES (?, ?, ?, ?, ?, 1)
+                ");
+                $stmt->execute([$id, $token, $username, $hash, $telefono]);
+
+                $rol = 'paciente';
+            }
+
+            // Confirmamos ambos INSERT.
             $pdo->commit();
 
-            // Registro exitoso: iniciamos sesión automáticamente con el paciente.
+            // Registro exitoso: lo dejamos adentro directamente para que no
+            // tenga que volver a escribir usuario y contraseña recién creados.
             $_SESSION['usuario_id'] = $id;
             $_SESSION['usuario_nombre'] = $nombre . ' ' . $apellido;
-            $_SESSION['usuario_rol'] = 'paciente';
+            $_SESSION['usuario_rol'] = $rol;
             $_SESSION['usuario_username'] = $username;
 
             return ['success' => true];
         } catch (PDOException $e) {
-            // Si algo falló (p. ej. un duplicado), deshace todo y avisa.
-            $pdo->rollBack();
+            // Cualquier error (p. ej. un duplicado que se escapó) revierte y avisa.
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             return ['success' => false, 'error' => 'Error al registrar. Verificá que los datos no estén duplicados.'];
         }
     }
 
     /**
-     * Cierra la sesión del usuario actual de forma segura.
+     * Sale del sistema. Limpia la sesión y la cookie del navegador para que
+     * quien usó la pc del consultorio no quede con una sesión abierta.
      */
     public static function logout(): void
     {
@@ -178,12 +243,13 @@ final class Auth
     }
 
     /**
-     * Busca al usuario por su nombre de usuario en funcionario o paciente
-     * (usuario.tipo indica dónde viven sus credenciales).
+     * Localiza a una persona por su nombre de usuario. Como funcionario y
+     * paciente viven en tablas distintas, une las tres y deja que el tipo
+     * de "usuario" diga cuál corresponde.
      *
-     * @param PDO    $pdo      Conexión activa a la base de datos.
-     * @param string $username Nombre de usuario a buscar.
-     * @return array|null Los datos del usuario, o null si no existe / está inactivo.
+     * $pdo: conexión activa a la base de datos.
+     * $username: nombre de usuario a buscar.
+     * Devuelve los datos de la persona, o null si no existe o está inactivo.
      */
     private static function buscarUsuario(PDO $pdo, string $username): ?array
     {
@@ -207,11 +273,11 @@ final class Auth
         $stmt->execute(['u1' => $username, 'u2' => $username]);
         $row = $stmt->fetch();
 
-        // Si no hay fila, o el usuario está desactivado, no se considera válido.
+        // Sin fila o usuario dado de baja (activo=0) no cuenta como válido.
         if ($row === false || !$row['activo']) return null;
 
-        // Normaliza el rol: para funcionarios se usa su rol real (admin, etc.);
-        // para pacientes, el rol es siempre 'paciente'.
+        // El rol depende del tipo: los funcionarios traen el suyo (admin,
+        // conductor...); un paciente siempre es 'paciente'.
         $row['rol'] = $row['tipo'] === 'funcionario' ? ($row['rol'] ?? 'funcionario') : 'paciente';
         return $row;
     }

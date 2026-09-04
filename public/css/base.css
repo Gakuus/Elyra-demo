@@ -3,11 +3,7 @@
     --azul-oscuro: #2A4780;
     --azul: #3B5998;
     --blanco: #FFF;
-    --gris-claro: #DDD;
     --gris-medio: #BBB;
-    --gris: #999;
-    --gris-oscuro: #555;
-    --gris-mas-oscuro: #333;
 
     --peligro: #D9534F;
 
@@ -167,11 +163,17 @@ img {
 .margen-superior-2 { margin-top: 6px; }
 .margen-superior-3 { margin-top: 10px; }
 .margen-inferior-0 { margin-bottom: 0; }
-.margen-inferior-2 { margin-bottom: 6px; }
 .margen-inferior-3 { margin-bottom: 10px; }
 
 /* ---------- Otros ---------- */
 .ancho-completo { width: 100%; }
+
+/* Página de error 404 */
+.pagina-404 {
+    font-family: var(--fuente-familia);
+    padding: 40px;
+    text-align: center;
+}
 
 .lista-sin-estilo {
     list-style: none;
