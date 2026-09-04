@@ -127,9 +127,10 @@ function render_dashboard(string $vista, string $titulo, string $seccion, array 
     // La sección pasada elige el array correcto: el enlace correspondiente
     // lleva la clase ' active' (que lo resalta) y los demás van vacíos.
     $activo = [
-        'inicio'     => ['activo_inicio' => ' active', 'activo_encuestas' => '', 'activo_documentos' => ''],
-        'encuestas'  => ['activo_inicio' => '', 'activo_encuestas' => ' active', 'activo_documentos' => ''],
-        'documentos' => ['activo_inicio' => '', 'activo_encuestas' => '', 'activo_documentos' => ' active'],
+        'inicio'     => ['activo_inicio' => ' active', 'activo_encuestas' => '', 'activo_documentos' => '', 'activo_vehiculos' => ''],
+        'encuestas'  => ['activo_inicio' => '', 'activo_encuestas' => ' active', 'activo_documentos' => '', 'activo_vehiculos' => ''],
+        'documentos' => ['activo_inicio' => '', 'activo_encuestas' => '', 'activo_documentos' => ' active', 'activo_vehiculos' => ''],
+        'vehiculos'  => ['activo_inicio' => '', 'activo_encuestas' => '', 'activo_documentos' => '', 'activo_vehiculos' => ' active'],
     ][$seccion] ?? [];
 
     // Renderiza el layout con: título de pestaña, usuario, contenido ya
