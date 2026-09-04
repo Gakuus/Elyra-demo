@@ -3,21 +3,20 @@
 declare(strict_types=1);
 
 /**
- * DocumentoController: controlador de documentos generales.
- * Gestiona la subida, listado, visualización y descarga de documentos (PDF)
- * con código QR. También expone las vistas públicas (las que abren los
- * pacientes escaneando el QR, sin necesidad de iniciar sesión).
+ * DocumentoController: documentos clínicos del Hospital de Clínicas.
+ * Maneja la subida, listado, detalle y descarga de los PDF (protocolos,
+ * informes) que quedan archivados, y las vistas públicas que el paciente
+ * abre desde el QR impreso en su papel — esas no piden sesión.
  */
 final class DocumentoController
 {
     /**
-     * Enrutador interno del módulo de documentos.
-     * index.php delega acá cualquier ruta que empiece con /documentos,
-     * /publico/doc o /publico/archivo, y este método decide qué acción
-     * ejecutar según la ruta exacta y el método HTTP.
+     * Enrutador del módulo de documentos. index.php manda acá cualquier ruta
+     * que arranque con /documentos, /publico/doc o /publico/archivo, y este
+     * método decide con qué acción responder según la ruta y el método HTTP.
      *
-     * @param string $path   Ruta (ej: '/documentos/subir').
-     * @param string $method Método HTTP en mayúsculas ('GET' o 'POST').
+     * $path:   ruta (ej: '/documentos/subir').
+     * $method: método HTTP en mayúsculas ('GET' o 'POST').
      */
     public static function dispatch(string $path, string $method): void
     {
@@ -44,9 +43,9 @@ final class DocumentoController
     }
 
     /**
-     * Listado de documentos generales (GET a /documentos).
-     * Muestra la tabla con todos los documentos, con filtros opcionales
-     * por tipo de documento y por búsqueda de texto en el título.
+     * Archivado de documentos generales (GET a /documentos).
+     * Muestra la tabla con todos los documentos que no pertenecen a un
+     * paciente concreto, y permite filtrar por tipo y por texto en el título.
      */
     public static function listar(): void
     {
@@ -94,11 +93,11 @@ final class DocumentoController
 
         // Si no hay resultados, mensaje vacío; si hay, arma la tabla completa.
         $contenido = $filas === ''
-            ? '<div class="text-center text-muted p-3" style="font-size:15px;">'
-                . '<i class="bi bi-inbox d-block mb-2" style="font-size:28px;"></i>No hay documentos generales.</div>'
+            ? '<div class="text-center text-muted p-3 mensaje-vacio">'
+                . '<i class="bi bi-inbox d-block mb-2 icono-vacio"></i>No hay documentos generales.</div>'
             : '<div class="table-responsive"><table class="tabla-panel"><thead><tr>'
-                . '<th style="width:50px;">QR</th><th>T&iacute;tulo</th><th>Tipo</th><th>Estado</th><th>Subido</th>'
-                . '<th style="width:130px;">Acciones</th></tr></thead><tbody>' . $filas . '</tbody></table></div>';
+                . '<th class="th-qr">QR</th><th>Título</th><th>Tipo</th><th>Estado</th><th>Subido</th>'
+                . '<th class="th-acciones-sm">Acciones</th></tr></thead><tbody>' . $filas . '</tbody></table></div>';
 
         // Renderiza la vista con: opciones del selector de tipo, texto de
         // búsqueda conservado y el HTML de la tabla ya armado.
@@ -110,10 +109,9 @@ final class DocumentoController
     }
 
     /**
-     * Procesa la subida de un documento (POST a /documentos/subir).
-     * Valida los datos, guarda el PDF en disco, registra el documento en la
-     * base de datos y redirige al listado. Si hay errores, vuelve al
-     * formulario con los valores cargados y el mensaje de error.
+     * Registra un documento nuevo (POST a /documentos/subir). Valida los
+     * datos, guarda el PDF en el disco y anota el documento en MySQL; si algo
+     * falla, devuelve al formulario con lo cargado para no perder el trabajo.
      */
     public static function subir(): void
     {
@@ -133,22 +131,22 @@ final class DocumentoController
 
         // Validaciones en cadena (if/elseif): se detiene en el primer error.
         if (strlen($titulo) < 3 || strlen($titulo) > 200) {
-            $error = 'El t&iacute;tulo debe tener entre 3 y 200 caracteres.';
+            $error = 'El título debe tener entre 3 y 200 caracteres.';
         } elseif ($tipoId <= 0) {
-            $error = 'Seleccion&aacute; un tipo de documento.';
+            $error = 'Seleccioná un tipo de documento.';
         } elseif (empty($_FILES['archivo']) || ($_FILES['archivo']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
             // UPLOAD_ERR_OK (0) significa que el archivo llegó sin problemas.
-            $error = 'Seleccion&aacute; un archivo PDF para subir.';
+            $error = 'Seleccioná un archivo PDF para subir.';
         } else {
             $archivo = $_FILES['archivo'];
 
             // Detecta el tipo real del archivo (no confía en la extensión).
             $mime = @mime_content_type($archivo['tmp_name']);
             if ($mime !== 'application/pdf') {
-                $error = 'El archivo debe ser un PDF v&aacute;lido.';
+                $error = 'El archivo debe ser un PDF válido.';
             } elseif ($archivo['size'] > 10 * 1024 * 1024) {
                 // Límite de 10 MB (10 * 1024 * 1024 bytes).
-                $error = 'El archivo supera el tama&ntilde;o m&aacute;ximo de 10 MB.';
+                $error = 'El archivo supera el tamaño máximo de 10 MB.';
             } else {
                 // Construye un nombre seguro para el archivo en disco:
                 // elimina caracteres raros del nombre original (solo letras,
@@ -166,7 +164,7 @@ final class DocumentoController
 
                 // move_uploaded_file mueve el archivo temporal al destino final.
                 if (!move_uploaded_file($archivo['tmp_name'], $destPath)) {
-                    $error = 'Error al guardar el archivo. Verific&aacute; los permisos del servidor.';
+                    $error = 'Error al guardar el archivo. Verificá los permisos del servidor.';
                 } else {
                     // Archivo guardado en disco → registra los datos en MySQL.
                     // Se guarda la RUTA del archivo, no el archivo en sí.
@@ -204,7 +202,7 @@ final class DocumentoController
     }
 
     /**
-     * Muestra el formulario vacío de subida (GET a /documentos/subir).
+     * Formulario en blanco para subir (GET a /documentos/subir).
      */
     public static function formulario(): void
     {
@@ -220,10 +218,9 @@ final class DocumentoController
     }
 
     /**
-     * Formulario de edición (GET a /documentos/editar?id=N).
-     * Muestra los datos actuales del documento para modificarlos.
-     * El archivo PDF NO se reemplaza: solo se editan título, tipo y
-     * descripción.
+     * Formulario de edición (GET a /documentos/editar?id=N). Carga los datos
+     * actuales del documento para corregirlos. El PDF en sí NO se reemplaza:
+     * solo se tocan título, tipo y descripción.
      */
     public static function formularioEditar(): void
     {
@@ -257,8 +254,8 @@ final class DocumentoController
 
     /**
      * Guarda los cambios del formulario de edición (POST a /documentos/editar).
-     * Actualiza título, descripción y tipo; mantiene el archivo, el QR y el
-     * resto de relaciones intactas.
+     * Actualiza título, descripción y tipo; el archivo, el QR y el resto de
+     * las relaciones quedan como estaban.
      */
     public static function editar(): void
     {
@@ -279,9 +276,9 @@ final class DocumentoController
         // Mismas reglas de validación que en la subida.
         $error = null;
         if (strlen($titulo) < 3 || strlen($titulo) > 200) {
-            $error = 'El t&iacute;tulo debe tener entre 3 y 200 caracteres.';
+            $error = 'El título debe tener entre 3 y 200 caracteres.';
         } elseif ($tipoId <= 0) {
-            $error = 'Seleccion&aacute; un tipo de documento.';
+            $error = 'Seleccioná un tipo de documento.';
         } else {
             // Verifica que el tipo exista (evita romper la clave foránea).
             $stmtT = $pdo->prepare('SELECT COUNT(*) FROM tipo_documento WHERE id = :id');
@@ -321,10 +318,9 @@ final class DocumentoController
     }
 
     /**
-     * Activa o desactiva un documento (POST a /documentos/estado).
-     * Es el "desactivar" del CRUD: borrado lógico. Un documento inactivo
-     * deja de verse en la vista pública (el QR da 404) pero conserva su
-     * archivo y sus datos.
+     * Activa o desactiva un documento (POST a /documentos/estado). Es el
+     * "desactivar" del archivo: baja un documento sin borrar el PDF. Uno
+     * inactivo deja de abrirse por el QR (404) pero conserva archivo y datos.
      */
     public static function estado(): void
     {
@@ -347,8 +343,8 @@ final class DocumentoController
     }
 
     /**
-     * Página de detalle de un documento (GET a /documentos/ver?id=N).
-     * Muestra el título, tipo, fecha, descripción y el PDF embebido.
+     * Detalle de un documento del archivo (GET a /documentos/ver?id=N).
+     * Muestra título, tipo, fecha, descripción y el PDF embebido en la página.
      */
     public static function ver(): void
     {
@@ -389,7 +385,7 @@ final class DocumentoController
     }
 
     /**
-     * Sirve el PDF de un documento autenticado (GET a /documentos/archivo?id=N).
+     * Entrega el PDF pedido desde una sesión interna (GET a /documentos/archivo).
      * Es la ruta que usa el <embed> del detalle y el botón de descarga.
      */
     public static function archivo(): void
@@ -409,12 +405,11 @@ final class DocumentoController
     }
 
     /**
-     * Vista pública de un documento (GET a /publico/doc?id=N).
-     * Es lo que ve el paciente al escanear el QR: no requiere sesión.
-     * Solo se muestran documentos ACTIVOS y generales.
-     * Incluye el acceso a la encuesta de satisfacción vinculada al documento
-     * (documento.encuesta_id) o, si no tiene ninguna, la primera encuesta
-     * activa disponible.
+     * Página que ve el paciente al escanear el QR (GET a /publico/doc?id=N).
+     * No pide sesión: es la entrega de su documento en el servicio. Solo se
+     * sirven documentos ACTIVOS y generales, y de paso se le ofrece la
+     * encuesta de satisfacción del servicio (la vinculada al documento o, si
+     * no tiene, la primera activa disponible).
      */
     public static function publicoDoc(): void
     {
@@ -455,15 +450,15 @@ final class DocumentoController
             'id' => (string) $id,
             'bloque_encuesta' => $encuestaId !== null
                 ? '<a href="' . base_path() . '/publico/encuesta?id=' . $encuestaId . '" class="btn btn-info">'
-                    . '<i class="bi bi-chat-square-text me-1"></i> Encuesta de satisfacci&oacute;n</a>'
+                    . '<i class="bi bi-chat-square-text me-1"></i> Encuesta de satisfacción</a>'
                 : '',
         ]);
     }
 
     /**
-     * Devuelve el ID de la encuesta pública a ofrecer desde la vista de un
-     * documento: prioriza la vinculada ($vinculadaId) y cae a la primera
-     * activa. Devuelve null si no hay encuestas disponibles.
+     * Elige qué encuesta ofrecer en la vista pública del documento: usa la
+     * que esté vinculada al documento si sigue activa, y si no cae a la
+     * primera encuesta activa. Devuelve null cuando no hay nada que ofrecer.
      */
     private static function resolverEncuestaPublica(PDO $pdo, ?int $vinculadaId): ?int
     {
@@ -483,8 +478,9 @@ final class DocumentoController
     }
 
     /**
-     * Sirve el PDF desde la vista pública (GET a /publico/archivo?id=N).
-     * Sin sesión, pero solo para documentos activos y generales.
+     * Descarga del PDF desde la vista pública (GET a /publico/archivo?id=N).
+     * Sin sesión, con las mismas restricciones: solo documentos activos y
+     * generales.
      */
     public static function publicoArchivo(): void
     {
@@ -500,11 +496,12 @@ final class DocumentoController
     }
 
     /**
-     * Genera las <option> del selector de tipo de documento.
-     * Es un HTML reutilizable para el filtro del listado y el formulario.
+     * Genera las <option> del selector de tipo de documento. Es el mismo
+     * HTML reutilizado en el filtro del archivo y en el formulario, para no
+     * duplicar el armado.
      *
-     * @param int|null  $seleccionado Id del tipo que debe quedar marcado.
-     * @param bool      $conTodos     Si true, incluye la opción "Todos los tipos".
+     * $seleccionado: id del tipo que debe quedar marcado (o null).
+     * $conTodos:     si true, incluye la opción "Todos los tipos" (para el filtro).
      */
     private static function opcionesTipo(?int $seleccionado = null, bool $conTodos = false): string
     {
@@ -527,11 +524,11 @@ final class DocumentoController
     }
 
     /**
-     * Construye la fila <tr> de un documento para la tabla del listado.
-     * Incluye botón de QR, título (con aviso si está inactivo), tipo,
-     * estado, fecha y acción de ver detalle.
+     * Arma la fila <tr> de un documento para la tabla del archivo: botón de
+     * QR, título (con aviso si está inactivo), tipo, estado, fecha y la
+     * acción de ver el detalle.
      *
-     * @param array $doc Fila de documento devuelta por la consulta.
+     * $doc: fila de documento devuelta por la consulta.
      */
     private static function filaDocumento(array $doc): string
     {
@@ -573,18 +570,18 @@ final class DocumentoController
     }
 
     /**
-     * Envía el PDF de un documento al navegador.
-     * Es la función compartida por las rutas autenticada y pública.
+     * Entrega el PDF de un documento al navegador. Es la rutina compartida
+     * por la descarga interna y la pública.
      *
-     * @param PDO  $pdo          Conexión activa.
-     * @param int  $id           Id del documento.
-     * @param bool $requiereAuth Si true, exige sesión y bloquea documentos de pacientes.
-     * @param bool $descargar    Si true, fuerza la descarga (attachment); si no, inline (embed).
+     * $pdo:          conexión activa.
+     * $id:           id del documento.
+     * $requiereAuth: si true, exige sesión y además bloquea documentos de pacientes.
+     * $descargar:    si true, fuerza la descarga (attachment); si no, inline (embed).
      */
     private static function servirPdf(PDO $pdo, int $id, bool $requiereAuth, bool $descargar): void
     {
         // Trae solo los datos necesarios para servir el archivo.
-        $sql = 'SELECT id, archivo_path, archivo_nombre, activo, paciente_id FROM documento WHERE id = :id';
+        $sql = 'SELECT id, archivo_path, archivo_contenido, archivo_nombre, activo, paciente_id FROM documento WHERE id = :id';
         $stmt = $pdo->prepare($sql);
         $stmt->execute(['id' => $id]);
         $doc = $stmt->fetch();
