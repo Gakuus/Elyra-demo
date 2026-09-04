@@ -69,6 +69,9 @@ function render_vista(string $archivo, array $datos): void
         echo 'Vista no encontrada: ' . htmlspecialchars($archivo);
         return;
     }
+    // El path base se inyecta siempre: el layout de las vistas públicas lo
+    // necesita para resolver URLs de recursos/enlaces en cualquier entorno.
+    $datos = ['base_path' => base_path()] + $datos;
     // Recorre cada dato y reemplaza su marcador correspondiente en el HTML.
     foreach ($datos as $clave => $valor) {
         $html = str_replace('{{' . $clave . '}}', (string) $valor, $html);
