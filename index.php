@@ -90,6 +90,7 @@ require_once __DIR__ . '/src/Controller/AuthController.php';
 require_once __DIR__ . '/src/Controller/DashboardController.php';
 require_once __DIR__ . '/src/Controller/DocumentoController.php';
 require_once __DIR__ . '/src/Controller/EncuestaController.php';
+require_once __DIR__ . '/src/Controller/VehiculoController.php';
 
 // ==== 4) Sesión ====
 // Inicia (o reanuda) la sesión para que $_SESSION esté disponible en todo.
@@ -145,6 +146,12 @@ switch (true) {
 
     case str_starts_with($path, '/publico/encuesta'):
         EncuestaController::dispatch($path, $method);
+        break;
+
+    // Módulo de vehículos: delega en el dispatch interno del controlador
+    // (listado, alta, baja y edición). Requiere sesión iniciada.
+    case str_starts_with($path, '/vehiculos'):
+        VehiculoController::dispatch($path, $method);
         break;
 
     // Módulo de documentos: delega en el dispatch interno del controlador,
