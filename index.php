@@ -107,6 +107,8 @@ require_once __DIR__ . '/src/Controller/EncuestaController.php';
 require_once __DIR__ . '/src/Controller/EncuestaResultadosController.php';
 require_once __DIR__ . '/src/Controller/EncuestaPublicaController.php';
 require_once __DIR__ . '/src/Controller/VehiculoController.php';
+require_once __DIR__ . '/src/Controller/InsumoData.php';                 // Trait de datos del módulo de insumos.
+require_once __DIR__ . '/src/Controller/InsumoController.php';
 require_once __DIR__ . '/src/Controller/UsuarioData.php';                 // Trait de datos del módulo de usuarios.
 require_once __DIR__ . '/src/Controller/UsuarioController.php';
 require_once __DIR__ . '/src/Controller/UsuarioEdicionController.php';
@@ -158,6 +160,13 @@ switch (true) {
     // (listado, alta, baja y edición). Requiere sesión iniciada.
     case str_starts_with($path, '/vehiculos'):
         VehiculoController::dispatch($path, $method);
+        break;
+
+    // Módulo de insumos médicos: delega en el dispatch interno del
+    // controlador (listado, alta, edición y activar/desactivar). Solo
+    // accesible para admin/superadmin (guards internos).
+    case str_starts_with($path, '/insumos'):
+        InsumoController::dispatch($path, $method);
         break;
 
     // Módulo de documentos: delega en el dispatch interno del controlador,
