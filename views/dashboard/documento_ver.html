@@ -15,7 +15,9 @@
             </div>
         </div>
 
-        {{descripcion_bloque}}
+        {{#hay_descripcion}}
+        <p class="text-muted mb-3">{{descripcion}}</p>
+        {{/hay_descripcion}}
 
         <div class="visor-pdf">
             <embed src="documentos/archivo?id={{id}}" type="application/pdf">

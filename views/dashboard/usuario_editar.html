@@ -1,7 +1,7 @@
 <div class="panel">
     <div class="cabecera-panel"><i class="bi bi-pencil-square me-1"></i> Editar usuario</div>
     <div class="cuerpo-panel">
-        {{mensaje_error}}
+        {{#hay_error}}<div class="mensaje-error">{{error}}</div>{{/hay_error}}
         <form method="post" action="usuarios/editar" id="editUserForm">
             <input type="hidden" name="id" value="{{id}}">
 

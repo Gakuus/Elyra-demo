@@ -1,0 +1,10 @@
+/* ---------- Bienvenida (Inicio) ---------- */
+.titulo-bienvenida {
+    margin: 0 0 8px;
+    color: #2A4780;
+}
+
+.subtitulo-bienvenida {
+    margin: 0;
+    font-size: 19px;
+}

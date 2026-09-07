@@ -1,0 +1,32 @@
+/* ---------- Página pública de un documento ---------- */
+body {
+    background: #fff;
+}
+
+.doc-publico {
+    max-width: 720px;
+    margin: 50px auto;
+    padding: 0 16px;
+}
+
+.tarjeta-doc {
+    background: #FFF;
+    border: 1px solid #DDD;
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+
+.tarjeta-doc h1 { font-size: 26px; color: #2A4780; }
+
+.icono-doc {
+    font-size: 52px;
+    color: #3B5998;
+    margin-bottom: 12px;
+}
+
+.insignia-doc {
+    background: #4F74B8;
+    color: #FFF;
+}

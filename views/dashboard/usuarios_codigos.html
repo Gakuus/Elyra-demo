@@ -5,7 +5,12 @@
             <i class="bi bi-arrow-left me-1"></i> Volver</a>
     </div>
     <div class="cuerpo-panel">
-        {{aviso_nuevo}}
+        {{#hay_nuevo}}
+        <div class="mensaje-exito"><strong>Código generado:</strong>
+            <span class="codigo-generado">{{nuevo}}</span>
+            <div class="texto-pequeno text-muted mt-1">Entregáselo a la persona. Al registrarse con él, su cuenta se creará como funcionario.</div>
+        </div>
+        {{/hay_nuevo}}
 
         <div class="info-codigos mb-3">
             <i class="bi bi-info-circle me-1"></i>
@@ -31,7 +36,31 @@
         <hr>
 
         <h6 class="mb-2"><i class="bi bi-list-ol me-1"></i> Códigos generados</h6>
-        {{bloque_tabla}}
+        {{^hay_codigos}}
+        <div class="text-center text-muted p-3 mensaje-vacio">
+            <i class="bi bi-person-plus d-block mb-2 icono-vacio"></i>
+            Todavía no se generaron códigos de funcionario.
+        </div>
+        {{/hay_codigos}}
+        {{#hay_codigos}}
+        <div class="table-responsive"><table class="tabla-panel">
+            <thead><tr><th>Código</th><th>Rol</th><th>Estado</th><th>Generado</th></tr></thead>
+            <tbody>
+            {{#codigos}}
+                <tr>
+                    <td class="fw-semibold codigo-generado">{{fila.codigo}}</td>
+                    <td><span class="insignia">{{fila.rol}}</span></td>
+                    <td>
+                        {{#fila.usado}}<span class="estado-inactivo">Usado por {{fila.usado_por}}</span>{{/fila.usado}}
+                        {{^fila.usado}}{{^fila.activo}}<span class="estado-inactivo">Desactivado</span>{{/fila.activo}}{{/fila.usado}}
+                        {{^fila.usado}}{{#fila.activo}}<span class="estado-activo">Disponible</span>{{/fila.activo}}{{/fila.usado}}
+                    </td>
+                    <td class="text-muted small">{{fila.fecha}}</td>
+                </tr>
+            {{/codigos}}
+            </tbody>
+        </table></div>
+        {{/hay_codigos}}
     </div>
 </div>
 

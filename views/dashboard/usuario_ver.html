@@ -4,7 +4,16 @@
         <div class="d-flex gap-2">
             <a href="usuarios/editar?id={{id}}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-pencil me-1"></i> Editar</a>
-            {{btn_estado}}
+            {{#activo}}
+                <button type="button" class="btn btn-outline-danger"
+                    onclick="ElyraUsuario.cambiarEstado({{id}}, 0, this)">
+                    <i class="bi bi-slash-circle me-1"></i> Desactivar</button>
+            {{/activo}}
+            {{^activo}}
+                <button type="button" class="btn btn-outline-success"
+                    onclick="ElyraUsuario.cambiarEstado({{id}}, 1, this)">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reactivar</button>
+            {{/activo}}
             <a href="usuarios" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i> Volver</a>
         </div>
     </div>
@@ -14,8 +23,9 @@
                 <h5 class="titulo-ficha">{{nombre_completo}}</h5>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <span class="insignia">{{categoria}}</span>
-                    {{estado_html}}
-                    {{rol_html}}
+                    {{#activo}}<span class="estado-activo">Activo</span>{{/activo}}
+                    {{^activo}}<span class="estado-inactivo">Inactivo</span>{{/activo}}
+                    {{#tiene_rol}}<span class="insignia">{{rol}}</span>{{/tiene_rol}}
                 </div>
             </div>
         </div>
@@ -48,7 +58,27 @@
         </div>
 
         <h6 class="text-muted mb-2"><i class="bi bi-file-earmark-text me-1"></i> Documentos de esta persona</h6>
-        {{bloque_documentos}}
+        {{^hay_documentos}}
+        <div class="text-center text-muted p-3 mensaje-vacio-sm">
+            <i class="bi bi-file-earmark-text d-block mb-2 icono-vacio-sm"></i>
+            Esta persona no tiene documentos asociados.
+        </div>
+        {{/hay_documentos}}
+        {{#hay_documentos}}
+        <div class="table-responsive"><table class="tabla-panel">
+            <thead><tr><th>Título</th><th>Tipo</th><th>Estado</th><th>Fecha</th></tr></thead>
+            <tbody>
+            {{#documentos}}
+                <tr>
+                    <td class="fw-semibold">{{fila.titulo}}</td>
+                    <td><span class="insignia">{{fila.tipo}}</span></td>
+                    <td><span class="{{#fila.activo}}estado-activo{{/fila.activo}}{{^fila.activo}}estado-inactivo{{/fila.activo}}">{{#fila.activo}}Activo{{/fila.activo}}{{^fila.activo}}Inactivo{{/fila.activo}}</span></td>
+                    <td class="text-muted small">{{fila.fecha}}</td>
+                </tr>
+            {{/documentos}}
+            </tbody>
+        </table></div>
+        {{/hay_documentos}}
     </div>
 </div>
 

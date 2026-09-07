@@ -180,23 +180,3 @@ img {
     margin: 0;
     padding: 0;
 }
-
-/* ---------- Móviles ---------- */
-@media (width <= 575.98px) {
-    .entrada-formulario {
-        height: 44px;
-        font-size: var(--fuente-md);
-    }
-
-    .btn {
-        padding: 10px 16px;
-        font-size: var(--fuente-md);
-        min-height: 44px;
-        display: inline-flex;
-        align-items: center;
-    }
-
-    input, select, textarea, button {
-        font-size: 17px;
-    }
-}

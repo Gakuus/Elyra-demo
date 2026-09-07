@@ -5,10 +5,11 @@
         <form method="post" action="vehiculos/agregar" id="vehiculoForm">
             <div class="mb-3">
                 <label for="patente" class="form-label">Patente <span style="color:#C00;">*</span></label>
-                <input type="text" name="patente" id="patente" class="form-control" required maxlength="20"
-                       placeholder="Ej: ABC123 / AB123CD" value="{{valor_patente}}"
+                <input type="text" name="patente" id="patente" class="form-control" required maxlength="8"
+                       placeholder="Ej: ABC 1234" value="{{valor_patente}}"
+                       pattern="[A-Za-z]{3}\s?[0-9]{4}" title="Formato uruguayo AAA 1234 (3 letras y 4 n&uacute;meros)"
                        style="text-transform:uppercase;">
-                <div class="form-text">Formato Mercosur (ABC123) o patente tradicional (AB123CD).</div>
+                <div class="form-text">Formato uruguayo: AAA 1234 (3 letras y 4 n&uacute;meros).</div>
             </div>
 
             <div class="mb-3">

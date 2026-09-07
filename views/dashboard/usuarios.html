@@ -1,19 +1,19 @@
 <div class="panel">
     <div class="cabecera-panel d-flex justify-content-between align-items-center">
         <span><i class="bi bi-people me-1"></i> Buscar persona</span>
-        {{bloque_codigos}}
+        {{#es_gestion}}
+            <a href="usuarios/codigos" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-person-plus me-1"></i> Códigos de funcionario</a>
+        {{/es_gestion}}
     </div>
     <div class="cuerpo-panel">
-        <!-- Buscador: mismo diseño que el apartado de Documentos (input + botón),
-             pero centrado. Al escribir dispara la búsqueda en vivo. -->
+        <!-- Buscador: al escribir dispara la búsqueda en vivo (sin botón). -->
         <div class="buscador-usuario">
             <div class="campo-busqueda">
                 <input type="text" id="buscarUsuario" class="form-control form-control-lg input-busqueda"
                        placeholder="Buscar por cédula o nombre..." autocomplete="off">
                 <i class="bi bi-search icono-lupa"></i>
             </div>
-            <button type="button" class="btn btn-primary btn-lg" onclick="ElyraUsuario.buscar()">
-                <i class="bi bi-search me-1"></i> Buscar</button>
         </div>
         <div class="text-center text-muted small mb-2">
             <i class="bi bi-info-circle me-1"></i> Escribí una cédula o un nombre/apellido y los resultados aparecen mientras escribís.

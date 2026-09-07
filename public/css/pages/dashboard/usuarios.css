@@ -1,0 +1,55 @@
+/* ---------- Buscador de usuarios (busca en vivo) ---------- */
+.buscador-usuario {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    justify-content: center;
+}
+
+.buscador-usuario .campo-busqueda {
+    position: relative;
+    max-width: 520px;
+    width: 100%;
+}
+
+.buscador-usuario .campo-busqueda .input-busqueda {
+    font-size: 1.15rem;
+    padding: 12px 20px;
+    padding-right: 46px;
+}
+
+.buscador-usuario .icono-lupa {
+    position: absolute;
+    top: 50%;
+    right: 18px;
+    transform: translateY(-50%);
+    color: #6c757d;
+    font-size: 1.2rem;
+    pointer-events: none;
+}
+
+/* ---------- Códigos de funcionario ---------- */
+.mensaje-exito {
+    background: #E8F5E9;
+    color: #1B5E20;
+    border: 1px solid #C8E6C9;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+
+.codigo-generado {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.info-codigos {
+    background: #F7F9FC;
+    border: 1px solid #E3E9F2;
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: #4A5A73;
+}

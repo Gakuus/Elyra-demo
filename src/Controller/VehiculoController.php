@@ -54,12 +54,15 @@ final class VehiculoController
         $q = trim((string) ($_GET['q'] ?? ''));
 
         // Consulta base, ordenada por patente (como en el repo original).
+        // La patente se guarda sin espacios (AAA1234), así que para poder
+        // buscarla como se ve en la placa (AAA 1234) se comparan ambas
+        // partes sin el espacio. El modelo se busca con el texto tal cual.
         $sql = 'SELECT id, patente, modelo, anio, created_at FROM vehiculo';
         $params = [];
         if ($q !== '') {
-            // LIKE con %...% busca en patente o modelo (mayúsculas/minúsculas indistinto).
-            $sql .= ' WHERE patente LIKE :q OR modelo LIKE :q';
-            $params['q'] = '%' . $q . '%';
+            $sql .= ' WHERE REPLACE(patente, " ", "") LIKE :qPatente OR modelo LIKE :qModelo';
+            $params['qPatente'] = '%' . str_replace(' ', '', $q) . '%';
+            $params['qModelo'] = '%' . $q . '%';
         }
         $sql .= ' ORDER BY patente';
 
@@ -97,8 +100,9 @@ final class VehiculoController
 
         $pdo = db_connect();
 
-        // Lee los campos del formulario y normaliza la patente (mayúsculas).
-        $patente = strtoupper(trim((string) ($_POST['patente'] ?? '')));
+        // Lee los campos del formulario y normaliza la patente (mayúsculas
+        // y sin el espacio que se ve en la placa, ej: ABC 1234 -> ABC1234).
+        $patente = strtoupper(str_replace(' ', '', trim((string) ($_POST['patente'] ?? ''))));
         $modelo = trim((string) ($_POST['modelo'] ?? ''));
         $anio = trim((string) ($_POST['anio'] ?? ''));
 
@@ -189,7 +193,7 @@ final class VehiculoController
             exit;
         }
 
-        $patente = strtoupper(trim((string) ($_POST['patente'] ?? '')));
+        $patente = strtoupper(str_replace(' ', '', trim((string) ($_POST['patente'] ?? ''))));
         $modelo = trim((string) ($_POST['modelo'] ?? ''));
         $anio = trim((string) ($_POST['anio'] ?? ''));
 
@@ -256,9 +260,9 @@ final class VehiculoController
      */
     private static function validar(PDO $pdo, string $patente, string $modelo, string $anio, ?int $excluirId): ?string
     {
-        // Formato de patente: Mercosur (ABC123 o AB123) o patente vieja (AB123CD).
-        if (!preg_match('/^([A-Z]{2}[0-9]{3}[A-Z]{2}|[A-Z]{2,3}[0-9]{3})$/i', $patente)) {
-            return 'La patente no tiene un formato v&aacute;lido.';
+        // Formato de patente uruguayo: 3 letras + 4 números (ej: ABC 1234).
+        if (!preg_match('/^[A-Z]{3}[0-9]{4}$/', $patente)) {
+            return 'La patente debe usar el formato uruguayo AAA 1234 (3 letras y 4 n&uacute;meros).';
         }
         if (strlen($modelo) > 100) {
             return 'El modelo no puede superar los 100 caracteres.';

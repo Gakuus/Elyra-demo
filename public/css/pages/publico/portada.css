@@ -1,8 +1,9 @@
-/* ---------- Barra de navegación ---------- */
+/* ---------- Página de inicio (portada del sitio) ---------- */
 body {
     background: #fff;
 }
 
+/* ---------- Barra de navegación ---------- */
 .navegacion-publica {
     background: linear-gradient(135deg, #2A4780, #3B5998);
     border-bottom: 2px solid #1A3560;
@@ -45,17 +46,6 @@ body {
 }
 
 .enlaces-navegacion a:hover { color: #fff; }
-
-.boton-menu-movil {
-    display: none;
-    background: none;
-    border: none;
-    color: #fff;
-    font-size: 32px;
-    cursor: pointer;
-    padding: 8px 10px;
-    line-height: 1;
-}
 
 /* Botón "Acceso interno" en la barra de navegación */
 .boton-acceso-nav {
@@ -190,35 +180,7 @@ body {
     margin-right: 8px;
 }
 
-/* ---------- Página pública de un documento ---------- */
-.doc-publico {
-    max-width: 720px;
-    margin: 50px auto;
-    padding: 0 16px;
-}
-
-.tarjeta-doc {
-    background: #FFF;
-    border: 1px solid #DDD;
-    border-radius: 8px;
-    padding: 30px;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,.06);
-}
-
-.tarjeta-doc h1 { font-size: 26px; color: #2A4780; }
-
-.icono-doc {
-    font-size: 52px;
-    color: #3B5998;
-    margin-bottom: 12px;
-}
-
-.insignia-doc {
-    background: #4F74B8;
-    color: #FFF;
-}
-
+/* ---------- Pie ---------- */
 .pie-publico {
     background: linear-gradient(135deg, #1A3560, #2A4780);
     color: #99AACC;
@@ -244,77 +206,4 @@ body {
     border-color: #3B5998;
     background: #EEF2FA;
     text-decoration: none;
-}
-
-/* ---------- Responsive ---------- */
-@media (max-width: 768px) {
-    .boton-menu-movil { display: block; }
-    .navegacion-interior { padding: 14px 0; }
-
-    .enlaces-navegacion {
-        display: none;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: linear-gradient(135deg, #2A4780, #3B5998);
-        flex-direction: column;
-        gap: 0;
-        padding: 8px 0;
-        border-top: 1px solid #4F74B8;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    }
-
-    .enlaces-navegacion.open { display: flex; }
-    .enlaces-navegacion li { width: 100%; }
-
-    .enlaces-navegacion li a {
-        display: block;
-        padding: 14px 24px;
-        font-size: 17px;
-        color: #CCD9F0;
-        border-bottom: 1px solid rgba(255,255,255,0.06);
-        transition: background 0.2s, color 0.2s;
-    }
-
-    .enlaces-navegacion li a:hover { background: rgba(255,255,255,0.08); color: #fff; }
-    .enlaces-navegacion li:last-child a { border-bottom: none; }
-
-    .seccion-portada { padding: 90px 0 70px; }
-    .seccion-portada h1 { font-size: 36px; }
-    .seccion-portada .lead { font-size: 18px; margin-bottom: 26px; }
-    .seccion-portada img { height: 80px; }
-
-    .seccion { padding: 56px 0; }
-    .titulo-seccion { font-size: 27px; }
-    .subtitulo-seccion { font-size: 16px; margin-bottom: 28px; }
-    .tarjeta-servicio { padding: 26px 16px; }
-    .icono-servicio { font-size: 38px; }
-}
-
-@media (max-width: 575px) {
-    .seccion-portada { padding: 70px 0 56px; }
-    .seccion-portada h1 { font-size: 28px; margin: 12px 0 6px; }
-    .seccion-portada .lead { font-size: 16px; color: rgba(255,255,255,0.75); }
-    .seccion-portada img { height: 64px; }
-
-    .botones-portada {
-        flex-direction: column;
-        align-items: center;
-        gap: 10px !important;
-    }
-
-    .botones-portada .btn {
-        width: 100%;
-        max-width: 280px;
-        padding: 14px 20px !important;
-        font-size: 17px !important;
-    }
-
-    .seccion { padding: 42px 0; }
-    .titulo-seccion { font-size: 24px; }
-    .tarjeta-servicio { padding: 22px 14px; border-radius: 6px; }
-    .tarjeta-servicio h6 { font-size: 16px !important; }
-    .tarjeta-servicio p { font-size: 14px !important; }
-    .icono-servicio { font-size: 34px; margin-bottom: 10px; }
 }

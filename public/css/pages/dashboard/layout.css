@@ -1,0 +1,137 @@
+/* ---------- Encabezado del sistema ---------- */
+.encabezado-sistema {
+    background: linear-gradient(135deg, #2A4780, #3B5998);
+    color: #FFF;
+    padding: 18px 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #1A3560;
+}
+
+.marca-encabezado {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-encabezado,
+.logo-encabezado:hover {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: #FFF;
+}
+
+.logo-encabezado img {
+    height: 36px;
+    width: auto;
+}
+
+.logo-encabezado span {
+    font-size: 25px;
+    font-weight: bold;
+    color: #FFF;
+}
+
+.usuario-encabezado {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 19px;
+    color: #B8C9E8;
+}
+
+.usuario-encabezado a {
+    color: #FFF;
+    text-decoration: none;
+}
+
+.usuario-encabezado a:hover {
+    text-decoration: underline;
+}
+
+/* ---------- Logout en la barra superior ---------- */
+.form-en-linea {
+    display: inline;
+}
+
+.btn-logout,
+.btn-logout:hover {
+    color: #000000;
+    text-decoration: none;
+}
+
+/* ---------- Cuerpo principal ---------- */
+.contenedor-principal {
+    display: flex;
+    min-height: calc(100vh - 110px);
+}
+
+.barra-lateral {
+    width: 280px;
+    min-width: 280px;
+    background: #3B5998;
+    padding: 10px 0;
+    font-size: 19px;
+}
+
+.seccion-barra {
+    padding: 0 0 6px;
+}
+
+.titulo-seccion {
+    font-size: 16px;
+    font-weight: bold;
+    color: #9BB5D9;
+    padding: 14px 20px 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.enlace-barra {
+    display: block;
+    padding: 15px 20px 15px 28px;
+    color: #FFF;
+    text-decoration: none;
+    font-size: 19px;
+    line-height: 28px;
+    transition: background 0.15s;
+}
+
+.enlace-barra:hover {
+    background: #4F74B8;
+    color: #FFF;
+    text-decoration: none;
+}
+
+.enlace-barra.active {
+    background: #2A4780;
+    color: #FFF;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.enlace-barra img {
+    vertical-align: middle;
+    margin-right: 6px;
+    margin-top: -2px;
+}
+
+.contenido-principal {
+    flex: 1;
+    padding: 30px 38px;
+    overflow-x: auto;
+}
+
+/* ---------- Pie ---------- */
+.pie-pagina {
+    background: #F6F6F6;
+    border-top: 1px solid #DDD;
+    padding: 14px 20px;
+    font-size: 16px;
+    color: #666;
+    text-align: center;
+    clear: both;
+}
