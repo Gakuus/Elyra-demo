@@ -11,7 +11,41 @@
     </div>
 </div>
 
-{{bloques_resultados}}
+{{#stats}}
+<div class="panel mb-3"><div class="cuerpo-panel">
+    <h6 class="fw-semibold mb-3">{{fila.indice}}. {{fila.texto}}</h6>
+
+    {{#fila.es_multiple}}
+    <div class="contenedor-chart-alto"><canvas id="{{fila.chart_id}}" height="{{fila.alto}}"></canvas></div>
+    {{/fila.es_multiple}}
+
+    {{#fila.es_escala}}
+    <div class="row g-3">
+        <div class="col-md-8">
+            <div class="contenedor-chart"><canvas id="{{fila.chart_id}}"></canvas></div>
+        </div>
+        <div class="col-md-4 d-flex flex-column justify-content-center">
+            <div class="text-center p-3 bg-light rounded-3">
+                <div class="display-5 fw-bold text-primary">{{fila.promedio}}</div>
+                <div class="text-muted small">Promedio (1-5)</div>
+            </div>
+            <div class="mt-2 text-center small text-muted">{{#fila.conteos}}<span class="me-2">{{fila.val}}: {{fila.cant}}</span>{{/fila.conteos}}</div>
+        </div>
+    </div>
+    {{/fila.es_escala}}
+
+    {{#fila.es_texto}}
+    {{#fila.tiene_textos}}
+    <ul class="list-group list-group-flush">
+        {{#fila.textos}}<li class="list-group-item py-2 px-0 border-0 border-bottom"><i class="bi bi-quote text-muted me-1"></i>{{fila.respuesta}}</li>{{/fila.textos}}
+    </ul>
+    {{/fila.tiene_textos}}
+    {{^fila.tiene_textos}}
+    <p class="text-muted small mb-0">Sin respuestas de texto.</p>
+    {{/fila.tiene_textos}}
+    {{/fila.es_texto}}
+</div></div>
+{{/stats}}
 
 <script>
 var ENCUESTA_STATS = {{stats_json}};

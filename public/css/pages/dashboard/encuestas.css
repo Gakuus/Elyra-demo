@@ -1,0 +1,21 @@
+/* ---------- Botón compacto (Encuestas) ---------- */
+.btn-compacto {
+    padding: 0 12px;
+    font-size: 11px;
+}
+
+/* ---------- Contenedores de gráficos (resultados de encuesta) ---------- */
+.contenedor-chart,
+.contenedor-chart-alto {
+    position: relative;
+}
+
+.contenedor-chart {
+    height: 220px;
+}
+
+.contenedor-chart canvas,
+.contenedor-chart-alto canvas {
+    width: 100% !important;
+    height: auto !important;
+}

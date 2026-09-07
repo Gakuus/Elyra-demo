@@ -13,6 +13,12 @@ public/uploads/*
 !storage/qrcodes/.gitkeep
 !public/uploads/.gitkeep
 
+# PDFs de documentos subidos por los usuarios (contenido real, no va al repo)
+storage/docs/*
+
+# Planificación interna del equipo (cronograma y sprints)
+docs/
+
 # Sistema
 .DS_Store
 Thumbs.db

@@ -1,0 +1,89 @@
+/* ---------- Modal QR compacto ---------- */
+.modal-box-qr {
+    max-width: 400px;
+}
+
+.modal-box .modal-encabezado-titulo {
+    margin: 0;
+}
+
+/* ---------- Modal QR ---------- */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 1050;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-overlay.open {
+    display: flex;
+}
+
+.modal-box {
+    background: #FFF;
+    border-radius: 6px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: #F0F3F8;
+    border-bottom: 1px solid #D5D9E0;
+}
+
+.cerrar-modal {
+    border: none;
+    background: none;
+    font-size: 24px;
+    line-height: 1;
+    color: #666;
+    cursor: pointer;
+}
+
+.cerrar-modal:hover {
+    color: #000;
+}
+
+.modal-body {
+    padding: 22px;
+}
+
+/* ---------- Impresión del QR ----------
+   #qrPrintArea está oculto en pantalla. Al imprimir un QR se agrega la
+   clase 'imprimiendo-qr' al <body>: todo lo demás se oculta y el área
+   muestra únicamente el código QR, bien grande y centrado en la hoja. */
+#qrPrintArea {
+    display: none;
+}
+
+@media print {
+    body.imprimiendo-qr > *:not(#qrPrintArea) {
+        display: none !important;
+    }
+
+    body.imprimiendo-qr #qrPrintArea {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+    }
+
+    body.imprimiendo-qr .qr-imprimible canvas,
+    body.imprimiendo-qr .qr-imprimible img,
+    body.imprimiendo-qr .qr-imprimible table {
+        width: 90vmin !important;
+        height: auto !important;
+        /* Mantiene los bordes del QR nítidos al agrandarlo. */
+        image-rendering: pixelated;
+    }
+}

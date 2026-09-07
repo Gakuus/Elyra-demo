@@ -10,6 +10,25 @@ declare(strict_types=1);
 final class AuthController
 {
     /**
+     * Enrutador interno de los flujos de autenticación. index.php delega acá
+     * la portada, login, registro y logout; este método decide la acción según
+     * la ruta exacta y el método HTTP. Las páginas son públicas (no requieren
+     * sesión); el logout entra siempre por POST por seguridad.
+     */
+    public static function dispatch(string $path, string $method): void
+    {
+        match (true) {
+            $path === '/' || $path === '' => self::home(),
+            $path === '/login' && $method === 'POST' => self::loginPost(),
+            $path === '/login' => self::login(),
+            $path === '/registro' && $method === 'POST' => self::registroPost(),
+            $path === '/registro' => self::registro(),
+            $path === '/logout' && $method === 'POST' => self::logout(),
+            default => pagina_404(),
+        };
+    }
+
+    /**
      * Página de inicio pública (la portada antes de iniciar sesión).
      * Simplemente muestra la vista home.html sin más lógica.
      */

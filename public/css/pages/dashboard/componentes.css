@@ -1,0 +1,132 @@
+/* ---------- Paneles ---------- */
+.panel {
+    background: #FFF;
+    border: 1px solid #CCC;
+    border-radius: 4px;
+    margin-bottom: 16px;
+}
+
+.cabecera-panel {
+    background: #F0F3F8;
+    border-bottom: 1px solid #D5D9E0;
+    padding: 16px 20px;
+    font-weight: bold;
+    font-size: 21px;
+    color: #2A4780;
+}
+
+.cuerpo-panel {
+    padding: 26px;
+}
+
+/* ---------- Tabla de encuestas ---------- */
+.tabla-panel {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 17px;
+}
+
+.tabla-panel th {
+    text-align: left;
+    padding: 13px 16px;
+    background: #F0F3F8;
+    border-bottom: 1px solid #D5D9E0;
+    font-size: 17px;
+    color: #555;
+}
+
+.tabla-panel td {
+    padding: 13px 16px;
+    border-bottom: 1px solid #EEE;
+    vertical-align: middle;
+}
+
+.tabla-panel tr:last-child td {
+    border-bottom: none;
+}
+
+.estado-activo {
+    color: #2E8B57;
+    font-weight: bold;
+}
+
+.estado-inactivo {
+    color: #999;
+}
+
+/* Columnas de tabla con ancho fijo */
+.th-acciones {
+    width: 170px;
+}
+
+.th-acciones-sm {
+    width: 130px;
+}
+
+.th-acciones-min {
+    width: 100px;
+}
+
+.th-qr {
+    width: 50px;
+}
+
+/* Celdas sin salto de línea */
+.celda-nowrap {
+    white-space: nowrap;
+}
+
+/* ---------- Insignias ---------- */
+.insignia {
+    display: inline-block;
+    background: #4F74B8;
+    color: #FFF;
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* ---------- Campo obligatorio (asterisco rojo) ---------- */
+.requerido {
+    color: #C00;
+}
+
+/* ---------- Título de ficha (nombre grande en las fichas) ---------- */
+.titulo-ficha {
+    margin: 0 0 6px;
+    color: #2A4780;
+}
+
+/* ---------- Mensaje y estado vacío ---------- */
+.mensaje-vacio {
+    font-size: 15px;
+}
+
+.mensaje-vacio-sm {
+    font-size: 14px;
+}
+
+.icono-vacio {
+    font-size: 28px;
+}
+
+.icono-vacio-sm {
+    font-size: 24px;
+}
+
+/* Iconos vacíos grandes (Encuestas) */
+.icono-vacio-lg {
+    font-size: 32px;
+}
+
+/* Mensaje de error de formulario */
+.mensaje-error {
+    background: #FBE9E7;
+    color: #B71C1C;
+    border: 1px solid #FFCDD2;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 16px;
+}

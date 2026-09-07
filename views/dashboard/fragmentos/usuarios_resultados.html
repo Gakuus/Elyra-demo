@@ -1,0 +1,30 @@
+{{^hay_personas}}
+<div class="text-center text-muted p-3 mensaje-vacio">
+    <i class="bi bi-search d-block mb-2 icono-vacio"></i>
+    No se encontraron personas con ese criterio.
+</div>
+{{/hay_personas}}
+
+{{#hay_personas}}
+<div class="table-responsive"><table class="tabla-panel">
+    <thead><tr>
+        <th>Cédula</th><th>Nombre</th><th>Categoría</th><th>Rol</th>
+        <th>Estado</th><th class="th-acciones-min">Acciones</th>
+    </tr></thead>
+    <tbody>
+    {{#personas}}
+        <tr data-usuario-id="{{fila.id}}">
+            <td class="fw-semibold">{{fila.cedula}}</td>
+            <td>{{fila.nombre}}{{^fila.activa}} <span class="badge bg-secondary ms-1">Inactivo</span>{{/fila.activa}}</td>
+            <td><span class="insignia">{{fila.categoria}}</span></td>
+            <td class="text-muted small">{{fila.rol}}</td>
+            <td><span class="{{#fila.activa}}estado-activo{{/fila.activa}}{{^fila.activa}}estado-inactivo{{/fila.activa}}">{{#fila.activa}}Activo{{/fila.activa}}{{^fila.activa}}Inactivo{{/fila.activa}}</span></td>
+            <td><div class="d-flex gap-1">
+                <a href="usuarios/ver?id={{fila.id}}" class="btn btn-sm btn-outline-secondary" title="Ver ficha"><i class="bi bi-eye"></i></a>
+                <a href="usuarios/editar?id={{fila.id}}" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
+            </div></td>
+        </tr>
+    {{/personas}}
+    </tbody>
+</table></div>
+{{/hay_personas}}

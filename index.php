@@ -54,7 +54,12 @@ if ($staticRel !== '/' && !str_contains($staticRel, '.php')) {
         ? substr($staticRel, strlen('/public'))
         : $staticRel;
     $file = __DIR__ . '/public' . $rel;
-    if (is_file($file)) {
+    // Descarta rutas con subidas de directorio (../): solo se sirven
+    // archivos dentro de public/ (por seguridad).
+    if (str_contains($rel, '..')) {
+        $file = '';
+    }
+    if ($file !== '' && is_file($file)) {
         // Detecta el tipo MIME según la extensión del archivo.
         $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
         $mime = match ($ext) {
@@ -74,7 +79,9 @@ if ($staticRel !== '/' && !str_contains($staticRel, '.php')) {
         };
         if ($mime !== null) {
             // Envía el archivo con su tipo y caché por 1 hora (rendimiento).
+            // Content-Length evita la transferencia por trozos y mejora la caché.
             header('Content-Type: ' . $mime);
+            header('Content-Length: ' . (string) filesize($file));
             header('Cache-Control: public, max-age=3600');
             readfile($file);
             exit; // Termina la petición: no se procesa ninguna ruta PHP.
@@ -91,10 +98,19 @@ require_once __DIR__ . '/src/Auth.php';             // Clase Auth (login, regist
 require_once __DIR__ . '/src/helpers.php';          // Funciones auxiliares (base_path, render...).
 require_once __DIR__ . '/src/Controller/AuthController.php';
 require_once __DIR__ . '/src/Controller/DashboardController.php';
+require_once __DIR__ . '/src/Controller/DocumentoData.php';             // Trait de datos del módulo de documentos.
+require_once __DIR__ . '/src/Controller/DocumentoArchivoController.php';
+require_once __DIR__ . '/src/Controller/DocumentoPublicoController.php';
 require_once __DIR__ . '/src/Controller/DocumentoController.php';
+require_once __DIR__ . '/src/Controller/EncuestaData.php';              // Trait de datos del módulo de encuestas.
 require_once __DIR__ . '/src/Controller/EncuestaController.php';
+require_once __DIR__ . '/src/Controller/EncuestaResultadosController.php';
+require_once __DIR__ . '/src/Controller/EncuestaPublicaController.php';
 require_once __DIR__ . '/src/Controller/VehiculoController.php';
+require_once __DIR__ . '/src/Controller/UsuarioData.php';                 // Trait de datos del módulo de usuarios.
 require_once __DIR__ . '/src/Controller/UsuarioController.php';
+require_once __DIR__ . '/src/Controller/UsuarioEdicionController.php';
+require_once __DIR__ . '/src/Controller/UsuarioCodigosController.php';
 
 // ------------------------------------------------------------------
 // 4) Sesión
@@ -112,32 +128,12 @@ $path = $staticRel;
 // switch(true) es un "switch de condiciones": evalúa cada case en orden y
 // ejecuta el primero que sea verdadero. Cada case llama a un controlador.
 switch (true) {
-    // Portada pública.
-    case $path === '/' || $path === '':
-        AuthController::home();
-        break;
-
-    // Login: POST procesa el formulario, GET muestra el formulario.
-    case $path === '/login' && $method === 'POST':
-        AuthController::loginPost();
-        break;
-
-    case $path === '/login':
-        AuthController::login();
-        break;
-
-    // Registro de pacientes: POST procesa, GET muestra.
-    case $path === '/registro' && $method === 'POST':
-        AuthController::registroPost();
-        break;
-
-    case $path === '/registro':
-        AuthController::registro();
-        break;
-
-    // Logout (siempre por POST, por seguridad).
-    case $path === '/logout' && $method === 'POST':
-        AuthController::logout();
+    // Flujos de autenticación (portada, login, registro y logout): delega en
+    // el dispatch interno del controlador, que decide la acción según la ruta
+    // exacta y el método. Páginas públicas (sin sesión).
+    case $path === '/' || $path === ''
+        || $path === '/login' || $path === '/registro' || $path === '/logout':
+        AuthController::dispatch($path, $method);
         break;
 
     // Panel de gestión.
@@ -145,18 +141,20 @@ switch (true) {
         DashboardController::inicio();
         break;
 
-    // Módulo de encuestas: le pasamos la ruta y el método al dispatch del
-    // controlador (listado, crear, toggle, resultados). El listado requiere
-    // sesión; la vista pública (/publico/encuesta) NO requiere sesión.
+    // Módulo de encuestas (panel del dashboard): le pasamos la ruta y el
+    // método al dispatch del controlador (listado, crear, editar, toggle y
+    // resultados, que este delega a EncuestaResultadosController). Requiere
+    // sesión (guards internos).
     case str_starts_with($path, '/encuestas'):
         EncuestaController::dispatch($path, $method);
         break;
 
+    // Página pública para responder encuestas (sin login).
     case str_starts_with($path, '/publico/encuesta'):
-        EncuestaController::dispatch($path, $method);
+        EncuestaPublicaController::dispatch($path, $method);
         break;
 
-// Módulo de vehículos: delega en el dispatch interno del controlador
+    // Módulo de vehículos: delega en el dispatch interno del controlador
     // (listado, alta, baja y edición). Requiere sesión iniciada.
     case str_starts_with($path, '/vehiculos'):
         VehiculoController::dispatch($path, $method);

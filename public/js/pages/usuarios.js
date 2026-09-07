@@ -5,6 +5,7 @@
  *   - buscar():  búsqueda en vivo. Escucha el input #buscarUsuario y, con un
  *                pequeño retardo (debounce), consulta /usuarios/buscar y
  *                reemplaza el contenedor #resultadoUsuarios con los resultados.
+ *                Se dispara sola al escribir (no hay botón de buscar).
  *   - cambiarEstado(id, activo, btn): desactiva o reactiva a una persona
  *                (borrado lógico) sin recargar la página.
  */
@@ -150,7 +151,6 @@
 
     // API pública.
     window.ElyraUsuario = {
-        buscar: buscar,
         cambiarEstado: cambiarEstado
     };
 })();

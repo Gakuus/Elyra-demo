@@ -1,7 +1,12 @@
 <div class="panel">
     <div class="cabecera-panel"><i class="bi bi-pencil-square me-1"></i> Editar documento</div>
     <div class="cuerpo-panel">
-        {{mensaje_error}}
+        {{#hay_error}}
+        <div class="alert alert-danger d-flex align-items-start gap-2 py-2">
+            <i class="bi bi-exclamation-triangle mt-1"></i>
+            <div>{{error}}</div>
+        </div>
+        {{/hay_error}}
         <form method="post" action="documentos/editar" id="editForm">
             <input type="hidden" name="id" value="{{id}}">
 
@@ -14,8 +19,9 @@
             <div class="mb-3">
                 <label for="tipo" class="form-label">Tipo de documento <span class="requerido">*</span></label>
                 <select name="tipo" id="tipo" class="form-select" required>
-                    <option value="">Seleccionar tipo...</option>
-                    {{opciones_tipo_editar}}
+                    {{#opciones_tipo_editar}}
+                    <option value="{{fila.id}}" {{#fila.seleccionado}}selected{{/fila.seleccionado}}>{{fila.nombre}}</option>
+                    {{/opciones_tipo_editar}}
                 </select>
             </div>
 

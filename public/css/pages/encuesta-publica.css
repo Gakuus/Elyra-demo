@@ -69,3 +69,39 @@
     width: 18px;
     height: 18px;
 }
+
+/* ---------- Alertas compactas (más pequeñas que las de Bootstrap) ---------- */
+.alert-chico {
+    font-size: 13px;
+}
+
+/* ---------- Textarea de ancho completo ---------- */
+.textarea-ancho {
+    width: 100%;
+}
+
+/* ---------- Opciones dinámicas del formulario de encuesta ---------- */
+.opcion-item {
+    width: auto;
+}
+
+.opcion-item .opcion-ancho {
+    width: 140px;
+}
+
+/* ---------- Iconos de estado en encuestas ---------- */
+.icono-pregunta {
+    font-size: 40px;
+    color: #98A6C4;
+}
+
+.icono-exito {
+    font-size: 36px;
+    color: #198754;
+    margin-bottom: 10px;
+}
+
+.icono-grafico {
+    font-size: 30px;
+    color: #3B5998;
+}

@@ -6,11 +6,55 @@
     <div class="cuerpo-panel">
         <form method="get" class="d-flex gap-2 mb-3">
             <select name="tipo" class="form-select select-filtro" onchange="this.form.submit()">
-                {{opciones_tipo}}
+                {{#tipos}}
+                <option value="{{fila.id}}" {{#fila.seleccionado}}selected{{/fila.seleccionado}}>{{fila.nombre}}</option>
+                {{/tipos}}
             </select>
             <input type="text" name="q" class="form-control" placeholder="Buscar por título..." value="{{q}}">
             <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i> Buscar</button>
         </form>
-        {{contenido_documentos}}
+        {{#hay_documentos}}
+        <div class="table-responsive">
+            <table class="tabla-panel">
+                <thead>
+                    <tr>
+                        <th class="th-qr">QR</th>
+                        <th>Título</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                        <th>Subido</th>
+                        <th class="th-acciones-sm">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {{#documentos}}
+                <tr data-doc-id="{{fila.id}}" data-doc-activo="{{#fila.inactivo}}0{{/fila.inactivo}}{{^fila.inactivo}}1{{/fila.inactivo}}">
+                    <td>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="ElyraDoc.verQR({{fila.id}})" title="Ver QR"><i class="bi bi-qr-code"></i></button>
+                    </td>
+                    <td class="fw-semibold">{{fila.titulo}}{{#fila.inactivo}} <span class="badge bg-secondary ms-1">Inactivo</span>{{/fila.inactivo}}</td>
+                    <td><span class="insignia">{{fila.tipo}}</span></td>
+                    <td><span class="{{#fila.inactivo}}estado-inactivo{{/fila.inactivo}}{{^fila.inactivo}}estado-activo{{/fila.inactivo}}">{{#fila.inactivo}}Inactivo{{/fila.inactivo}}{{^fila.inactivo}}Activo{{/fila.inactivo}}</span></td>
+                    <td class="text-muted small">{{fila.fecha}}</td>
+                    <td>
+                        <div class="d-flex gap-1 justify-content-end">
+                            <a href="documentos/ver?id={{fila.id}}" class="btn btn-sm btn-outline-secondary" title="Ver detalle"><i class="bi bi-eye"></i></a>
+                            <a href="documentos/editar?id={{fila.id}}" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
+                            <button type="button" class="btn btn-sm {{#fila.inactivo}}btn-outline-success{{/fila.inactivo}}{{^fila.inactivo}}btn-outline-secondary{{/fila.inactivo}}" onclick="ElyraDoc.cambiarEstado({{fila.id}}, {{#fila.inactivo}}1{{/fila.inactivo}}{{^fila.inactivo}}0{{/fila.inactivo}}, this)" {{#fila.inactivo}}title="Reactivar documento"{{/fila.inactivo}}{{^fila.inactivo}}title="Desactivar documento"{{/fila.inactivo}}>
+                                {{#fila.inactivo}}<i class="bi bi-arrow-counterclockwise"></i>{{/fila.inactivo}}{{^fila.inactivo}}<i class="bi bi-slash-circle"></i>{{/fila.inactivo}}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {{/documentos}}
+                </tbody>
+            </table>
+        </div>
+        {{/hay_documentos}}
+        {{^hay_documentos}}
+        <div class="text-center text-muted p-3 mensaje-vacio">
+            <i class="bi bi-inbox d-block mb-2 icono-vacio"></i>No hay documentos generales.
+        </div>
+        {{/hay_documentos}}
     </div>
 </div>
