@@ -1,0 +1,63 @@
+<div class="panel">
+    <div class="cabecera-panel d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-box-seam me-1"></i> Insumos m&eacute;dicos</span>
+        <a href="insumos/agregar" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Agregar insumo</a>
+    </div>
+    <div class="cuerpo-panel">
+        <!-- Buscador por texto (nombre o descripción) -->
+        <form method="get" class="d-flex gap-2 mb-3">
+            <input type="hidden" name="estado" value="{{estado_sel}}">
+            <input type="text" name="q" class="form-control" placeholder="Buscar por nombre o descripci&oacute;n..." value="{{q}}">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i> Buscar</button>
+        </form>
+
+        <!-- Filtro de estado -->
+        <div class="btn-group btn-group-sm mb-3" role="group" aria-label="Filtrar por estado">
+            <a href="insumos?estado=activos&q={{q_url}}" class="btn btn-outline-secondary{{estado_activos}}">Activos</a>
+            <a href="insumos?estado=inactivos&q={{q_url}}" class="btn btn-outline-secondary{{estado_inactivos}}">Inactivos</a>
+            <a href="insumos?estado=todos&q={{q_url}}" class="btn btn-outline-secondary{{estado_todos}}">Todos</a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="tabla-panel">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Descripci&oacute;n</th>
+                        <th style="width:90px;">Stock</th>
+                        <th>Registrado</th>
+                        <th style="width:100px;">Estado</th>
+                        <th style="width:110px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#insumos}}
+                    <tr data-insumo-id="{{fila.id}}">
+                        <td class="fw-semibold">{{fila.nombre}}</td>
+                        <td>{{fila.descripcion}}</td>
+                        <td><span class="badge text-bg-info">{{fila.stock}}</span></td>
+                        <td class="text-muted small">{{fila.fecha}}</td>
+                        <td>
+                            {{#fila.activo}}<span class="badge text-bg-success">Activo</span>{{/fila.activo}}
+                            {{#fila.inactivo}}<span class="badge text-bg-secondary">Inactivo</span>{{/fila.inactivo}}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="insumos/editar?id={{fila.id}}" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
+                                <button type="button" class="btn btn-sm {{#fila.activo}}btn-outline-warning{{/fila.activo}}{{#fila.inactivo}}btn-outline-success{{/fila.inactivo}}" title="Activar/Desactivar"
+                                        onclick="ElyraInsumos.toggle({{fila.id}}, this)"><i class="bi bi-power"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                    {{/insumos}}
+                </tbody>
+            </table>
+        </div>
+
+        {{^insumos}}
+        <div class="text-center text-muted p-3" style="font-size:15px;">
+            <i class="bi bi-box-seam d-block mb-2" style="font-size:28px;"></i>No hay insumos para mostrar.
+        </div>
+        {{/insumos}}
+    </div>
+</div>
