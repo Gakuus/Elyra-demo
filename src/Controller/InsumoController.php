@@ -77,7 +77,13 @@ final class InsumoController
             $filas[] = self::mostrarInsumo($ins);
         }
 
+        // Aviso de éxito tras agregar o guardar cambios (?agregado=1 / ?editado=1).
+        $aviso = isset($_GET['agregado']) ? 'Insumo agregado correctamente.'
+            : (isset($_GET['editado']) ? 'Cambios guardados.' : '');
+
         render_dashboard('insumos', 'Insumos', 'insumos', [
+            'hay_aviso' => $aviso !== '' ? ['1'] : [],
+            'aviso' => htmlspecialchars($aviso),
             'q' => htmlspecialchars($q),
             'q_url' => urlencode($q),
             'estado_sel' => htmlspecialchars($estado),
@@ -119,7 +125,8 @@ final class InsumoController
         }
 
         render_dashboard('insumos_agregar', 'Agregar insumo', 'insumos', [
-            'mensaje_error' => self::errorHtml($error),
+            'hay_error' => ['1'],
+            'error' => $error,
             'valor_nombre' => htmlspecialchars($nombre),
             'valor_descripcion' => htmlspecialchars($descripcion),
             'valor_stock' => htmlspecialchars($stock),
@@ -134,7 +141,8 @@ final class InsumoController
         self::guardarGestion();
 
         render_dashboard('insumos_agregar', 'Agregar insumo', 'insumos', [
-            'mensaje_error' => '',
+            'hay_error' => [],
+            'error' => '',
             'valor_nombre' => '',
             'valor_descripcion' => '',
             'valor_stock' => '0',
@@ -165,7 +173,8 @@ final class InsumoController
         }
 
         render_dashboard('insumos_editar', 'Editar insumo', 'insumos', [
-            'mensaje_error' => '',
+            'hay_error' => [],
+            'error' => '',
             'id' => (string) $id,
             'valor_nombre' => htmlspecialchars((string) $ins['nombre']),
             'valor_descripcion' => htmlspecialchars((string) ($ins['descripcion'] ?? '')),
@@ -198,7 +207,8 @@ final class InsumoController
 
         if ($error !== null) {
             render_dashboard('insumos_editar', 'Editar insumo', 'insumos', [
-                'mensaje_error' => self::errorHtml($error),
+                'hay_error' => ['1'],
+                'error' => $error,
                 'id' => (string) $id,
                 'valor_nombre' => htmlspecialchars($nombre),
                 'valor_descripcion' => htmlspecialchars($descripcion),
@@ -233,7 +243,7 @@ final class InsumoController
         $id = (int) ($_POST['id'] ?? 0);
 
         if ($id <= 0) {
-            self::respondeJson(['ok' => false, 'error' => 'ID inv&aacute;lido.']);
+            self::respondeJson(['ok' => false, 'error' => 'ID inválido.']);
         }
 
         $pdo = db_connect();
@@ -295,14 +305,5 @@ final class InsumoController
         }
 
         return null;
-    }
-
-    /**
-     * Convierte un mensaje de error en el bloque HTML con la clase
-     * .mensaje-error (misma presentación que el resto de los módulos).
-     */
-    private static function errorHtml(string $error): string
-    {
-        return '<div class="mensaje-error">' . $error . '</div>';
     }
 }

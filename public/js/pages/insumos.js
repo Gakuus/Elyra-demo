@@ -12,7 +12,8 @@
     /**
      * toggle: activa o desactiva un insumo (POST /insumos/toggle).
      * Pide confirmación primero y, si el servidor responde ok, actualiza el
-     * estado de la fila sin recargar la página.
+     * estado y el botón de la fila sin recargar la página. El endpoint
+     * devuelve el estado nuevo (activo) para pintarlo al toque.
      */
     function toggle(id, btn) {
         var fila = document.querySelector('tr[data-insumo-id="' + id + '"]');
@@ -32,8 +33,22 @@
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (!data || data.ok !== true) throw new Error('error');
+
+                // Localiza la fila por data-insumo-id; si no está (caso raro),
+                // recarga para reflejar el estado real del servidor.
                 if (!fila) { window.location.reload(); return; }
-                window.location.reload();
+
+                var activo = !!(data.activo);
+
+                // Estado (Activo/Inactivo): se pinta el badge nuevo.
+                fila.children[4].innerHTML = '<span class="badge ' + (activo ? 'text-bg-success' : 'text-bg-secondary') + '">'
+                    + (activo ? 'Activo' : 'Inactivo') + '</span>';
+
+                // El botón pasa a ofrecer la acción inversa.
+                btn.disabled = false;
+                btn.className = 'btn btn-sm ' + (activo ? 'btn-outline-warning' : 'btn-outline-success');
+                btn.title = activo ? 'Desactivar insumo' : 'Activar insumo';
+                btn.onclick = function () { ElyraInsumos.toggle(id, btn); };
             })
             .catch(function () {
                 btn.disabled = false;

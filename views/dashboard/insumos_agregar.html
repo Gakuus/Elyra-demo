@@ -1,7 +1,12 @@
 <div class="panel">
     <div class="cabecera-panel"><i class="bi bi-box-seam me-1"></i> Agregar insumo</div>
     <div class="cuerpo-panel">
-        {{mensaje_error}}
+        {{#hay_error}}
+        <div class="alert alert-danger d-flex align-items-start gap-2 py-2">
+            <i class="bi bi-exclamation-triangle mt-1"></i>
+            <div>{{error}}</div>
+        </div>
+        {{/hay_error}}
         <form method="post" action="insumos/agregar" id="insumoForm">
             <div class="mb-3">
                 <label for="nombre" class="form-label">Nombre <span style="color:#C00;">*</span></label>
