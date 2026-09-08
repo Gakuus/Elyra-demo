@@ -4,6 +4,10 @@
         <a href="insumos/agregar" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Agregar insumo</a>
     </div>
     <div class="cuerpo-panel">
+        {{#hay_aviso}}
+        <div class="alert alert-success py-2"><i class="bi bi-check-lg me-1"></i>{{aviso}}</div>
+        {{/hay_aviso}}
+
         <!-- Buscador por texto (nombre o descripción) -->
         <form method="get" class="d-flex gap-2 mb-3">
             <input type="hidden" name="estado" value="{{estado_sel}}">
