@@ -3,8 +3,6 @@
 > Sistema de gestión hospitalaria para el **Hospital de Clínicas**.
 > Front controller en PHP con autenticación, encuestas, documentos, vehículos, insumos y usuarios.
 
-📊 **Documentación visual:** [Diagramas de actividad](docs/diagrama_actividad.md) · [Versión HTML](docs/diagramas_actividad.html) · [PDF](docs/diagramas_actividad.pdf)
-
 [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC_BY--NC_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 [![CI](https://github.com/Gakuus/Elyra-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/Gakuus/Elyra-demo/actions/workflows/ci.yml)
 [![PHP](https://img.shields.io/badge/PHP-%3E%3D8.1-777BB4?logo=php&logoColor=white)](https://php.net)
