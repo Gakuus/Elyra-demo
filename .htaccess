@@ -1,0 +1,16 @@
+# Elyra: reescritura para Apache.
+#
+# Todas las peticiones que NO corresponden a un archivo o carpeta real se
+# mandan a index.php (front controller). Asi las rutas de la app (/login,
+# /dashboard, /encuestas...) funcionan igual que con el servidor de
+# desarrollo (php -S), con o sin subcarpeta delante (base_path).
+#
+# RewriteBase se omite a proposito: Apache resuelve "index.php" relativo al
+# directorio de este archivo, asi la app sirve en la raiz o bajo
+# /proyectos/elyra sin cambiar nada.
+RewriteEngine On
+
+# El archivo o carpeta existe en disco -> se sirve directo (estaticos).
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]
