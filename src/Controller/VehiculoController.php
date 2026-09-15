@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 /**
  * VehiculoController: controlador del módulo de vehículos.
- * Gestiona el ABM (alta, baja y modificación) de los vehículos de la
- * institución. La tabla vehiculo guarda patente, modelo y año; es la
- * misma estructura que la entidad Vehiculo del proyecto original.
+ * Gestiona el ABM (alta, activación/desactivación y modificación) de los
+ * vehículos de la institución. La tabla vehiculo guarda patente, modelo,
+ * año y estado (activo); es la misma estructura que la entidad Vehiculo
+ * del proyecto original. La desactivación es una baja lógica: nunca se
+ * borran filas para conservar el historial.
  *
  * Todas las páginas requieren sesión iniciada (requerir_login).
  */
@@ -31,8 +33,8 @@ final class VehiculoController
             // Edición: POST guarda, GET muestra el formulario con los datos.
             $path === '/vehiculos/editar' && $method === 'POST' => self::editar(),
             $path === '/vehiculos/editar' && $method === 'GET' => self::formularioEditar(),
-            // Baja (eliminación real de la fila, no hay borrado lógico acá).
-            $path === '/vehiculos/eliminar' && $method === 'POST' => self::eliminar(),
+            // Activar/desactivar un vehículo (baja lógica, responde JSON).
+            $path === '/vehiculos/toggle' && $method === 'POST' => self::toggle(),
             // Ninguna condición coincidió → página 404.
             default => pagina_404(),
         };
@@ -41,7 +43,8 @@ final class VehiculoController
     /**
      * Listado de vehículos (GET a /vehiculos).
      * Muestra la tabla con todos los vehículos ordenados por patente,
-     * con un campo de búsqueda por texto (patente o modelo).
+     * con un campo de búsqueda por texto (patente o modelo) y un filtro
+     * de estado (activos/inactivos/todos).
      */
     public static function listar(): void
     {
@@ -50,20 +53,31 @@ final class VehiculoController
 
         $pdo = db_connect();
 
-        // Texto de búsqueda opcional (?q=texto).
+        // Texto de búsqueda opcional (?q=texto) y estado (?estado=...).
         $q = trim((string) ($_GET['q'] ?? ''));
+        $estado = (string) ($_GET['estado'] ?? 'activos');
+        if (!in_array($estado, ['todos', 'activos', 'inactivos'], true)) {
+            $estado = 'activos';
+        }
 
         // Consulta base, ordenada por patente (como en el repo original).
         // La patente se guarda sin espacios (AAA1234), así que para poder
         // buscarla como se ve en la placa (AAA 1234) se comparan ambas
         // partes sin el espacio. El modelo se busca con el texto tal cual.
-        $sql = 'SELECT id, patente, modelo, anio, created_at FROM vehiculo';
+        $sql = 'SELECT id, patente, modelo, anio, activo, created_at FROM vehiculo';
         $params = [];
         if ($q !== '') {
             $sql .= ' WHERE REPLACE(patente, " ", "") LIKE :qPatente OR modelo LIKE :qModelo';
             $params['qPatente'] = '%' . str_replace(' ', '', $q) . '%';
             $params['qModelo'] = '%' . $q . '%';
         }
+
+        if ($estado === 'activos') {
+            $sql .= ($params ? ' AND' : ' WHERE') . ' activo = 1';
+        } elseif ($estado === 'inactivos') {
+            $sql .= ($params ? ' AND' : ' WHERE') . ' activo = 0';
+        }
+
         $sql .= ' ORDER BY patente';
 
         $stmt = $pdo->prepare($sql);
@@ -78,13 +92,19 @@ final class VehiculoController
 
         $contenido = $filas === ''
             ? '<div class="text-center text-muted p-3" style="font-size:15px;">'
-                . '<i class="bi bi-truck d-block mb-2" style="font-size:28px;"></i>No hay veh&iacute;culos cargados.</div>'
+                . '<img src="public/img/silk/lorry.png" alt="" class="d-block mx-auto mb-2" style="width:48px;height:48px;">No hay vehículos para mostrar.</div>'
             : '<div class="table-responsive"><table class="tabla-panel"><thead><tr>'
-                . '<th>Patente</th><th>Modelo</th><th>A&ntilde;o</th><th>Registrado</th>'
+                . '<th>Patente</th><th>Modelo</th><th>Año</th><th>Registrado</th>'
+                . '<th style="width:100px;">Estado</th>'
                 . '<th style="width:120px;">Acciones</th></tr></thead><tbody>' . $filas . '</tbody></table></div>';
 
         render_dashboard('vehiculos', 'Vehículos', 'vehiculos', [
             'q' => htmlspecialchars($q),
+            'q_url' => urlencode($q),
+            'estado_sel' => htmlspecialchars($estado),
+            'estado_activos' => $estado === 'activos' ? ' active' : '',
+            'estado_inactivos' => $estado === 'inactivos' ? ' active' : '',
+            'estado_todos' => $estado === 'todos' ? ' active' : '',
             'contenido_vehiculos' => $contenido,
         ]);
     }
@@ -225,24 +245,35 @@ final class VehiculoController
     }
 
     /**
-     * Elimina un vehículo (POST a /vehiculos/eliminar).
-     * Es una baja fisica: borra la fila de la tabla. Se ejecuta por POST
-     * para evitar borrados accidentales y responde en JSON.
+     * Activa o desactiva un vehículo (POST a /vehiculos/toggle).
+     * Es una baja lógica: cambia el campo activo, no borra la fila.
+     * Responde en JSON para que el listado lo actualice sin recargar.
      */
-    public static function eliminar(): void
+    public static function toggle(): void
     {
         requerir_login();
 
         $id = (int) ($_POST['id'] ?? 0);
 
-        if ($id > 0) {
-            $pdo = db_connect();
-            $stmt = $pdo->prepare('DELETE FROM vehiculo WHERE id = :id');
-            $stmt->execute(['id' => $id]);
+        if ($id <= 0) {
+            header('Content-Type: application/json');
+            echo json_encode(['ok' => false, 'error' => 'ID inválido.']);
+            exit;
         }
 
+        $pdo = db_connect();
+        $stmt = $pdo->prepare(
+            'UPDATE vehiculo SET activo = IF(activo = 1, 0, 1) WHERE id = :id'
+        );
+        $stmt->execute(['id' => $id]);
+
+        // Devuelve el estado nuevo para que la fila se pueda pintar al toque.
+        $stmt = $pdo->prepare('SELECT activo FROM vehiculo WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        $activo = (bool) $stmt->fetchColumn();
+
         header('Content-Type: application/json');
-        echo json_encode(['ok' => true]);
+        echo json_encode(['ok' => true, 'activo' => $activo]);
         exit;
     }
 
@@ -262,13 +293,13 @@ final class VehiculoController
     {
         // Formato de patente uruguayo: 3 letras + 4 números (ej: ABC 1234).
         if (!preg_match('/^[A-Z]{3}[0-9]{4}$/', $patente)) {
-            return 'La patente debe usar el formato uruguayo AAA 1234 (3 letras y 4 n&uacute;meros).';
+            return 'La patente debe usar el formato uruguayo AAA 1234 (3 letras y 4 números).';
         }
         if (strlen($modelo) > 100) {
             return 'El modelo no puede superar los 100 caracteres.';
         }
         if ($anio !== '' && (!ctype_digit($anio) || (int) $anio < 1900 || (int) $anio > 2100)) {
-            return 'El a&ntilde;o debe ser un n&uacute;mero entre 1900 y 2100.';
+            return 'El año debe ser un número entre 1900 y 2100.';
         }
 
         // Patente duplicada (la columna patente es UNIQUE en la base).
@@ -282,7 +313,7 @@ final class VehiculoController
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         if ((int) $stmt->fetchColumn() > 0) {
-            return 'Ya existe un veh&iacute;culo con esa patente.';
+            return 'Ya existe un vehículo con esa patente.';
         }
 
         return null;
@@ -299,8 +330,8 @@ final class VehiculoController
 
     /**
      * Construye la fila <tr> de un vehículo para la tabla del listado.
-     * Incluye patente, modelo, año, fecha de registro y botones de
-     * editar / eliminar.
+     * Incluye patente, modelo, año, fecha de registro, estado y botones
+     * de editar / activar-desactivar.
      *
      * @param array $veh Fila de vehículo devuelta por la consulta.
      */
@@ -311,18 +342,25 @@ final class VehiculoController
         $modelo = htmlspecialchars((string) ($veh['modelo'] ?? ''));
         $anio = htmlspecialchars((string) ($veh['anio'] ?? ''));
         $fecha = date('d/m/Y', (int) strtotime((string) $veh['created_at']));
+        $activo = (bool) ($veh['activo'] ?? true);
 
-        // El botón eliminar pide confirmación en el navegador antes de
-        // llamar a ElyraVehiculos.eliminar(id, this) definido en vehiculos.js.
+        $estado = $activo
+            ? '<span class="estado-activo">Activo</span>'
+            : '<span class="estado-inactivo">Inactivo</span>';
+
+        // El botón cambia estado pide confirmación en el navegador antes de
+        // llamar a ElyraVehiculos.toggle(id, this) definido en vehiculos.js.
         return '<tr data-vehiculo-id="' . $id . '">'
             . '<td class="fw-semibold">' . $patente . '</td>'
             . '<td>' . ($modelo !== '' ? $modelo : '<span class="text-muted">—</span>') . '</td>'
             . '<td>' . ($anio !== '' ? $anio : '<span class="text-muted">—</span>') . '</td>'
             . '<td class="text-muted small">' . $fecha . '</td>'
+            . '<td>' . $estado . '</td>'
             . '<td><div class="d-flex gap-1">'
             . '<a href="vehiculos/editar?id=' . $id . '" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>'
-            . '<button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar"'
-            . ' onclick="ElyraVehiculos.eliminar(' . $id . ', this)"><i class="bi bi-trash"></i></button>'
+            . '<button type="button" class="btn btn-sm ' . ($activo ? 'btn-outline-warning' : 'btn-outline-success') . '"'
+            . ' title="' . ($activo ? 'Desactivar vehículo' : 'Activar vehículo') . '"'
+            . ' onclick="ElyraVehiculos.toggle(' . $id . ', this)"><i class="bi bi-power"></i></button>'
             . '</div></td>'
             . '</tr>';
     }

@@ -281,10 +281,10 @@ final class InsumoController
             return 'El nombre no puede superar los 150 caracteres.';
         }
         if (mb_strlen($descripcion) > 5000) {
-            return 'La descripci&oacute;n es demasiado larga.';
+            return 'La descripción es demasiado larga.';
         }
         if ($stock === '' || !ctype_digit($stock)) {
-            return 'El stock debe ser un n&uacute;mero entero.';
+            return 'El stock debe ser un número entero.';
         }
         if ((int) $stock > 100000000) {
             return 'El stock no puede superar los 100.000.000.';

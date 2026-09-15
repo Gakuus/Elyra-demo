@@ -50,9 +50,11 @@ CREATE TABLE `vehiculo` (
   `patente` varchar(20) NOT NULL,
   `modelo` varchar(100) DEFAULT NULL,
   `anio` year(4) DEFAULT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `patente` (`patente`)
+  UNIQUE KEY `patente` (`patente`),
+  KEY `idx_vehiculo_activo` (`activo`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `funcionario` (

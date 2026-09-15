@@ -1,9 +1,3 @@
-/* ---------- Botón compacto (Encuestas) ---------- */
-.btn-compacto {
-    padding: 0 12px;
-    font-size: 11px;
-}
-
 /* ---------- Contenedores de gráficos (resultados de encuesta) ---------- */
 .contenedor-chart,
 .contenedor-chart-alto {

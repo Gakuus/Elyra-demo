@@ -76,6 +76,12 @@
     white-space: nowrap;
 }
 
+/* ---------- Filtro de estado con botón activo en texto negro ---------- */
+.filtro-estado .btn-outline-secondary.active,
+.filtro-estado .btn-outline-secondary:active {
+    color: #000;
+}
+
 /* ---------- Insignias ---------- */
 .insignia {
     display: inline-block;

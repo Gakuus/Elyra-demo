@@ -15,7 +15,7 @@
     {{#personas}}
         <tr data-usuario-id="{{fila.id}}">
             <td class="fw-semibold">{{fila.cedula}}</td>
-            <td>{{fila.nombre}}{{^fila.activa}} <span class="badge bg-secondary ms-1">Inactivo</span>{{/fila.activa}}</td>
+            <td>{{fila.nombre}}</td>
             <td><span class="insignia">{{fila.categoria}}</span></td>
             <td class="text-muted small">{{fila.rol}}</td>
             <td><span class="{{#fila.activa}}estado-activo{{/fila.activa}}{{^fila.activa}}estado-inactivo{{/fila.activa}}">{{#fila.activa}}Activo{{/fila.activa}}{{^fila.activa}}Inactivo{{/fila.activa}}</span></td>

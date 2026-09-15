@@ -7,12 +7,12 @@
             {{#activo}}
                 <button type="button" class="btn btn-outline-danger"
                     onclick="ElyraUsuario.cambiarEstado({{id}}, 0, this)">
-                    <i class="bi bi-slash-circle me-1"></i> Desactivar</button>
+                    <i class="bi bi-power me-1"></i> Desactivar</button>
             {{/activo}}
             {{^activo}}
                 <button type="button" class="btn btn-outline-success"
                     onclick="ElyraUsuario.cambiarEstado({{id}}, 1, this)">
-                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reactivar</button>
+                    <i class="bi bi-power me-1"></i> Reactivar</button>
             {{/activo}}
             <a href="usuarios" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i> Volver</a>
         </div>
@@ -82,4 +82,4 @@
     </div>
 </div>
 
-<script src="public/js/pages/usuarios.js?v=1" defer></script>
+<script src="public/js/pages/usuarios.js?v=2" defer></script>
