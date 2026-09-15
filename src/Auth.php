@@ -258,11 +258,16 @@ final class Auth
         // - funcionario: credenciales de empleados (username, password, rol).
         // - paciente: credenciales de pacientes (username, password).
         // LEFT JOIN porque un usuario es solo una de las dos cosas.
-        // COALESCE(f.activo, p.activo) toma el "activo" de la tabla que
-        // corresponda (la otra tiene NULL por el LEFT JOIN).
+        // COALESCE(...) toma cada campo de la tabla que corresponda
+        // (la otra tiene NULL por el LEFT JOIN). Sin esto, el password_hash
+        // de un paciente llegaría NULL y password_verify() fallaría (500).
+        // El rol de un paciente no existe en la tabla: siempre 'paciente'.
         $stmt = $pdo->prepare("
             SELECT u.id, u.nombre, u.apellido, u.email, u.tipo,
-                   f.username, f.password_hash, f.rol, COALESCE(f.activo, p.activo) AS activo
+                   COALESCE(f.username, p.username) AS username,
+                   COALESCE(f.password_hash, p.password_hash) AS password_hash,
+                   COALESCE(f.rol, 'paciente') AS rol,
+                   COALESCE(f.activo, p.activo) AS activo
             FROM usuario u
             LEFT JOIN funcionario f ON f.id = u.id
             LEFT JOIN paciente p ON p.id = u.id
