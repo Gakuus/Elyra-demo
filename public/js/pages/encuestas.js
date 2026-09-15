@@ -53,8 +53,8 @@
         });
     }
 
-    // Desactivar / reactivar desde el botón de acciones (además del switch).
-    // Al confirmarse, sincroniza el switch y el botón de la fila.
+    // Desactivar / reactivar desde el botón de acciones. Al confirmarse,
+    // actualiza el estado y el botón de la fila.
     function cambiarEstado(id, activa, btn) {
         btn.disabled = true;
 
@@ -67,18 +67,16 @@
             .then(function (data) {
                 if (!data || data.ok !== true) throw new Error('error');
 
-                // Sincroniza el switch de la misma fila (queda marcado igual
-                // que el estado recién guardado).
+                // Actualiza la celda de estado (Activa/Inactiva) de la fila.
                 var fila = btn.closest('tr');
                 if (fila) {
-                    var sw = fila.querySelector('.form-check-input[data-encuesta-id]');
-                    var etiqueta = fila.querySelector('.form-check-label');
-                    if (sw) sw.checked = !!activa;
-                    if (etiqueta) etiqueta.textContent = activa ? 'Activa' : 'Inactiva';
+                    fila.children[3].innerHTML = '<span class="'
+                        + (activa ? 'estado-activo' : 'estado-inactivo') + '">'
+                        + (activa ? 'Activa' : 'Inactiva') + '</span>';
                 }
 
                 // El botón pasa a ofrecer la acción inversa.
-                btn.innerHTML = '<i class="bi bi-' + (activa ? 'toggle-off' : 'arrow-counterclockwise') + '"></i>';
+                btn.innerHTML = '<i class="bi bi-power"></i>';
                 btn.title = activa ? 'Desactivar' : 'Reactivar';
                 btn.classList.toggle('text-success', !activa);
                 btn.disabled = false;
@@ -95,32 +93,4 @@
         imprimirQR: function (url) { window.Elyra.util.imprimeQR(url); },
         cambiarEstado: cambiarEstado
     };
-
-    // Switch activa/inactiva: publica o despublica la encuesta vía fetch.
-    // Usa el mismo endpoint que cambiarEstado (/encuestas/toggle); la
-    // diferencia es que acá el origen del cambio ES el switch, así que ante
-    // un error se revierte su estado visual para que no mienta.
-    document.querySelectorAll('.form-check-input[data-encuesta-id]').forEach(function (toggle) {
-        toggle.addEventListener('change', function () {
-            var activa = toggle.checked ? '1' : '0';
-            var etiqueta = toggle.parentElement.querySelector('label');
-            toggle.disabled = true; // evita cambios mientras viaja el request
-
-            fetch((window.BASE_PATH || '') + '/encuestas/toggle', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'id=' + encodeURIComponent(toggle.dataset.encuestaId) + '&activa=' + activa
-            })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    if (!data || data.ok !== true) throw new Error('error');
-                    if (etiqueta) etiqueta.textContent = toggle.checked ? 'Activa' : 'Inactiva';
-                    toggle.disabled = false;
-                })
-                .catch(function () {
-                    toggle.checked = !toggle.checked; // revierte al estado previo
-                    toggle.disabled = false;
-                });
-        });
-    });
 })();

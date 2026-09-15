@@ -89,12 +89,12 @@
                 if (String(activo) === '0') {
                     btn.className = 'btn btn-sm btn-outline-success';
                     btn.title = 'Reactivar documento';
-                    btn.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i>';
+                    btn.innerHTML = '<i class="bi bi-power"></i>';
                     btn.onclick = function () { ElyraDoc.cambiarEstado(id, 1, btn); };
                 } else {
                     btn.className = 'btn btn-sm btn-outline-secondary';
                     btn.title = 'Desactivar documento';
-                    btn.innerHTML = '<i class="bi bi-slash-circle"></i>';
+                    btn.innerHTML = '<i class="bi bi-power"></i>';
                     btn.onclick = function () { ElyraDoc.cambiarEstado(id, 0, btn); };
                 }
             })

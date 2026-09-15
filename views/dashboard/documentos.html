@@ -41,7 +41,7 @@
                             <a href="documentos/ver?id={{fila.id}}" class="btn btn-sm btn-outline-secondary" title="Ver detalle"><i class="bi bi-eye"></i></a>
                             <a href="documentos/editar?id={{fila.id}}" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
                             <button type="button" class="btn btn-sm {{#fila.inactivo}}btn-outline-success{{/fila.inactivo}}{{^fila.inactivo}}btn-outline-secondary{{/fila.inactivo}}" onclick="ElyraDoc.cambiarEstado({{fila.id}}, {{#fila.inactivo}}1{{/fila.inactivo}}{{^fila.inactivo}}0{{/fila.inactivo}}, this)" {{#fila.inactivo}}title="Reactivar documento"{{/fila.inactivo}}{{^fila.inactivo}}title="Desactivar documento"{{/fila.inactivo}}>
-                                {{#fila.inactivo}}<i class="bi bi-arrow-counterclockwise"></i>{{/fila.inactivo}}{{^fila.inactivo}}<i class="bi bi-slash-circle"></i>{{/fila.inactivo}}
+                                <i class="bi bi-power"></i>
                             </button>
                         </div>
                     </td>

@@ -131,11 +131,11 @@
                 btn.disabled = false;
                 if (String(activo) === '0') {
                     btn.className = 'btn btn-outline-success';
-                    btn.innerHTML = '<i class="bi bi-arrow-counterclockwise me-1"></i> Reactivar';
+                    btn.innerHTML = '<i class="bi bi-power me-1"></i> Reactivar';
                     btn.onclick = function () { ElyraUsuario.cambiarEstado(id, 1, btn); };
                 } else {
                     btn.className = 'btn btn-outline-danger';
-                    btn.innerHTML = '<i class="bi bi-slash-circle me-1"></i> Desactivar';
+                    btn.innerHTML = '<i class="bi bi-power me-1"></i> Desactivar';
                     btn.onclick = function () { ElyraUsuario.cambiarEstado(id, 0, btn); };
                 }
             })

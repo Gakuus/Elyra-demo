@@ -10,11 +10,11 @@
     <link href="public/css/base.css?v=5" rel="stylesheet">
     <link href="public/css/pages/dashboard/layout.css?v=6" rel="stylesheet">
     <link href="public/css/pages/dashboard/modal.css?v=6" rel="stylesheet">
-    <link href="public/css/pages/dashboard/componentes.css?v=6" rel="stylesheet">
+    <link href="public/css/pages/dashboard/componentes.css?v=7" rel="stylesheet">
     <link href="public/css/pages/dashboard/inicio.css?v=6" rel="stylesheet">
     <link href="public/css/pages/dashboard/usuarios.css?v=6" rel="stylesheet">
     <link href="public/css/pages/dashboard/documentos.css?v=6" rel="stylesheet">
-    <link href="public/css/pages/dashboard/encuestas.css?v=6" rel="stylesheet">
+    <link href="public/css/pages/dashboard/encuestas.css?v=7" rel="stylesheet">
     <meta name="theme-color" content="#3B5998">
 </head>
 <body>
@@ -51,7 +51,7 @@
             <a href="usuarios" class="enlace-barra{{activo_usuarios}}">
                 <img src="public/img/silk/group.png" width="16" height="16" alt=""> Usuarios</a>
             <a href="insumos" class="enlace-barra{{activo_insumos}}">
-                <i class="bi bi-box-seam me-1" aria-hidden="true"></i> Insumos</a>
+                <img src="public/img/silk/package_box.png" width="16" height="16" alt=""> Insumos</a>
         </div>
     </div>
 
@@ -68,7 +68,7 @@
     <div class="modal-box modal-box-qr">
         <div class="modal-header">
             <h6 class="modal-encabezado-titulo">Código QR</h6>
-            <button type="button" class="cerrar-modal" onclick="document.getElementById('qrModal').classList.remove('open')" aria-label="Cerrar">&times;</button>
+            <button type="button" class="cerrar-modal" onclick="document.getElementById('qrModal').classList.remove('open')" aria-label="Cerrar">×</button>
         </div>
         <div class="modal-body text-center" id="qrModalBody">
             <p class="text-muted small mb-0">Cargando...</p>
@@ -83,8 +83,8 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
 <script>window.BASE_PATH = '{{base_path}}';</script>
 <script src="public/js/elyra.js?v=2" defer></script>
-<script src="public/js/pages/documentos.js?v=2" defer></script>
-<script src="public/js/pages/vehiculos.js?v=1" defer></script>
+<script src="public/js/pages/documentos.js?v=3" defer></script>
+<script src="public/js/pages/vehiculos.js?v=2" defer></script>
 <script src="public/js/pages/insumos.js?v=1" defer></script>
 </body>
 </html>
