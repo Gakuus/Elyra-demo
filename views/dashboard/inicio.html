@@ -1,9 +1,284 @@
-<div class="panel">
-    <div class="cabecera-panel"><i class="bi bi-house-door me-1"></i> Inicio</div>
-    <div class="cuerpo-panel">
-        <h5 class="titulo-bienvenida">Bienvenido, {{usuario}}</h5>
-        <p class="text-muted subtitulo-bienvenida">
-            Sistema de gestión hospitalaria Elyra.
-        </p>
+<!--
+    Inicio del panel: la "central de operaciones" de Elyra.
+
+    La vista llega renderizada del servidor (DashboardController::datosInicio),
+    así que se ve completa aun sin JavaScript. public/js/pages/inicio.js la
+    vuelve a pintar con el mismo payload de /api/mapa: el tablero, los conteos
+    y la flota quedan en vivo, y el recuadro de abajo a la derecha es un
+    mini-mapa Leaflet de solo lectura (Leaflet ya viene cargado en el layout).
+-->
+<div class="inicio" data-usuario-id="{{usuario_id}}">
+
+    <!-- ---------- Cabecera ---------- -->
+    <header class="inicio-cabecera">
+        <div class="inicio-saludo-bloque">
+            <h1 class="inicio-saludo">{{saludo}}, {{usuario}}</h1>
+            <p class="inicio-fecha">{{fecha_larga}}</p>
+        </div>
+
+        <div class="inicio-vivo">
+            <span class="latido" aria-hidden="true"></span>
+            <span id="inicio-reloj" class="inicio-reloj">--:--</span>
+            <span class="inicio-vivo-texto">en vivo</span>
+        </div>
+    </header>
+
+    <!-- ---------- Acciones rápidas ---------- -->
+    <nav class="inicio-acciones" aria-label="Acciones rápidas">
+        {{^es_paciente}}
+        <a href="mapa" class="accion accion-primaria">
+            <i class="bi bi-plus-circle"></i> Registrar traslado
+        </a>
+        {{/es_paciente}}
+        <a href="mapa" class="accion">
+            <i class="bi bi-map"></i> Ver mapa en vivo
+        </a>
+        {{#es_gestion}}
+        <a href="documentos" class="accion">
+            <i class="bi bi-file-earmark-text"></i> Documentos
+        </a>
+        <a href="encuestas" class="accion">
+            <i class="bi bi-clipboard-check"></i> Encuestas
+        </a>
+        <a href="usuarios" class="accion">
+            <i class="bi bi-people"></i> Usuarios
+        </a>
+        {{/es_gestion}}
+    </nav>
+
+    {{#es_gestion}}
+    <!-- ---------- Franja de estado: el pipeline de un vistazo ---------- -->
+    <section class="franja-estado" id="inicio-conteos" aria-label="Resumen de traslados">
+        <div class="franja-item estado-pendiente">
+            <span class="franja-numero" data-contador="pendiente">{{cnt_pendiente}}</span>
+            <span class="franja-rotulo">Pendientes</span>
+        </div>
+        <div class="franja-item estado-en_curso">
+            <span class="franja-numero" data-contador="en_curso">{{cnt_curso}}</span>
+            <span class="franja-rotulo">En curso</span>
+        </div>
+        <div class="franja-item estado-en_destino">
+            <span class="franja-numero" data-contador="en_destino">{{cnt_destino}}</span>
+            <span class="franja-rotulo">En destino</span>
+        </div>
+        <div class="franja-item estado-en_retorno">
+            <span class="franja-numero" data-contador="en_retorno">{{cnt_retorno}}</span>
+            <span class="franja-rotulo">En retorno</span>
+        </div>
+        <div class="franja-item franja-cierre">
+            <span class="franja-numero" data-contador="completados">{{completados_hoy}}</span>
+            <span class="franja-rotulo">Completados hoy</span>
+        </div>
+    </section>
+    {{/es_gestion}}
+
+    <div class="inicio-grid">
+
+        <!-- ---------- Columna principal ---------- -->
+        <main class="inicio-principal">
+
+            {{#es_operacion}}
+            <!-- Variante del chofer: su traslado, no el tablero global. -->
+            <section class="bloque">
+                <div class="bloque-titulo"><i class="bi bi-truck"></i> Mi traslado</div>
+                {{#mi_traslado}}
+                <article class="tarjeta-grande estado-{{fila.estado}}">
+                    <div class="tarjeta-grande-cabecera">
+                        <span class="tarjeta-codigo">{{fila.codigo}}</span>
+                        <span class="chip-estado estado-{{fila.estado}}">{{fila.estado_etiqueta}}</span>
+                    </div>
+                    <div class="tarjeta-grande-ruta">
+                        <div class="ruta-linea">
+                            <span class="ruta-punto"></span>
+                            <span class="ruta-texto">{{fila.origen}}</span>
+                        </div>
+                        <div class="ruta-linea">
+                            <span class="ruta-punto ruta-punto-destino"></span>
+                            <span class="ruta-texto">{{fila.destino}}</span>
+                        </div>
+                    </div>
+                    <div class="tarjeta-grande-pie">
+                        <span><i class="bi bi-clock-history"></i> {{fila.tiempo}}</span>
+                        <a href="mapa" class="accion accion-primaria accion-chica">Abrir en el mapa</a>
+                    </div>
+                </article>
+                {{/mi_traslado}}
+                {{^mi_traslado}}
+                <div class="tarjeta-grande estado-sin-asignar">
+                    <div class="tarjeta-grande-vacia">
+                        <i class="bi bi-broadcast"></i>
+                        <p>No tenés un traslado activo en este momento.</p>
+                        <a href="mapa" class="accion accion-primaria">Abrir el mapa</a>
+                    </div>
+                </div>
+                {{/mi_traslado}}
+            </section>
+            {{/es_operacion}}
+
+            {{#es_gestion}}
+            <!-- Tablero por estado: cada traslado donde está parado hoy. -->
+            <section class="bloque">
+                <div class="bloque-titulo"><i class="bi bi-kanban"></i> Traslados activos</div>
+                <div class="tablero-traslados">
+
+                    <div class="columna-estado estado-pendiente">
+                        <div class="columna-cabecera">Pendiente</div>
+                        <div class="lista-columna" id="col-pendiente">
+                            {{#col_pendiente}}
+                            <article class="tarjeta-mini">
+                                <div class="mini-cabecera">
+                                    <span class="tarjeta-codigo">{{fila.codigo}}</span>
+                                    <span class="mini-tiempo">{{fila.tiempo}}</span>
+                                </div>
+                                <div class="mini-ruta">{{fila.origen}} <i class="bi bi-arrow-right"></i> {{fila.destino}}</div>
+                                <div class="mini-pie">
+                                    <span><i class="bi bi-person"></i> {{fila.conductor}}</span>
+                                    <span class="mini-vehiculo">{{fila.vehiculo}}</span>
+                                </div>
+                            </article>
+                            {{/col_pendiente}}
+                            {{^col_pendiente}}<p class="columna-vacia">Sin traslados</p>{{/col_pendiente}}
+                        </div>
+                    </div>
+
+                    <div class="columna-estado estado-en_curso">
+                        <div class="columna-cabecera">En curso</div>
+                        <div class="lista-columna" id="col-en_curso">
+                            {{#col_curso}}
+                            <article class="tarjeta-mini">
+                                <div class="mini-cabecera">
+                                    <span class="tarjeta-codigo">{{fila.codigo}}</span>
+                                    <span class="mini-tiempo">{{fila.tiempo}}</span>
+                                </div>
+                                <div class="mini-ruta">{{fila.origen}} <i class="bi bi-arrow-right"></i> {{fila.destino}}</div>
+                                <div class="mini-pie">
+                                    <span><i class="bi bi-person"></i> {{fila.conductor}}</span>
+                                    <span class="mini-vehiculo">{{fila.vehiculo}}</span>
+                                </div>
+                            </article>
+                            {{/col_curso}}
+                            {{^col_curso}}<p class="columna-vacia">Sin traslados</p>{{/col_curso}}
+                        </div>
+                    </div>
+
+                    <div class="columna-estado estado-en_destino">
+                        <div class="columna-cabecera">En destino</div>
+                        <div class="lista-columna" id="col-en_destino">
+                            {{#col_destino}}
+                            <article class="tarjeta-mini">
+                                <div class="mini-cabecera">
+                                    <span class="tarjeta-codigo">{{fila.codigo}}</span>
+                                    <span class="mini-tiempo">{{fila.tiempo}}</span>
+                                </div>
+                                <div class="mini-ruta">{{fila.origen}} <i class="bi bi-arrow-right"></i> {{fila.destino}}</div>
+                                <div class="mini-pie">
+                                    <span><i class="bi bi-person"></i> {{fila.conductor}}</span>
+                                    <span class="mini-vehiculo">{{fila.vehiculo}}</span>
+                                </div>
+                            </article>
+                            {{/col_destino}}
+                            {{^col_destino}}<p class="columna-vacia">Sin traslados</p>{{/col_destino}}
+                        </div>
+                    </div>
+
+                    <div class="columna-estado estado-en_retorno">
+                        <div class="columna-cabecera">En retorno</div>
+                        <div class="lista-columna" id="col-en_retorno">
+                            {{#col_retorno}}
+                            <article class="tarjeta-mini">
+                                <div class="mini-cabecera">
+                                    <span class="tarjeta-codigo">{{fila.codigo}}</span>
+                                    <span class="mini-tiempo">{{fila.tiempo}}</span>
+                                </div>
+                                <div class="mini-ruta">{{fila.origen}} <i class="bi bi-arrow-right"></i> {{fila.destino}}</div>
+                                <div class="mini-pie">
+                                    <span><i class="bi bi-person"></i> {{fila.conductor}}</span>
+                                    <span class="mini-vehiculo">{{fila.vehiculo}}</span>
+                                </div>
+                            </article>
+                            {{/col_retorno}}
+                            {{^col_retorno}}<p class="columna-vacia">Sin traslados</p>{{/col_retorno}}
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+            {{/es_gestion}}
+
+            <!-- Actividad reciente: los últimos cambios de estado. -->
+            <section class="bloque">
+                <div class="bloque-titulo"><i class="bi bi-activity"></i> Actividad reciente</div>
+                <div class="actividad" id="inicio-actividad">
+                    {{#actividad}}
+                    <div class="actividad-fila">
+                        <span class="actividad-punto estado-{{fila.clase}}"></span>
+                        <span class="actividad-texto"><strong>{{fila.codigo}}</strong> · {{fila.estado}}</span>
+                        <span class="actividad-meta">{{fila.usuario}} · {{fila.hace}}</span>
+                    </div>
+                    {{/actividad}}
+                    {{^actividad}}<p class="columna-vacia">Todavía no hay movimientos registrados.</p>{{/actividad}}
+                </div>
+            </section>
+
+        </main>
+
+        <!-- ---------- Columna lateral ---------- -->
+        <aside class="inicio-lateral">
+
+            <!-- Mini-mapa en vivo -->
+            <section class="bloque bloque-mapa">
+                <div class="bloque-titulo">
+                    <i class="bi bi-geo-alt"></i> Flota en vivo
+                    <span class="bloque-badge" id="inicio-en-linea">{{en_linea}}/{{conductores_total}}</span>
+                </div>
+                <div class="mini-mapa" id="mini-mapa" aria-label="Mapa en vivo de la flota"></div>
+                <div class="flota" id="inicio-flota">
+                    {{#flota}}
+                    <button type="button" class="flota-fila {{fila.clase}}"
+                            data-lat="{{fila.lat}}" data-lng="{{fila.lng}}">
+                        <span class="flota-avatar">{{fila.iniciales}}</span>
+                        <span class="flota-datos">
+                            <span class="flota-nombre">{{fila.nombre}}</span>
+                            <span class="flota-detalle">{{fila.detalle}}</span>
+                        </span>
+                    </button>
+                    {{/flota}}
+                    {{^flota}}<p class="columna-vacia">Ningún conductor está reportando posición.</p>{{/flota}}
+                </div>
+            </section>
+
+            {{#es_gestion}}
+            <!-- Avisos que piden una mirada -->
+            <section class="bloque">
+                <div class="bloque-titulo"><i class="bi bi-exclamation-triangle"></i> Para mirar</div>
+                <div class="avisos">
+                    {{#insumos_bajos}}
+                    <div class="aviso aviso-alerta">
+                        <i class="bi bi-box-seam"></i>
+                        <span>{{fila.nombre}}</span>
+                        <span class="aviso-dato">stock {{fila.stock}}</span>
+                    </div>
+                    {{/insumos_bajos}}
+                    {{^insumos_bajos}}
+                    <div class="aviso aviso-ok">
+                        <i class="bi bi-check2-circle"></i>
+                        <span>Insumos con stock suficiente</span>
+                    </div>
+                    {{/insumos_bajos}}
+                    <div class="aviso">
+                        <i class="bi bi-clipboard-check"></i>
+                        <span>Encuestas abiertas</span>
+                        <span class="aviso-dato">{{encuestas_activas}}</span>
+                    </div>
+                    <div class="aviso">
+                        <i class="bi bi-truck"></i>
+                        <span>Vehículos activos</span>
+                        <span class="aviso-dato">{{vehiculos_activos}}/{{vehiculos_total}}</span>
+                    </div>
+                </div>
+            </section>
+            {{/es_gestion}}
+
+        </aside>
     </div>
 </div>

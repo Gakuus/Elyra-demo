@@ -8,6 +8,7 @@
         </div>
         {{/hay_error}}
         <form method="post" action="insumos/editar" id="insumoForm">
+        <input type="hidden" name="_csrf" value="{{csrf_token}}">
             <input type="hidden" name="id" value="{{id}}">
             <div class="mb-3">
                 <label for="nombre" class="form-label">Nombre <span style="color:#C00;">*</span></label>

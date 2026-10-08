@@ -3,31 +3,21 @@
 declare(strict_types=1);
 
 /**
- * UsuarioEdicionController: edición y estado de las personas del Hospital de
- * Clínicas. Viven acá, separadas del directorio (UsuarioController) para que
- * cada archivo tenga un único tema: el formulario de edición, el guardado y
- * el activar/desactivar. La capa compartida (JSON y permiso de gestión) está
- * en el trait UsuarioData; el HTML lo arman las vistas, no este archivo.
+ * UsuarioEdicionController: edición y activar/desactivar de personas.
+ * La capa compartida está en el trait UsuarioData.
  */
 final class UsuarioEdicionController
 {
     use UsuarioData;
 
-    /**
-     * Formulario de edición (GET a /usuarios/editar?id=N). Precarga los
-     * datos actuales de la persona. El teléfono y el login viven en la tabla
-     * de credenciales, así que según el tipo se lee de funcionario o de
-     * paciente.
-     */
+    /** Formulario de edición (GET). El teléfono se lee de la tabla según el tipo. */
     public static function formularioEditar(): void
     {
-        requerir_login();
+        requerir_gestion();
 
         $pdo = db_connect();
         $id = (int) ($_GET['id'] ?? 0);
 
-        // Si el id no existe (borrado o mal escrito), volvemos al listado
-        // en vez de mostrar un formulario roto.
         $stmt = $pdo->prepare(
             "SELECT u.id, u.tipo, u.nombre, u.apellido, u.email, u.documento_identidad,
                     f.telefono AS telefono_func, p.telefono AS telefono_pac
@@ -58,21 +48,14 @@ final class UsuarioEdicionController
         ]);
     }
 
-    /**
-     * Guarda los cambios de una persona (POST a /usuarios/editar).
-     * Actualiza los datos comunes en "usuario" (nombre, apellido, email,
-     * cédula) y el teléfono en la tabla de credenciales que le toque según
-     * el tipo. Todo va en una transacción: si algo choca (por ejemplo, ya
-     * existe otra persona con esa misma cédula), se deshace y se informa.
-     */
+    /** Guarda datos comunes en "usuario" y teléfono en la tabla del tipo, en transacción. */
     public static function editar(): void
     {
-        requerir_login();
+        requerir_gestion();
 
         $pdo = db_connect();
         $id = (int) ($_POST['id'] ?? 0);
 
-        // Sin id no hay nada que editar; vuelve al directorio.
         if ($id <= 0) {
             header('Location: ' . base_path() . '/usuarios');
             exit;
@@ -84,9 +67,6 @@ final class UsuarioEdicionController
         $cedula = trim((string) ($_POST['documento'] ?? ''));
         $telefono = trim((string) ($_POST['telefono'] ?? ''));
 
-        // Mismas reglas que al registrar: nombre/apellido mínimos, email y
-        // cédula con formato, teléfono de 8-9 dígitos (el celular uruguayo
-        // lleva el 9 adelante).
         $error = null;
         if (mb_strlen($nombre) < 2) $error = 'Ingrese un nombre válido.';
         elseif (mb_strlen($apellido) < 2) $error = 'Ingrese un apellido válido.';
@@ -94,15 +74,14 @@ final class UsuarioEdicionController
         elseif ($cedula !== '' && !preg_match('/^[\d.\- ]{6,20}$/', $cedula)) $error = 'La cédula no es válida.';
         elseif ($telefono !== '' && !preg_match('/^\d{8,9}$/', $telefono)) $error = 'El teléfono debe tener 8 o 9 dígitos.';
 
-        // Necesitamos saber el tipo para decidir dónde cae el teléfono.
+        // Se necesita el tipo para decidir dónde cae el teléfono.
         $stmt = $pdo->prepare('SELECT tipo FROM usuario WHERE id = :id LIMIT 1');
         $stmt->execute(['id' => $id]);
         $tipoRow = $stmt->fetch();
         if (!$tipoRow) $error = 'El usuario no existe.';
         $tipo = $tipoRow['tipo'] ?? 'paciente';
 
-        // Si alguna validación falló, redibuja el formulario con el error
-        // y los valores que el usuario ya había escrito (para no perderlos).
+        // Con error, vuelve al formulario conservando lo escrito.
         if ($error !== null) {
             render_dashboard('usuario_editar', 'Editar usuario', 'usuarios', [
                 'hay_error' => ['1'],
@@ -118,11 +97,9 @@ final class UsuarioEdicionController
         }
 
         try {
-            // Todo o nada: si el UPDATE de la cédula choca con otra persona,
-            // la transacción se deshace y no queda el teléfono a medio guardar.
+            // Todo o nada: si la cédula choca con otra persona, se deshace.
             $pdo->beginTransaction();
 
-            // Primero los datos comunes de identidad, que viven en "usuario".
             $stmt = $pdo->prepare(
                 'UPDATE usuario SET nombre = :nombre, apellido = :apellido, email = :email,
                      documento_identidad = :documento
@@ -136,7 +113,6 @@ final class UsuarioEdicionController
                 'id' => $id,
             ]);
 
-            // Y el teléfono, en la tabla de credenciales del tipo.
             if ($tipo === 'funcionario') {
                 $stmt = $pdo->prepare('UPDATE funcionario SET telefono = :t WHERE id = :id');
             } else {
@@ -146,7 +122,7 @@ final class UsuarioEdicionController
 
             $pdo->commit();
         } catch (PDOException $e) {
-            // Un duplicado de email o cédula lanza un error 23000.
+            // Duplicado de email o cédula (error 23000).
             $pdo->rollBack();
             render_dashboard('usuario_editar', 'Editar usuario', 'usuarios', [
                 'hay_error' => ['1'],
@@ -161,22 +137,14 @@ final class UsuarioEdicionController
             return;
         }
 
-        // Todo bien → vuelve a la ficha.
         header('Location: ' . base_path() . '/usuarios/ver?id=' . $id . '&editado=1');
         exit;
     }
 
-    /**
-     * Desactiva o reactiva a una persona (POST a /usuarios/estado). Es un
-     * borrado lógico: se cambia el flag "activo" en la tabla de credenciales
-     * que le toque (funcionario o paciente) pero la fila y sus documentos se
-     * conservan. Al desactivar, la persona ya no puede entrar al panel y su
-     * QR deja de entregar documentos. Devuelve JSON para que el JS actualice
-     * la fila sin recargar.
-     */
+    /** Baja lógica: cambia el flag activo en la tabla del tipo. Responde JSON. */
     public static function estado(): void
     {
-        requerir_login();
+        requerir_gestion();
 
         $id = (int) ($_POST['id'] ?? 0);
         $activo = (($_POST['activo'] ?? '') === '1');
@@ -184,7 +152,6 @@ final class UsuarioEdicionController
         if ($id > 0) {
             $pdo = db_connect();
 
-            // Determina en qué tabla vive el flag "activo".
             $stmt = $pdo->prepare('SELECT tipo FROM usuario WHERE id = :id LIMIT 1');
             $stmt->execute(['id' => $id]);
             $tipo = $stmt->fetchColumn();

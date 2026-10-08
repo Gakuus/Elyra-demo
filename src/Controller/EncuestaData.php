@@ -2,17 +2,9 @@
 
 declare(strict_types=1);
 
-/**
- * EncuestaData: capa de datos compartida del módulo de encuestas.
- *
- * Los tres controladores del módulo la usan con `use EncuestaData` para no
- * duplicar consultas y transformaciones. Son métodos estáticos privados que,
- * al usarse desde una clase, pasan a ser privados de esa clase (misma
- * visibilidad que cuando vivían en un único EncuestaController).
- */
+/** EncuestaData: capa de datos compartida del módulo de encuestas. */
 trait EncuestaData
 {
-    /** Devuelve la encuesta por id, o null si no existe. */
     private static function obtenerEncuesta(PDO $pdo, int $id): ?array
     {
         $stmt = $pdo->prepare('SELECT * FROM encuesta WHERE id = ?');
@@ -21,10 +13,7 @@ trait EncuestaData
         return $fila !== false ? $fila : null;
     }
 
-    /**
-     * Preguntas de la encuesta con sus opciones agrupadas [opcion_id => texto],
-     * en orden. Con $conRequerida incluye además el flag requerida (vista pública).
-     */
+    /** Preguntas de la encuesta con opciones agrupadas [id => texto], en orden. */
     private static function preguntasConOpciones(PDO $pdo, int $encuestaId, bool $conRequerida = false): array
     {
         $seleccion = 'p.id, p.tipo, p.texto, po.id AS opcion_id, po.texto AS opcion_texto'
@@ -54,11 +43,7 @@ trait EncuestaData
         return array_values($preguntas);
     }
 
-    /**
-     * Valida y normaliza el formulario completo (título + preguntas dinámicas).
-     * Devuelve ['datos' => [...], 'errores' => [...]]. Cada dato conserva el id
-     * de la pregunta existente cuando viene de edición.
-     */
+    /** Valida y normaliza el formulario (título + preguntas dinámicas). */
     private static function normalizarFormulario(string $titulo, array $preguntasInput, string $mensajeSinPreguntas): array
     {
         $errores = strlen($titulo) < 3 || strlen($titulo) > 200
@@ -105,7 +90,6 @@ trait EncuestaData
         return ['datos' => $datos, 'errores' => $errores];
     }
 
-    /** Arma el <ul> de errores de validación. */
     private static function htmlErrores(array $errores): string
     {
         return '<div class="alert alert-danger py-2 alert-chico"><ul class="mb-0 ps-3">'
@@ -113,7 +97,6 @@ trait EncuestaData
             . '</ul></div>';
     }
 
-    /** Inserta las opciones de una pregunta con el statement ya preparado. */
     private static function insertarOpciones(PDOStatement $stmt, int $preguntaId, ?array $opciones): void
     {
         if ($opciones === null) {
@@ -124,7 +107,6 @@ trait EncuestaData
         }
     }
 
-    /** Deshace la transacción si hay una pendiente. */
     private static function rollbackSiActivo(PDO $pdo): void
     {
         if ($pdo->inTransaction()) {

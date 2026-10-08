@@ -3,66 +3,32 @@
 declare(strict_types=1);
 
 /**
- * InsumoController: controlador del módulo de insumos médicos.
- *
- * Gestiona el stock de insumos de la institución: listado con búsqueda y
- * filtro de estado, alta, edición y activación/desactivación (baja lógica,
- * nunca se eliminan filas para conservar el historial). Solo accesible para
- * admin/superadmin (guard esGestion en cada acción).
+ * InsumoController: stock de insumos. Listado, alta, edición y
+ * activación/desactivación (baja lógica). Solo admin/superadmin.
  */
 final class InsumoController
 {
     use InsumoData;
 
-    /**
-     * Enrutador interno del módulo de insumos.
-     * index.php delega acá cualquier ruta que empiece con /insumos y este
-     * método decide qué acción ejecutar según la ruta exacta y el método HTTP.
-     *
-     * @param string $path   Ruta (ej: '/insumos/agregar').
-     * @param string $method Método HTTP en mayúsculas ('GET' o 'POST').
-     */
+    /** Enrutador interno: index.php delega acá las rutas que empiezan con /insumos. */
     public static function dispatch(string $path, string $method): void
     {
         match (true) {
-            // Listado de insumos.
             $path === '/insumos' && $method === 'GET' => self::listar(),
-            // Alta: POST procesa el formulario, GET muestra el formulario vacío.
             $path === '/insumos/agregar' && $method === 'POST' => self::agregar(),
             $path === '/insumos/agregar' && $method === 'GET' => self::formularioAgregar(),
-            // Edición: POST guarda, GET muestra el formulario con los datos.
             $path === '/insumos/editar' && $method === 'POST' => self::editar(),
             $path === '/insumos/editar' && $method === 'GET' => self::formularioEditar(),
-            // Activar/desactivar un insumo (baja lógica, responde JSON).
             $path === '/insumos/toggle' && $method === 'POST' => self::toggle(),
-            // Ninguna condición coincidió → página 404.
             default => pagina_404(),
         };
     }
 
-    /**
-     * Guard de gestión: solo admin/superadmin. Si no, manda al dashboard
-     * (que exige sesión pero no gestión) y detiene la ejecución.
-     */
-    private static function guardarGestion(): void
-    {
-        requerir_login();
-        if (!self::esGestion()) {
-            header('Location: ' . base_path() . '/dashboard');
-            exit;
-        }
-    }
-
-    /**
-     * Listado de insumos (GET a /insumos).
-     * Muestra la tabla con todos los insumos ordenados por nombre, con
-     * buscador por texto (nombre o descripción) y filtro de estado.
-     */
+    /** Listado con búsqueda (?q=) y filtro de estado (?estado=...). */
     public static function listar(): void
     {
-        self::guardarGestion();
+        requerir_gestion();
 
-        // Texto de búsqueda (?q=) y estado (?estado=activos|inactivos|todos).
         $q = trim((string) ($_GET['q'] ?? ''));
         $estado = (string) ($_GET['estado'] ?? 'activos');
         if (!in_array($estado, ['todos', 'activos', 'inactivos'], true)) {
@@ -71,13 +37,12 @@ final class InsumoController
 
         $insumos = self::buscarInsumos($q, $estado);
 
-        // Una fila por insumo con sus campos preparados para la vista.
         $filas = [];
         foreach ($insumos as $ins) {
             $filas[] = self::mostrarInsumo($ins);
         }
 
-        // Aviso de éxito tras agregar o guardar cambios (?agregado=1 / ?editado=1).
+        // Aviso tras agregar/editar (?agregado=1 / ?editado=1).
         $aviso = isset($_GET['agregado']) ? 'Insumo agregado correctamente.'
             : (isset($_GET['editado']) ? 'Cambios guardados.' : '');
 
@@ -94,14 +59,10 @@ final class InsumoController
         ]);
     }
 
-    /**
-     * Procesa el alta de un insumo (POST a /insumos/agregar).
-     * Valida los datos y registra la fila. Si hay errores, vuelve al
-     * formulario conservando lo cargado y mostrando el mensaje.
-     */
+    /** Alta: valida y registra; con errores, vuelve al formulario con lo cargado. */
     public static function agregar(): void
     {
-        self::guardarGestion();
+        requerir_gestion();
 
         $pdo = db_connect();
 
@@ -133,12 +94,9 @@ final class InsumoController
         ]);
     }
 
-    /**
-     * Muestra el formulario vacío de alta (GET a /insumos/agregar).
-     */
     public static function formularioAgregar(): void
     {
-        self::guardarGestion();
+        requerir_gestion();
 
         render_dashboard('insumos_agregar', 'Agregar insumo', 'insumos', [
             'hay_error' => [],
@@ -149,13 +107,9 @@ final class InsumoController
         ]);
     }
 
-    /**
-     * Formulario de edición (GET a /insumos/editar?id=N).
-     * Muestra los datos actuales del insumo para modificarlos.
-     */
     public static function formularioEditar(): void
     {
-        self::guardarGestion();
+        requerir_gestion();
 
         $pdo = db_connect();
         $id = (int) ($_GET['id'] ?? 0);
@@ -166,7 +120,6 @@ final class InsumoController
         $stmt->execute(['id' => $id]);
         $ins = $stmt->fetch();
 
-        // Si no existe, vuelve al listado.
         if (!$ins) {
             header('Location: ' . base_path() . '/insumos');
             exit;
@@ -182,14 +135,10 @@ final class InsumoController
         ]);
     }
 
-    /**
-     * Guarda los cambios del formulario de edición (POST a /insumos/editar).
-     * Usa las mismas reglas de validación que en el alta; al editar se
-     * excluye de la verificación de nombre duplicado al propio insumo.
-     */
+    /** Guarda los cambios de la edición; al verificar duplicado se excluye la propia fila. */
     public static function editar(): void
     {
-        self::guardarGestion();
+        requerir_gestion();
 
         $pdo = db_connect();
         $id = (int) ($_POST['id'] ?? 0);
@@ -231,14 +180,10 @@ final class InsumoController
         exit;
     }
 
-    /**
-     * Activa o desactiva un insumo (POST a /insumos/toggle).
-     * Es una baja lógica: cambia el campo activo, no borra la fila.
-     * Responde en JSON para que el listado lo actualice sin recargar.
-     */
+    /** Baja lógica: cambia activo, responde JSON para actualizar sin recargar. */
     public static function toggle(): void
     {
-        self::guardarGestion();
+        requerir_gestion();
 
         $id = (int) ($_POST['id'] ?? 0);
 
@@ -252,7 +197,6 @@ final class InsumoController
         );
         $stmt->execute(['id' => $id]);
 
-        // Devuelve el estado nuevo para que la fila se pueda pintar al toque.
         $stmt = $pdo->prepare('SELECT activo FROM insumo WHERE id = :id');
         $stmt->execute(['id' => $id]);
         $activo = (bool) $stmt->fetchColumn();
@@ -260,18 +204,7 @@ final class InsumoController
         self::respondeJson(['ok' => true, 'activo' => $activo]);
     }
 
-    /**
-     * Valida los campos de un insumo (común a alta y edición).
-     * Se detiene en el primer error y devuelve el mensaje; si todo está
-     * bien devuelve null.
-     *
-     * @param PDO      $pdo        Conexión activa.
-     * @param string   $nombre     Nombre del insumo.
-     * @param string   $descripcion Descripción opcional.
-     * @param string   $stock      Stock (texto del formulario).
-     * @param int|null $excluirId  Id a excluir de la verificación de nombre
-     *                             duplicado (al editar), null en el alta.
-     */
+    /** Valida los campos (común a alta y edición); devuelve el primer error o null. */
     private static function validar(PDO $pdo, string $nombre, string $descripcion, string $stock, ?int $excluirId): ?string
     {
         if ($nombre === '') {
@@ -290,8 +223,7 @@ final class InsumoController
             return 'El stock no puede superar los 100.000.000.';
         }
 
-        // Nombre duplicado (la columna nombre es UNIQUE en la base).
-        // En la edición se ignora la propia fila ($excluirId).
+        // Nombre duplicado (columna UNIQUE); al editar se ignora la propia fila.
         $sql = 'SELECT COUNT(*) FROM insumo WHERE nombre = :nombre';
         $params = ['nombre' => $nombre];
         if ($excluirId !== null) {

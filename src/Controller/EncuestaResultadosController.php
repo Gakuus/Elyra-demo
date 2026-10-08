@@ -3,27 +3,17 @@
 declare(strict_types=1);
 
 /**
- * EncuestaResultadosController: estadísticas de una encuesta (lo invoca
- * EncuestaController::dispatch para GET a /encuestas/resultados?id=N). Trae
- * todas las respuestas en una sola consulta, calcula los agregados por tipo
- * de pregunta y expone los datos al JS de Chart.js ({{stats}} de la vista +
- * ENCUESTA_STATS). La capa de datos compartida con los demás controladores
- * del módulo está en el trait EncuestaData.
+ * EncuestaResultadosController: estadísticas de una encuesta. Trae todas las
+ * respuestas en una consulta y expone los datos al JS de Chart.js.
  */
 final class EncuestaResultadosController
 {
     use EncuestaData;
 
-    /**
-     * Resultados de una encuesta (GET a /encuestas/resultados?id=N). Trae todas
-     * las respuestas en una sola consulta, calcula estadísticas por pregunta y
-     * expone los datos al JS de Chart.js. La vista arma el HTML de cada bloque
-     * según el tipo con {{#fila.es_multiple}}, {{#fila.es_escala}} o
-     * {{#fila.es_texto}}.
-     */
+    /** Resultados (/encuestas/resultados): una fila por pregunta para los bloques de la vista. */
     public static function resultados(): void
     {
-        requerir_login();
+        requerir_gestion();
         $id = (int) ($_GET['id'] ?? 0);
         $pdo = db_connect();
 
@@ -36,8 +26,7 @@ final class EncuestaResultadosController
         $preguntas = self::preguntasConOpciones($pdo, $id);
         $resultados = self::calcularResultados($pdo, $id, $preguntas);
 
-        // Una fila por pregunta para los bloques de la vista. El id del canvas
-        // usa el índice 0-based (chart-$i), coincidiendo con ENCUESTA_STATS.
+        // El id del canvas usa el índice 0-based (chart-$i), igual que ENCUESTA_STATS.
         $filasStats = [];
         foreach (array_values($resultados['stats']) as $i => $s) {
             $esMultiple = $s['tipo'] === 'multiple_choice';
@@ -76,10 +65,8 @@ final class EncuestaResultadosController
     }
 
     /**
-     * Estadísticas por pregunta a partir de TODAS las respuestas de la encuesta
-     * (una sola consulta en vez de una por pregunta). Devuelve también el total
-     * de sesiones únicas que respondieron. Cada tipo de pregunta agrega distinto:
-     * múltiple → conteo por opción, escala → conteo 1-5 + promedio, texto → listado.
+     * Agrega las respuestas por pregunta: múltiple → conteo por opción,
+     * escala → conteo 1-5 + promedio, texto → listado. Incluye total de sesiones únicas.
      */
     private static function calcularResultados(PDO $pdo, int $encuestaId, array $preguntas): array
     {

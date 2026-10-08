@@ -20,6 +20,7 @@
         </div>
 
         <form method="post" action="usuarios/codigos" class="flexible espacio-2 align-items-end">
+        <input type="hidden" name="_csrf" value="{{csrf_token}}">
             <div class="grupo-formulario">
                 <label for="rolCodigo" class="etiqueta-formulario">Rol que otorga el código</label>
                 <select id="rolCodigo" name="rol" class="form-control">
