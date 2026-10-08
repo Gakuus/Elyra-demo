@@ -8,6 +8,7 @@
         </div>
         {{/hay_error}}
         <form method="post" action="documentos/editar" id="editForm">
+        <input type="hidden" name="_csrf" value="{{csrf_token}}">
             <input type="hidden" name="id" value="{{id}}">
 
             <div class="mb-3">

@@ -116,6 +116,19 @@
     }
 
     /**
+     * csrfHeaders: cabeceras para los POST que se hacen con fetch.
+     * Lee el token que el layout dejó en <meta name="csrf-token"> y lo manda
+     * en X-CSRF-Token. Sin esto, el servidor responde 403 porque no reconoce
+     * la petición. Se usa así:
+     *     fetch(url, { method: 'POST', headers: window.Elyra.csrfHeaders(), body: data })
+     */
+    function csrfHeaders() {
+        var meta = document.querySelector('meta[name="csrf-token"]');
+        if (!meta) { return {}; }
+        return { 'X-CSRF-Token': meta.getAttribute('content') || '' };
+    }
+
+    /**
      * copiaAlPortapapeles: copia un texto. Usa la API moderna
      * (navigator.clipboard) y, si falla o no está disponible (navegadores
      * viejos, http), cae al método viejo con execCommand. Al terminar llama
@@ -162,6 +175,7 @@
 
     window.Elyra = {
         setInputFilter: setInputFilter,
+        csrfHeaders: csrfHeaders,
         util: {
             urlAbsoluta: urlAbsoluta,
             generaQR: generaQR,

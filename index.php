@@ -31,6 +31,15 @@ if (file_exists($envFile)) {
 }
 
 // ------------------------------------------------------------------
+// 1.b) Zona horaria
+// ------------------------------------------------------------------
+// PHP por defecto usa UTC, pero el sistema (y por lo tanto MySQL) está en
+// hora local de Uruguay. Sin esto, el saludo y los "hace X" quedaban 3 horas
+// adelantados (a las 17:00 decía "Buenas noches"). Se puede cambiar con la
+// variable APP_TIMEZONE del .env.
+date_default_timezone_set((string) ($_ENV['APP_TIMEZONE'] ?? 'America/Montevideo'));
+
+// ------------------------------------------------------------------
 // 2) Archivos estáticos (public/)
 // ------------------------------------------------------------------
 // URL pedida por el navegador, solo la parte de ruta (sin dominio ni query).
@@ -96,6 +105,10 @@ if ($staticRel !== '/' && !str_contains($staticRel, '.php')) {
 require_once __DIR__ . '/config/database.php';      // Función db_connect().
 require_once __DIR__ . '/src/Auth.php';             // Clase Auth (login, registro).
 require_once __DIR__ . '/src/helpers.php';          // Funciones auxiliares (base_path, render...).
+require_once __DIR__ . '/src/GeoapifyService.php';    // Geoapify (mapa/rutas) con caída a OSRM.
+require_once __DIR__ . '/src/InterseccionService.php'; // "calle A y calle B" -> punto de cruce (Overpass).
+require_once __DIR__ . '/src/RutaService.php';      // Rutas reales por calles (OSRM) con caché.
+require_once __DIR__ . '/src/GeocodeService.php';    // Texto <-> coordenadas (Nominatim) con caché.
 require_once __DIR__ . '/src/Controller/AuthController.php';
 require_once __DIR__ . '/src/Controller/DashboardController.php';
 require_once __DIR__ . '/src/Controller/DocumentoData.php';             // Trait de datos del módulo de documentos.
@@ -115,17 +128,38 @@ require_once __DIR__ . '/src/Controller/UsuarioEdicionController.php';
 require_once __DIR__ . '/src/Controller/UsuarioCodigosController.php';
 
 // ------------------------------------------------------------------
-// 4) Sesión
+// 4) Cabeceras de seguridad
+// ------------------------------------------------------------------
+// Van antes de cualquier salida: CSP, anti-sniffing, anti-framing, HSTS
+// (solo sobre HTTPS) y política de referencia. cubre todas las rutas.
+cabeceras_seguridad();
+
+// ------------------------------------------------------------------
+// 5) Sesión
 // ------------------------------------------------------------------
 // Inicia (o reanuda) la sesión para que $_SESSION esté disponible en todo.
 Auth::iniciarSesion();
 
 // ------------------------------------------------------------------
-// 5) Rutas
+// 6) Rutas
 // ------------------------------------------------------------------
 // Datos de la petición actual: método HTTP (GET/POST...) y ruta.
 $method = $_SERVER['REQUEST_METHOD'];
 $path = $staticRel;
+
+// ------------------------------------------------------------------
+// CSRF: todo POST tiene que traer el token de la sesión.
+// Se comprueba UNA sola vez acá, antes de que cualquier controlador vea la
+// petición, así no hay que repetir el chequeo en cada una de las 18 rutas
+// POST. Sin esto, un formulario de otra página podía hacer que el navegador
+// de un usuario logueado envíe un POST a Elyra (crear Surveys, desactivar
+// cuentas, subir documentos) sin que él lo haya pedido.
+// ------------------------------------------------------------------
+if ($method === 'POST' && !csrf_valido()) {
+    log_seguridad('csrf_invalido');
+    http_response_code(403);
+    exit('403 — Token de seguridad inválido. Recargá la página e intentá de nuevo.');
+}
 
 // switch(true) es un "switch de condiciones": evalúa cada case en orden y
 // ejecuta el primero que sea verdadero. Cada case llama a un controlador.
@@ -141,6 +175,54 @@ switch (true) {
     // Panel de gestión.
     case $path === '/dashboard':
         DashboardController::inicio();
+        break;
+
+    // Mapa interactivo del panel: página y datos JSON que consume el mapa.
+    case $path === '/mapa':
+        DashboardController::mapa();
+        break;
+
+    case $path === '/api/mapa':
+        DashboardController::mapaDatos();
+        break;
+
+    case $path === '/api/ruta/real':
+        DashboardController::rutaReal();
+        break;
+
+    // Buscador de lugares del mapa: convierte el texto que escribe el usuario
+    // en coordenadas (Nominatim) y, al revés, le pone nombre a un punto. Es lo
+    // que alimenta el autocompletado de destinos del nuevo traslado.
+    case $path === '/api/geocodificar':
+        DashboardController::geocodificar();
+        break;
+
+    // Búsqueda de pacientes para el modal de alta (GET /api/pacientes/buscar).
+    case $path === '/api/pacientes/buscar':
+        DashboardController::buscarPacientes();
+        break;
+
+    // Reporte de posición del conductor (POST a /api/ubicacion). Lo dispara
+    // el mapa cuando el usuario tiene rol 'conductor': toma la posición con
+    // navigator.geolocation y la manda cada pocos segundos. El CSRF global de
+    // arriba ya lo cubre.
+    case $path === '/api/ubicacion':
+        DashboardController::guardarUbicacionConductor();
+        break;
+
+    // Formulario para registrar un traslado: GET muestra el formulario y el
+    // POST guarda el traslado en la base de datos (respuesta JSON).
+    case $path === '/traslados/nuevo':
+        if ($method === 'POST') {
+            DashboardController::guardarTraslado();
+        } else {
+            DashboardController::nuevoTraslado();
+        }
+        break;
+
+    // Avance de estado de un traslado (POST a /traslados/estado).
+    case $path === '/traslados/estado':
+        DashboardController::cambiarEstadoTraslado();
         break;
 
     // Módulo de encuestas (panel del dashboard): le pasamos la ruta y el

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Levanta phpMyAdmin (instalado por composer) con el server embebido de PHP.
-# URL: http://localhost:8081  (usuario BD: elyra / elyra_pass)
+# URL: http://localhost:8081  (usuario y contraseña BD: los definidos en tu .env)
 set -e
 cd "$(dirname "$0")"
 PORT=8081

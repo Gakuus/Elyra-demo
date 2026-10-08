@@ -2,24 +2,9 @@
 
 declare(strict_types=1);
 
-/**
- * InsumoData: capa de datos compartida del módulo de insumos médicos.
- *
- * El controlador del módulo la usa con `use InsumoData` para no duplicar
- * consultas y comportamiento común (el permiso de gestión admin/superadmin,
- * el envío de respuestas JSON, la búsqueda de insumos y el armado de las
- * filas para la vista). Son métodos estáticos privados que, al usarse desde
- * una clase, pasan a ser privados de esa clase.
- */
+/** InsumoData: capa de datos compartida del módulo de insumos. */
 trait InsumoData
 {
-    /** True si el usuario logueado es admin o superadmin (gestión). */
-    private static function esGestion(): bool
-    {
-        return in_array($_SESSION['usuario_rol'] ?? '', ['admin', 'superadmin'], true);
-    }
-
-    /** Envía una respuesta JSON y corta la ejecución. */
     private static function respondeJson(array $datos): void
     {
         header('Content-Type: application/json');
@@ -27,15 +12,7 @@ trait InsumoData
         exit;
     }
 
-    /**
-     * Consulta los insumos que coinciden con un criterio de búsqueda
-     * (texto parcial en nombre o descripción) y un filtro de estado.
-     * Es la lógica compartida entre la vista y el filtrado de listado.
-     *
-     * @param string $q      Texto a buscar ('' = sin filtro de texto).
-     * @param string $estado 'todos' | 'activos' | 'inactivos'.
-     * @return array Lista de filas de insumos.
-     */
+    /** Busca insumos por texto (nombre/descripción) y filtro de estado. */
     private static function buscarInsumos(string $q, string $estado): array
     {
         $pdo = db_connect();
@@ -44,9 +21,10 @@ trait InsumoData
         $params = [];
 
         if ($q !== '') {
+            $qLike = like_escapar($q);
             $sql .= ' WHERE (nombre LIKE :qNombre OR descripcion LIKE :qDesc)';
-            $params['qNombre'] = '%' . $q . '%';
-            $params['qDesc'] = '%' . $q . '%';
+            $params['qNombre'] = '%' . $qLike . '%';
+            $params['qDesc'] = '%' . $qLike . '%';
         }
 
         if ($estado === 'activos') {
@@ -55,7 +33,6 @@ trait InsumoData
             $sql .= ($params ? ' AND' : ' WHERE') . ' activo = 0';
         }
 
-        // Los más recientes primero.
         $sql .= ' ORDER BY nombre ASC';
 
         $stmt = $pdo->prepare($sql);
@@ -63,11 +40,7 @@ trait InsumoData
         return $stmt->fetchAll();
     }
 
-    /**
-     * Convierte una fila de insumo en los campos que espera la vista del
-     * listado: texto escapado (XSS), stock en formato legible, fecha en
-     * d/m/Y y el estado como bloque que alimenta {{#activo}} / {{#inactivo}}.
-     */
+    /** Campos de un insumo para la vista (escapados, con los flags de estado). */
     private static function mostrarInsumo(array $ins): array
     {
         $activo = (bool) $ins['activo'];

@@ -26,6 +26,7 @@
             <p class="texto-atenuado texto-pequeno texto-centrado margen-inferior-3">Completá tus datos para registrarte</p>
 
             <form method="post">
+            <input type="hidden" name="_csrf" value="{{csrf_token}}">
                 <div class="flexible espacio-2">
                     <div class="grupo-formulario ancho-completo">
                         <label for="nombre" class="etiqueta-formulario">Nombre <span class="texto-peligro">*</span></label>

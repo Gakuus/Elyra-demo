@@ -12,22 +12,23 @@
 
     // El QR necesita la URL COMPLETA (protocolo + dominio + ruta). Antes se
     // generaba con una ruta relativa, por lo que al escanear no abría nada.
-    function urlPublica(id) {
-        return window.Elyra.util.urlAbsoluta('/publico/doc?id=' + id);
+    // El enlace viaja firmado (id + token) para que no se pueda enumerar.
+    function urlPublica(id, token) {
+        return window.Elyra.util.urlAbsoluta('/publico/doc?id=' + id + '&t=' + encodeURIComponent(token));
     }
 
     /**
      * abrirModal: abre el modal de QR público de un documento. Lo llama
-     * ElyraDoc.verQR(id) desde el botón QR de cada fila. Se reconstruye el
-     * contenido en cada apertura porque el QR y los botones dependen del
+     * ElyraDoc.verQR(id, token) desde el botón QR de cada fila. Se reconstruye
+     * el contenido en cada apertura porque el QR y los botones dependen del
      * documento elegido, y los listeners se cuelgan recién acá (el modal es
      * HTML estático del layout).
      */
-    function abrirModal(id) {
+    function abrirModal(id, token) {
         var modal = document.getElementById('qrModal');
         if (!modal) return;
         var body = document.getElementById('qrModalBody');
-        var url = urlPublica(id);
+        var url = urlPublica(id, token);
 
         // Contenido: el QR chico (vista previa) + acciones.
         body.innerHTML = '<div class="mb-3"><div id="qrcode"></div></div>'
@@ -56,7 +57,7 @@
 
         fetch((window.BASE_PATH || '') + '/documentos/estado', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, window.Elyra.csrfHeaders()),
             body: 'id=' + encodeURIComponent(id) + '&activo=' + encodeURIComponent(activo)
         })
             .then(function (r) { return r.json(); })
