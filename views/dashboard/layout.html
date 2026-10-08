@@ -3,15 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{csrf_token}}">
     <base href="{{base_path}}/">
     <title>{{titulo}} — Elyra</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Leaflet es la base del mapa. mapa.js arranca con "if (typeof window.L
+         === 'undefined') return", así que sin este script no se crea el mapa,
+         no se publica window.ElyraMapa, y el modal de traslado nunca se monta:
+         por eso el buscador de direcciones no respondía. -->
+    <link href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+          rel="stylesheet" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin="">
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin="" defer></script>
+    <!-- Instalar la app en el home screen es lo que hace que iOS recuerde el
+         permiso de ubicación entre visitas (si no, lo pregunta cada vez). -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="public/img/icono-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Elyra">
     <link href="public/css/base.css?v=5" rel="stylesheet">
-    <link href="public/css/pages/dashboard/layout.css?v=6" rel="stylesheet">
+    <link href="public/css/pages/dashboard/layout.css?v=7" rel="stylesheet">
     <link href="public/css/pages/dashboard/modal.css?v=6" rel="stylesheet">
     <link href="public/css/pages/dashboard/componentes.css?v=7" rel="stylesheet">
-    <link href="public/css/pages/dashboard/inicio.css?v=6" rel="stylesheet">
+    <link href="public/css/pages/dashboard/inicio.css?v=7" rel="stylesheet">
+    <link href="public/css/pages/dashboard/mapa.css?v=5" rel="stylesheet">
+    <link href="public/css/pages/dashboard/mapa_traslado.css?v=9" rel="stylesheet">
     <link href="public/css/pages/dashboard/usuarios.css?v=6" rel="stylesheet">
     <link href="public/css/pages/dashboard/documentos.css?v=6" rel="stylesheet">
     <link href="public/css/pages/dashboard/encuestas.css?v=7" rel="stylesheet">
@@ -29,6 +48,7 @@
     <div class="usuario-encabezado">
         <span><i class="bi bi-person-circle"></i> {{usuario}}</span>
         <form method="post" action="logout" class="form-en-linea">
+        <input type="hidden" name="_csrf" value="{{csrf_token}}">
             <button type="submit" class="btn btn-sm btn-link btn-logout">
                 <i class="bi bi-box-arrow-right"></i> Salir
             </button>
@@ -38,25 +58,47 @@
 
 <div class="contenedor-principal">
     <div class="barra-lateral" role="navigation" aria-label="Menú principal">
+        {{^es_paciente}}
         <div class="seccion-barra">
-            <div class="titulo-seccion">Gestión</div>
+            <div class="titulo-seccion">Panel</div>
             <a href="dashboard" class="enlace-barra{{activo_inicio}}">
                 <img src="public/img/silk/house.png" width="16" height="16" alt=""> Inicio</a>
-            <a href="encuestas" class="enlace-barra{{activo_encuestas}}">
-                <img src="public/img/silk/chart_bar.png" width="16" height="16" alt=""> Encuestas</a>
-            <a href="documentos" class="enlace-barra{{activo_documentos}}">
-                <img src="public/img/silk/page_white_text.png" width="16" height="16" alt=""> Documentos</a>
+        </div>
+        {{/es_paciente}}
+
+        <div class="seccion-barra">
+            <div class="titulo-seccion">Traslados</div>
+            <a href="mapa" class="enlace-barra{{activo_mapa}}">
+                <img src="public/img/silk/map.png" width="16" height="16" alt=""> Mapa</a>
+            {{#es_vehiculo}}
             <a href="vehiculos" class="enlace-barra{{activo_vehiculos}}">
-                <img src="public/img/silk/lorry.png" width="16" height="16" alt=""> Vehiculos</a>
-            <a href="usuarios" class="enlace-barra{{activo_usuarios}}">
-                <img src="public/img/silk/group.png" width="16" height="16" alt=""> Usuarios</a>
+                <img src="public/img/silk/lorry.png" width="16" height="16" alt=""> Vehículos</a>
+            {{/es_vehiculo}}
+            {{#es_gestion}}
             <a href="insumos" class="enlace-barra{{activo_insumos}}">
                 <img src="public/img/silk/package_box.png" width="16" height="16" alt=""> Insumos</a>
+            {{/es_gestion}}
         </div>
+
+        {{#es_gestion}}
+        <div class="seccion-barra">
+            <div class="titulo-seccion">Documentación</div>
+            <a href="documentos" class="enlace-barra{{activo_documentos}}">
+                <img src="public/img/silk/page_white_text.png" width="16" height="16" alt=""> Documentos</a>
+            <a href="encuestas" class="enlace-barra{{activo_encuestas}}">
+                <img src="public/img/silk/chart_bar.png" width="16" height="16" alt=""> Encuestas</a>
+        </div>
+
+        <div class="seccion-barra">
+            <div class="titulo-seccion">Usuarios</div>
+            <a href="usuarios" class="enlace-barra{{activo_usuarios}}">
+                <img src="public/img/silk/group.png" width="16" height="16" alt=""> Usuarios</a>
+        </div>
+        {{/es_gestion}}
     </div>
 
     <div class="contenido-principal" id="main-content">
-        {{contenido}}
+        {{{contenido}}}
     </div>
 </div>
 
@@ -83,8 +125,36 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
 <script>window.BASE_PATH = '{{base_path}}';</script>
 <script src="public/js/elyra.js?v=2" defer></script>
+<script src="public/js/pages/inicio.js?v=1" defer></script>
 <script src="public/js/pages/documentos.js?v=3" defer></script>
 <script src="public/js/pages/vehiculos.js?v=2" defer></script>
 <script src="public/js/pages/insumos.js?v=1" defer></script>
+
+<!-- Mapa en vivo. Va partido en módulos: public/js/mapa/ arma el mapa y
+     dibuja los traslados, public/js/traslado/ monta el modal de registro que
+     se apoya sobre él. El orden importa: nucleo.js primero (define la tabla de
+     módulos y el estado) y app.js al final (es el que junta todo). -->
+<script src="public/js/comun/formato.js?v=1" defer></script>
+<script src="public/js/mapa/nucleo.js?v=1" defer></script>
+<script src="public/js/mapa/util.js?v=1" defer></script>
+<script src="public/js/mapa/iconos.js?v=1" defer></script>
+<script src="public/js/mapa/animacion.js?v=1" defer></script>
+<script src="public/js/mapa/ruta.js?v=1" defer></script>
+<script src="public/js/mapa/render.js?v=1" defer></script>
+<script src="public/js/mapa/seguimiento.js?v=1" defer></script>
+<script src="public/js/mapa/simulacion.js?v=1" defer></script>
+<script src="public/js/mapa/panel.js?v=1" defer></script>
+<script src="public/js/mapa/historial.js?v=1" defer></script>
+<script src="public/js/mapa/datos.js?v=1" defer></script>
+<script src="public/js/mapa/app.js?v=2" defer></script>
+
+<script src="public/js/traslado/nucleo.js?v=1" defer></script>
+<script src="public/js/traslado/ui.js?v=1" defer></script>
+<script src="public/js/traslado/extremos.js?v=1" defer></script>
+<script src="public/js/traslado/direcciones.js?v=1" defer></script>
+<script src="public/js/traslado/pacientes.js?v=1" defer></script>
+<script src="public/js/traslado/ruta.js?v=1" defer></script>
+<script src="public/js/traslado/modal.js?v=1" defer></script>
+<script src="public/js/traslado/app.js?v=1" defer></script>
 </body>
 </html>

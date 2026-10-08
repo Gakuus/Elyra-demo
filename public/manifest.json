@@ -1,0 +1,32 @@
+{
+    "name": "Elyra — Hospital de Clínicas",
+    "short_name": "Elyra",
+    "description": "Seguimiento en vivo de ambulancias y traslados.",
+    "lang": "es",
+    "start_url": "mapa",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#3B5998",
+    "theme_color": "#3B5998",
+    "icons": [
+        {
+            "src": "public/img/icono-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "public/img/icono-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "public/img/icono-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

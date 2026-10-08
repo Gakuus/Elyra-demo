@@ -135,3 +135,48 @@
     text-align: center;
     clear: both;
 }
+
+/* ---------- Pantallas chicas ---------- */
+@media (max-width: 768px) {
+    .encabezado-sistema {
+        padding: 10px 14px;
+        gap: 8px;
+    }
+
+    .logo-encabezado img {
+        height: 30px;
+    }
+
+    .logo-encabezado span {
+        font-size: 20px;
+    }
+
+    .usuario-encabezado {
+        font-size: 15px;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .usuario-encabezado > span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 42vw;
+    }
+
+    /* En la página del mapa la barra lateral y el pie no dejan lugar: el
+       celular es pantalla completa para el mapa. La navegación queda a cargo
+       del navegador (volver atrás), que es lo que hace un chofer. */
+    .contenedor-principal:has(.contenedor-mapa) .barra-lateral {
+        display: none;
+    }
+
+    .contenedor-principal:has(.contenedor-mapa) + .pie-pagina {
+        display: none;
+    }
+
+    .contenido-principal {
+        padding: 16px 14px;
+        overflow-x: hidden;
+    }
+}
