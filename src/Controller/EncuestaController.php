@@ -3,25 +3,15 @@
 declare(strict_types=1);
 
 /**
- * EncuestaController: panel del dashboard del módulo de encuestas.
- * Métodos estáticos + vistas HTML con marcadores {{}} y esquema normalizado:
- * las opciones de una pregunta viven en pregunta_opcion y cada respuesta es
- * una fila por pregunta respondida, agrupada en sesión anónima por sesion_token.
- *
- * Cubre el ABM del panel: listado (con toggle activa/inactiva), creación y
- * edición con preguntas dinámicas. Los resultados viven en
- * EncuestaResultadosController y la página pública (responder sin login) en
- * EncuestaPublicaController; la capa de datos compartida está en EncuestaData.
+ * EncuestaController: ABM del panel de encuestas. El esquema es normalizado:
+ * pregunta_opcion guarda las opciones y cada respuesta es una fila por
+ * pregunta, agrupada por sesion_token.
  */
 final class EncuestaController
 {
     use EncuestaData;
 
-    /**
-     * Enrutador interno del módulo; index.php delega aquí toda ruta /encuestas.
-     * La página pública (/publico/encuesta) la enruta index.php directamente a
-     * EncuestaPublicaController.
-     */
+    /** Enrutador interno: index.php delega acá las rutas /encuestas. */
     public static function dispatch(string $path, string $method): void
     {
         match (true) {
@@ -36,20 +26,10 @@ final class EncuestaController
         };
     }
 
-    // ------------------------------------------------------------------
-    // LISTADO
-    // ------------------------------------------------------------------
-
-    /**
-     * Panel de encuestas (GET a /encuestas): tabla con título, cantidad de
-     * preguntas y respuestas, switch activa/inactiva y acciones. La vista
-     * arma el HTML de filas y estado vacío a partir de las filas que acá se
-     * pasan (la plantilla repite el bloque {{#encuestas}} por cada una y
-     * {{^hay_encuestas}} muestra el mensaje cuando no hay).
-     */
+    /** Panel de encuestas: tabla con preguntas, respuestas y switch activa/inactiva. */
     public static function listar(): void
     {
-        requerir_login();
+        requerir_gestion();
         $pdo = db_connect();
 
         // Una fila por encuesta; subconsultas cuentan preguntas y respuestas.
@@ -63,7 +43,6 @@ final class EncuestaController
             ORDER BY e.created_at DESC
         ");
 
-        // Cada fila se escapa acá; la vista solo la ubica en su lugar.
         $filas = [];
         foreach ($stmt->fetchAll() as $fila) {
             $filas[] = [
@@ -77,7 +56,7 @@ final class EncuestaController
             ];
         }
 
-        // Aviso de éxito tras crear o guardar cambios.
+        // Aviso tras crear o guardar cambios (?creada=1 / ?editada=1).
         $aviso = isset($_GET['creada']) || isset($_GET['editada'])
             ? '<div class="alert alert-success py-2 alert-chico"><i class="bi bi-check-lg me-1"></i>'
                 . (isset($_GET['creada']) ? 'Encuesta creada correctamente.' : 'Cambios guardados.')
@@ -91,24 +70,16 @@ final class EncuestaController
         ]);
     }
 
-    // ------------------------------------------------------------------
-    // CREACIÓN
-    // ------------------------------------------------------------------
-
-    /** Formulario vacío para crear una encuesta (GET a /encuestas/crear). */
     public static function formulario(): void
     {
-        requerir_login();
+        requerir_gestion();
         render_dashboard('encuestas_crear', 'Nueva encuesta', 'encuestas', ['error' => '']);
     }
 
-    /**
-     * Guarda la encuesta con sus preguntas y opciones (POST a /encuestas/crear),
-     * escribiendo sobre el esquema normalizado en una sola transacción.
-     */
+    /** Guarda encuesta + preguntas + opciones en una sola transacción. */
     public static function crear(): void
     {
-        requerir_login();
+        requerir_gestion();
         $pdo = db_connect();
 
         $titulo = trim((string) ($_POST['titulo'] ?? ''));
@@ -159,17 +130,9 @@ final class EncuestaController
         exit;
     }
 
-    // ------------------------------------------------------------------
-    // EDICIÓN
-    // ------------------------------------------------------------------
-
-    /**
-     * Formulario de edición (GET a /encuestas/editar?id=N). Precarga título,
-     * descripción y preguntas con sus opciones para el editor dinámico.
-     */
     public static function formularioEditar(): void
     {
-        requerir_login();
+        requerir_gestion();
         $pdo = db_connect();
         $id = (int) ($_GET['id'] ?? 0);
 
@@ -185,16 +148,10 @@ final class EncuestaController
         ]);
     }
 
-    /**
-     * Guarda los cambios de una encuesta (POST a /encuestas/editar). En una
-     * única transacción sincroniza título/descripción, preguntas existentes
-     * (texto/tipo/orden y opciones), nuevas y eliminadas (el FK en cascada de
-     * pregunta_opcion se lleva las opciones; respuesta usa ON DELETE SET NULL
-     * para preservar el historial).
-     */
+    /** Sincroniza título, preguntas (texto/tipo/orden/opciones) y borrados en una transacción. */
     public static function editar(): void
     {
-        requerir_login();
+        requerir_gestion();
         $pdo = db_connect();
         $id = (int) ($_POST['id'] ?? 0);
 
@@ -244,20 +201,19 @@ final class EncuestaController
                 $pidExistente = (int) ($pd['id'] ?? 0);
 
                 if ($pidExistente > 0 && isset($existentes[$pidExistente])) {
-                    // Pregunta existente: se actualiza y sus opciones se reemplazan.
+                    // Existente: se actualiza y sus opciones se reemplazan.
                     $stmtUpdPreg->execute([$pd['tipo'], $pd['texto'], $orden, $pidExistente, $id]);
                     $stmtDelOpc->execute([$pidExistente]);
                     self::insertarOpciones($stmtInsOpc, $pidExistente, $pd['opciones']);
                     $mantenidas[] = $pidExistente;
                 } else {
-                    // Pregunta nueva: se ignora cualquier id recibido.
+                    // Nueva: se ignora cualquier id recibido.
                     $stmtInsPreg->execute([$id, $pd['tipo'], $pd['texto'], $orden]);
                     self::insertarOpciones($stmtInsOpc, (int) $pdo->lastInsertId(), $pd['opciones']);
                 }
             }
 
-            // OJO: array_diff preserva las claves del array izquierdo, así que se
-            // iteran los VALORES (los ids), no array_keys().
+            // array_diff preserva las claves del array izquierdo, por eso se iteran los valores.
             $aBorrar = array_diff(array_keys($existentes), $mantenidas);
             $stmtDelPreg = $pdo->prepare('DELETE FROM pregunta WHERE id = ?');
             foreach ($aBorrar as $borrarId) {
@@ -277,11 +233,7 @@ final class EncuestaController
         exit;
     }
 
-    /**
-     * Vista de edición recargando las preguntas actuales de la BD (así un error
-     * de validación no deja el editor desincronizado) y aplicando los overrides
-     * opcionales (título/descripción/error).
-     */
+    /** Edición: recarga las preguntas de la BD y aplica overrides opcionales. */
     private static function renderFormularioEdicion(PDO $pdo, int $id, array $overrides): void
     {
         $preguntas = self::preguntasConOpciones($pdo, $id);
@@ -301,14 +253,10 @@ final class EncuestaController
         ]);
     }
 
-    // ------------------------------------------------------------------
-    // PUBLICAR / DESPUBLICAR
-    // ------------------------------------------------------------------
-
-    /** Activa o desactiva una encuesta (POST a /encuestas/toggle). */
+    /** Activa/desactiva una encuesta (baja lógica). Responde JSON. */
     public static function toggle(): void
     {
-        requerir_login();
+        requerir_gestion();
 
         $id = (int) ($_POST['id'] ?? 0);
         $activa = (($_POST['activa'] ?? '') === '1');

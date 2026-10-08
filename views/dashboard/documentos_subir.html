@@ -8,6 +8,7 @@
         </div>
         {{/hay_error}}
         <form method="post" action="documentos/subir" enctype="multipart/form-data" id="uploadForm">
+        <input type="hidden" name="_csrf" value="{{csrf_token}}">
             <div class="mb-3">
                 <label for="titulo" class="form-label">Título del documento <span class="requerido">*</span></label>
                 <input type="text" name="titulo" id="titulo" class="form-control" required minlength="3" maxlength="200" placeholder="Ej: Indicaciones pre-operatorias" value="{{valor_titulo}}">

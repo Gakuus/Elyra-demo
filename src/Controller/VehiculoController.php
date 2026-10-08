@@ -3,67 +3,39 @@
 declare(strict_types=1);
 
 /**
- * VehiculoController: controlador del módulo de vehículos.
- * Gestiona el ABM (alta, activación/desactivación y modificación) de los
- * vehículos de la institución. La tabla vehiculo guarda patente, modelo,
- * año y estado (activo); es la misma estructura que la entidad Vehiculo
- * del proyecto original. La desactivación es una baja lógica: nunca se
- * borran filas para conservar el historial.
- *
- * Todas las páginas requieren sesión iniciada (requerir_login).
+ * VehiculoController: ABM de vehículos. La desactivación es una baja lógica
+ * (no se borran filas). Requiere rol admin/superadmin/conductor.
  */
 final class VehiculoController
 {
-    /**
-     * Enrutador interno del módulo de vehículos.
-     * index.php delega acá cualquier ruta que empiece con /vehiculos y este
-     * método decide qué acción ejecutar según la ruta exacta y el método HTTP.
-     *
-     * @param string $path   Ruta (ej: '/vehiculos/agregar').
-     * @param string $method Método HTTP en mayúsculas ('GET' o 'POST').
-     */
+    /** Enrutador interno: index.php delega acá las rutas que empiezan con /vehiculos. */
     public static function dispatch(string $path, string $method): void
     {
         match (true) {
-            // Listado de vehículos.
             $path === '/vehiculos' && $method === 'GET' => self::listar(),
-            // Alta: POST procesa el formulario, GET muestra el formulario vacío.
             $path === '/vehiculos/agregar' && $method === 'POST' => self::agregar(),
             $path === '/vehiculos/agregar' && $method === 'GET' => self::formularioAgregar(),
-            // Edición: POST guarda, GET muestra el formulario con los datos.
             $path === '/vehiculos/editar' && $method === 'POST' => self::editar(),
             $path === '/vehiculos/editar' && $method === 'GET' => self::formularioEditar(),
-            // Activar/desactivar un vehículo (baja lógica, responde JSON).
             $path === '/vehiculos/toggle' && $method === 'POST' => self::toggle(),
-            // Ninguna condición coincidió → página 404.
             default => pagina_404(),
         };
     }
 
-    /**
-     * Listado de vehículos (GET a /vehiculos).
-     * Muestra la tabla con todos los vehículos ordenados por patente,
-     * con un campo de búsqueda por texto (patente o modelo) y un filtro
-     * de estado (activos/inactivos/todos).
-     */
     public static function listar(): void
     {
-        // Guard: solo usuarios autenticados.
-        requerir_login();
+        requerir_roles(['admin', 'superadmin', 'conductor']);
 
         $pdo = db_connect();
 
-        // Texto de búsqueda opcional (?q=texto) y estado (?estado=...).
+        // Búsqueda por texto (?q=) y filtro de estado (?estado=...).
         $q = trim((string) ($_GET['q'] ?? ''));
         $estado = (string) ($_GET['estado'] ?? 'activos');
         if (!in_array($estado, ['todos', 'activos', 'inactivos'], true)) {
             $estado = 'activos';
         }
 
-        // Consulta base, ordenada por patente (como en el repo original).
-        // La patente se guarda sin espacios (AAA1234), así que para poder
-        // buscarla como se ve en la placa (AAA 1234) se comparan ambas
-        // partes sin el espacio. El modelo se busca con el texto tal cual.
+        // La patente se guarda sin espacios (AAA1234); la búsqueda compara ambas variantes.
         $sql = 'SELECT id, patente, modelo, anio, activo, created_at FROM vehiculo';
         $params = [];
         if ($q !== '') {
@@ -84,7 +56,6 @@ final class VehiculoController
         $stmt->execute($params);
         $vehiculos = $stmt->fetchAll();
 
-        // Convierte cada vehículo en una fila <tr> de la tabla.
         $filas = '';
         foreach ($vehiculos as $veh) {
             $filas .= self::filaVehiculo($veh);
@@ -109,19 +80,14 @@ final class VehiculoController
         ]);
     }
 
-    /**
-     * Procesa el alta de un vehículo (POST a /vehiculos/agregar).
-     * Valida los datos y registra la fila. Si hay errores, vuelve al
-     * formulario conservando lo cargado y mostrando el mensaje.
-     */
+    /** Alta: valida y registra. Si hay errores, vuelve al formulario con el mensaje. */
     public static function agregar(): void
     {
-        requerir_login();
+        requerir_roles(['admin', 'superadmin', 'conductor']);
 
         $pdo = db_connect();
 
-        // Lee los campos del formulario y normaliza la patente (mayúsculas
-        // y sin el espacio que se ve en la placa, ej: ABC 1234 -> ABC1234).
+        // Patente normalizada (mayúsculas y sin espacio: ABC 1234 -> ABC1234).
         $patente = strtoupper(str_replace(' ', '', trim((string) ($_POST['patente'] ?? ''))));
         $modelo = trim((string) ($_POST['modelo'] ?? ''));
         $anio = trim((string) ($_POST['anio'] ?? ''));
@@ -149,12 +115,9 @@ final class VehiculoController
         ]);
     }
 
-    /**
-     * Muestra el formulario vacío de alta (GET a /vehiculos/agregar).
-     */
     public static function formularioAgregar(): void
     {
-        requerir_login();
+        requerir_roles(['admin', 'superadmin', 'conductor']);
 
         render_dashboard('vehiculos_agregar', 'Agregar vehículo', 'vehiculos', [
             'mensaje_error' => '',
@@ -164,13 +127,9 @@ final class VehiculoController
         ]);
     }
 
-    /**
-     * Formulario de edición (GET a /vehiculos/editar?id=N).
-     * Muestra los datos actuales del vehículo para modificarlos.
-     */
     public static function formularioEditar(): void
     {
-        requerir_login();
+        requerir_roles(['admin', 'superadmin', 'conductor']);
 
         $pdo = db_connect();
         $id = (int) ($_GET['id'] ?? 0);
@@ -196,14 +155,10 @@ final class VehiculoController
         ]);
     }
 
-    /**
-     * Guarda los cambios del formulario de edición (POST a /vehiculos/editar).
-     * Usa las mismas reglas de validación que en el alta; al editar se
-     * excluye de la verificación de patente duplicada al propio vehículo.
-     */
+    /** Guarda los cambios de la edición; al verificar duplicado se excluye la propia fila. */
     public static function editar(): void
     {
-        requerir_login();
+        requerir_roles(['admin', 'superadmin', 'conductor']);
 
         $pdo = db_connect();
         $id = (int) ($_POST['id'] ?? 0);
@@ -244,14 +199,10 @@ final class VehiculoController
         exit;
     }
 
-    /**
-     * Activa o desactiva un vehículo (POST a /vehiculos/toggle).
-     * Es una baja lógica: cambia el campo activo, no borra la fila.
-     * Responde en JSON para que el listado lo actualice sin recargar.
-     */
+    /** Baja lógica: cambia el campo activo, no borra la fila. Responde JSON. */
     public static function toggle(): void
     {
-        requerir_login();
+        requerir_roles(['admin', 'superadmin', 'conductor']);
 
         $id = (int) ($_POST['id'] ?? 0);
 
@@ -267,7 +218,7 @@ final class VehiculoController
         );
         $stmt->execute(['id' => $id]);
 
-        // Devuelve el estado nuevo para que la fila se pueda pintar al toque.
+        // Devuelve el estado nuevo para actualizar la fila sin recargar.
         $stmt = $pdo->prepare('SELECT activo FROM vehiculo WHERE id = :id');
         $stmt->execute(['id' => $id]);
         $activo = (bool) $stmt->fetchColumn();
@@ -277,21 +228,10 @@ final class VehiculoController
         exit;
     }
 
-    /**
-     * Valida los campos de un vehículo (común a alta y edición).
-     * Se detiene en el primer error y devuelve el mensaje; si todo está
-     * bien devuelve null.
-     *
-     * @param PDO      $pdo        Conexión activa.
-     * @param string   $patente    Patente (ya normalizada a mayúsculas).
-     * @param string   $modelo     Modelo del vehículo.
-     * @param string   $anio       Año (texto del formulario).
-     * @param int|null $excluirId  Id a excluir de la verificación de patente
-     *                             duplicada (al editar), null en el alta.
-     */
+    /** Valida los campos (común a alta y edición); devuelve el primer error o null. */
     private static function validar(PDO $pdo, string $patente, string $modelo, string $anio, ?int $excluirId): ?string
     {
-        // Formato de patente uruguayo: 3 letras + 4 números (ej: ABC 1234).
+        // Patente uruguaya: 3 letras + 4 números (ej: ABC 1234).
         if (!preg_match('/^[A-Z]{3}[0-9]{4}$/', $patente)) {
             return 'La patente debe usar el formato uruguayo AAA 1234 (3 letras y 4 números).';
         }
@@ -302,8 +242,7 @@ final class VehiculoController
             return 'El año debe ser un número entre 1900 y 2100.';
         }
 
-        // Patente duplicada (la columna patente es UNIQUE en la base).
-        // En la edición se ignora la propia fila ($excluirId).
+        // Patente duplicada (columna UNIQUE); al editar se ignora la propia fila.
         $sql = 'SELECT COUNT(*) FROM vehiculo WHERE patente = :patente';
         $params = ['patente' => $patente];
         if ($excluirId !== null) {
@@ -319,22 +258,12 @@ final class VehiculoController
         return null;
     }
 
-    /**
-     * Convierte un mensaje de error en el bloque HTML con la clase
-     * .mensaje-error (misma presentación que el resto de los módulos).
-     */
     private static function errorHtml(string $error): string
     {
         return '<div class="mensaje-error">' . $error . '</div>';
     }
 
-    /**
-     * Construye la fila <tr> de un vehículo para la tabla del listado.
-     * Incluye patente, modelo, año, fecha de registro, estado y botones
-     * de editar / activar-desactivar.
-     *
-     * @param array $veh Fila de vehículo devuelta por la consulta.
-     */
+    /** Construye la fila <tr> de un vehículo para el listado. */
     private static function filaVehiculo(array $veh): string
     {
         $id = (int) $veh['id'];
@@ -348,8 +277,6 @@ final class VehiculoController
             ? '<span class="estado-activo">Activo</span>'
             : '<span class="estado-inactivo">Inactivo</span>';
 
-        // El botón cambia estado pide confirmación en el navegador antes de
-        // llamar a ElyraVehiculos.toggle(id, this) definido en vehiculos.js.
         return '<tr data-vehiculo-id="' . $id . '">'
             . '<td class="fw-semibold">' . $patente . '</td>'
             . '<td>' . ($modelo !== '' ? $modelo : '<span class="text-muted">—</span>') . '</td>'

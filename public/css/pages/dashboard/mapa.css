@@ -1,0 +1,475 @@
+/* ---------- Mapa interactivo ---------- */
+
+/* La página del mapa ocupa todo el área del dashboard: sin padding ni
+   scroll en el contenedor principal y sin el piso de altura mínima. */
+.contenido-principal:has(.contenedor-mapa) {
+    padding: 0 !important;
+    overflow: hidden !important;
+    display: flex;
+}
+
+.contenedor-principal:has(.contenedor-mapa) {
+    min-height: 0;
+}
+
+.contenedor-mapa {
+    position: relative;
+    flex: 1;
+    display: flex;
+    height: calc(100vh - 126px);
+    min-width: 0;
+}
+
+#map {
+    flex: 1;
+    height: 100%;
+    min-height: 100%;
+    z-index: 1;
+}
+
+/* ---------- Panel lateral ---------- */
+.panel-mapa {
+    width: 340px;
+    background: var(--blanco);
+    border-left: 1px solid #DDD;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-mapa.collapsed {
+    transform: translateX(100%);
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+
+.panel-mapa-toggle {
+    position: absolute;
+    right: 346px;
+    top: 10px;
+    z-index: 3;
+    background: var(--blanco);
+    border: 1px solid #DDD;
+    border-radius: 4px 0 0 4px;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: right 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--fuente-familia);
+}
+
+/* La pestaña con texto solo tiene sentido en el celular: en el escritorio es
+   un botón chico al lado del panel y el titulo lo dice todo. */
+.panel-mapa-toggle .etiqueta-panel-toggle {
+    display: none;
+}
+
+.panel-mapa.collapsed ~ .panel-mapa-toggle {
+    right: 0;
+    border-radius: 4px 0 0 4px;
+}
+
+.encabezado-lista {
+    padding: 14px 16px;
+    border-bottom: 1px solid #DDD;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.encabezado-lista .contador {
+    font-size: 15px;
+    color: var(--texto-atenuado);
+    font-weight: 400;
+}
+
+.mapa-vacio {
+    padding: 40px 16px;
+    text-align: center;
+    color: var(--texto-atenuado);
+}
+
+.mapa-vacio i {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* ---------- Tarjetas de traslados en el panel ---------- */
+.tarjeta-traslado {
+    padding: 12px 16px;
+    border-bottom: 1px solid #EEE;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.tarjeta-traslado:hover {
+    background: #F5F7FA;
+}
+
+.tarjeta-traslado.active {
+    background: #EAF1FB;
+    border-left: 3px solid #3B5998;
+}
+
+.tarjeta-traslado .codigo {
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tarjeta-traslado .conductor {
+    font-size: 13px;
+    color: var(--texto-atenuado);
+    margin-top: 2px;
+}
+
+.tarjeta-traslado .route {
+    font-size: 12px;
+    color: #555;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.tarjeta-traslado .acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.tarjeta-traslado .btn-accion {
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 14px;
+    background: #fff;
+    border: 1px solid;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.tarjeta-traslado .btn-accion:hover {
+    background: currentColor;
+    color: #fff !important;
+}
+
+.popup-conductor {
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.popup-route {
+    font-size: 0.8rem;
+    color: #555;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ---------- Seguimiento de la ubicación del conductor ---------- */
+
+/* Bloque arriba de la lista de traslados, solo para el rol conductor. Es lo
+   que le dice al chofer si el GPS está prendido y si el despacho ya recibió
+   su posición. */
+.bloque-seguimiento {
+    padding: 12px 16px;
+    border-bottom: 1px solid #DDD;
+    background: #F7F9FC;
+}
+
+.seguimiento-fila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.seguimiento-titulo {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.seguimiento-estado {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+
+.seguimiento-estado.ok {
+    background: #E8F5E9;
+    color: #2E7D32;
+}
+
+.seguimiento-estado.esperando {
+    background: #FFF8E1;
+    color: #F9A825;
+}
+
+.seguimiento-estado.error {
+    background: #FFEBEE;
+    color: #C62828;
+}
+
+.seguimiento-estado.simulando {
+    background: #F3E5F5;
+    color: #6A1B9A;
+}
+
+.seguimiento-detalle {
+    font-size: 12px;
+    color: var(--texto-atenuado);
+    margin-top: 6px;
+    line-height: 1.35;
+}
+
+.seguimiento-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.btn-seguimiento {
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 14px;
+    background: #fff;
+    border: 1px solid #C9D4E3;
+    color: #3B5998;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.btn-seguimiento:hover:not(:disabled) {
+    background: #3B5998;
+    border-color: #3B5998;
+    color: #fff;
+}
+
+.btn-seguimiento:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-simular {
+    border-color: #B388FF;
+    color: #6A1B9A;
+}
+
+.btn-simular:hover:not(:disabled) {
+    background: #6A1B9A;
+    border-color: #6A1B9A;
+}
+
+.btn-simular.activo {
+    background: #6A1B9A;
+    border-color: #6A1B9A;
+    color: #fff;
+}
+
+/* ---------- Leyenda y estado ---------- */
+.leyenda-mapa {
+    position: absolute;
+    bottom: 16px;
+    left: 10px;
+    background: var(--blanco);
+    padding: 10px 14px;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    z-index: 2;
+    font-size: 14px;
+}
+
+.leyenda-mapa div {
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.leyenda-mapa div:last-child {
+    margin-bottom: 0;
+}
+
+.punto-leyenda {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.estado-mapa {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--blanco);
+    padding: 6px 14px;
+    border-radius: 20px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+    z-index: 2;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.punto-pulso {
+    width: 8px;
+    height: 8px;
+    background: #4CAF50;
+    border-radius: 50%;
+    animation: pulsar 2s infinite;
+}
+
+@keyframes pulsar {
+    0%   { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.6); }
+    70%  { box-shadow: 0 0 0 8px rgba(76, 175, 80, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+}
+
+/* ---------- Popups de Leaflet ---------- */
+.leaflet-popup-content {
+    font-family: var(--fuente-familia);
+    margin: 10px 14px;
+}
+
+/* ---------- Pantallas pequeñas ---------- */
+@media (max-width: 768px) {
+    .contenido-principal:has(.contenedor-mapa) {
+        overflow: hidden !important;
+        display: flex;
+    }
+
+    .contenedor-mapa {
+        height: calc(100vh - 52px);
+        height: calc(100dvh - 52px);
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #map {
+        height: 100%;
+        min-height: 100%;
+    }
+
+    /* El panel pasa a ser una hoja que se apoya sobre el mapa: no lo empuja,
+       se le encima, para que el mapa sea toda la pantalla y la lista se abra
+       cuando hace falta. La pestaña flotante de abajo la muestra u oculta. */
+    .panel-mapa {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: auto;
+        width: 100%;
+        max-height: 46vh;
+        border-left: none;
+        border-top: 1px solid #DDD;
+        border-radius: 14px 14px 0 0;
+        box-shadow: 0 -6px 22px rgba(0, 0, 0, .18);
+        padding-bottom: env(safe-area-inset-bottom);
+        transform: translateY(0);
+        transition: transform 0.3s ease;
+    }
+
+    .panel-mapa.collapsed {
+        transform: translateY(103%);
+        max-height: none;
+    }
+
+    .panel-mapa-toggle {
+        position: fixed;
+        right: 12px;
+        bottom: calc(12px + env(safe-area-inset-bottom));
+        top: auto;
+        z-index: 110;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 44px;
+        padding: 0 16px;
+        border-radius: 22px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, .3);
+        font-size: 14px;
+        font-weight: 600;
+        font-family: var(--fuente-familia);
+        cursor: pointer;
+        background: var(--blanco);
+        color: var(--azul);
+        border: 1px solid #C9D4E3;
+        transition: right 0.3s ease, bottom 0.3s ease;
+    }
+
+    .panel-mapa-toggle:hover {
+        background: #F0F3F9;
+    }
+
+    .panel-mapa-toggle .etiqueta-panel-toggle {
+        display: inline;
+    }
+
+    .panel-mapa.collapsed ~ .panel-mapa-toggle {
+        right: 12px;
+        border-radius: 22px;
+    }
+
+    /* Con la hoja abierta la pestaña sube y queda como un asa para cerrarla. */
+    .panel-mapa:not(.collapsed) ~ .panel-mapa-toggle {
+        bottom: calc(46vh + 12px + env(safe-area-inset-bottom));
+    }
+
+    /* Con el modal o el historial abierto, la pestaña del panel no tiene
+       sentido: el pie del formulario usa el mismo borde de abajo. */
+    body:has(.velo-traslado:not([hidden])) .panel-mapa-toggle,
+    body:has(.velo-historial:not([hidden])) .panel-mapa-toggle {
+        display: none;
+    }
+
+    .leyenda-mapa {
+        bottom: calc(env(safe-area-inset-bottom) + 12px);
+        left: 10px;
+        font-size: 12px;
+        padding: 8px 10px;
+        max-width: calc(100% - 24px);
+        z-index: 1;
+    }
+
+    .estado-mapa {
+        top: 8px;
+        font-size: 12px;
+        padding: 4px 10px;
+    }
+
+    /* En el celular el bloque de seguimiento va arriba del todo: es lo
+       primero que el chofer necesita ver, antes que la lista de traslados. */
+    .bloque-seguimiento {
+        padding: 10px 12px;
+    }
+
+    .seguimiento-acciones {
+        margin-top: 8px;
+    }
+
+    .btn-seguimiento {
+        padding: 8px 14px;
+        font-size: 14px;
+        min-height: 40px;
+    }
+}

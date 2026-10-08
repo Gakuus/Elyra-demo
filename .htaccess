@@ -8,7 +8,67 @@
 # RewriteBase se omite a proposito: Apache resuelve "index.php" relativo al
 # directorio de este archivo, asi la app sirve en la raiz o bajo
 # /proyectos/elyra sin cambiar nada.
+
+# ==========================================================================
+# BARRERA DE SEGURIDAD
+# ==========================================================================
+# El proyecto completo vive dentro del docroot, asi que sin estas reglas
+# cualquier archivo del disco se descargaba sin autenticacion: /.env con las
+# credenciales de MySQL, /.git con el repositorio entero, /phpmyadmin con la
+# base de datos, /database/esquema.sql y los PDFs de storage/docs.
+#
+# Se usan solo RedirectMatch porque necesita la misma directiva de override
+# (FileInfo) que el RewriteRule de mas abajo: funciona en cualquier servidor
+# donde la app ya funcione hoy.
+#
+# EL ARREGLO DE FONDO es mover el docroot a public/. Con esto la app queda
+# bloqueada aunque el docroot no se mueva nunca.
+
+<IfModule mod_alias.c>
+    # 1) Archivos ocultos: .env, .git/config, .gitignore, .htaccess...
+    #    Bloquea cualquier segmento de ruta que empiece con un punto.
+    RedirectMatch 404 (?i)(^|/)\.
+
+    # 2) Carpetas internas que nunca deben servirse. 'public' NO va aqui:
+    #    es la carpeta de assets que la app si usa.
+    RedirectMatch 404 ^/(config|src|views|storage|database|docs|phpmyadmin|vendor|node_modules)(/|$)
+
+    # 3) Extensiones de datos, scripts y backups.
+    #    La app no sirve ninguna de estas como archivo estatico.
+    RedirectMatch 404 (?i)\.(sql|tar|tgz|gz|zip|bak|old|log|ini|env|sh|md|lock|yml|yaml|json)$
+</IfModule>
+
+# 4) Refuerzo opcional con FilesMatch. Solo agregalo si el servidor tiene
+#    "AllowOverride All" o "AllowOverride FileInfo AuthConfig Limit"; con
+#    un AllowOverride restringido la directiva Require da error 500.
+#
+# <FilesMatch "(^\.|\.(sql|tar|gz|log|ini|sh|md|json)$)">
+#     <IfModule mod_authz_core.c>
+#         Require all denied
+#     </IfModule>
+#     <IfModule !mod_authz_core.c>
+#         Order allow,deny
+#         Deny from all
+#     </IfModule>
+# </FilesMatch>
+
+# ==========================================================================
+# REESCRITURA
+# ==========================================================================
 RewriteEngine On
+
+# ==========================================================================
+# HTTPS OBLIGATORIO (M3)
+# ==========================================================================
+# En produccion todo va por HTTPS. Se contempla un proxy inverso que termina
+# el TLS (X-Forwarded-Proto) para no entrar en bucle, y se excluye localhost
+# para no romper una instalacion Apache de desarrollo. El servidor embebido
+# (php -S) ignora este archivo: en local se sigue sirviendo por http.
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
+RewriteCond %{HTTP_HOST} !^localhost(:[0-9]+)?$ [NC]
+RewriteCond %{HTTP_HOST} !^127\.0\.0\.1(:[0-9]+)?$ [NC]
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
 # El archivo o carpeta existe en disco -> se sirve directo (estaticos).
 RewriteCond %{REQUEST_FILENAME} !-f

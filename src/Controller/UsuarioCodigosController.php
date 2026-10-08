@@ -3,31 +3,17 @@
 declare(strict_types=1);
 
 /**
- * UsuarioCodigosController: panel de códigos de funcionario.
- *
- * Son códigos de invitación que un admin/superadmin genera para que una
- * persona se registre como funcionario (el rol del código determina el rol de
- * la cuenta). Viven acá, separados del directorio (UsuarioController); la
- * capa compartida (permiso de gestión) está en el trait UsuarioData y el
- * HTML de filas y tablas lo arman las vistas, no este archivo.
+ * UsuarioCodigosController: códigos de invitación para registrarse como
+ * funcionario (el rol del código determina el rol de la cuenta).
  */
 final class UsuarioCodigosController
 {
     use UsuarioData;
 
-    /**
-     * Panel de códigos de funcionario (GET a /usuarios/codigos).
-     * Muestra el formulario para generar un código nuevo (con el rol que va a
-     * otorgar) y el listado de códigos generados con su estado. Solo accesible
-     * para admin/superadmin.
-     */
+    /** Panel de códigos: formulario para generar uno nuevo y listado con estado. */
     public static function codigos(): void
     {
-        requerir_login();
-        if (!self::esGestion()) {
-            header('Location: ' . base_path() . '/usuarios');
-            exit;
-        }
+        requerir_gestion();
 
         $pdo = db_connect();
         $stmt = $pdo->query(
@@ -40,10 +26,9 @@ final class UsuarioCodigosController
         );
         $codigos = $stmt->fetchAll();
 
-        // El código que acabamos de generar llega por ?nuevo=CODIGO.
+        // El código recién generado llega por ?nuevo=CODIGO.
         $nuevo = trim((string) ($_GET['nuevo'] ?? ''));
 
-        // Una fila por código; la vista arma {{#codigos}} con sus 3 estados.
         $filas = [];
         foreach ($codigos as $c) {
             $filas[] = [
@@ -64,18 +49,10 @@ final class UsuarioCodigosController
         ]);
     }
 
-    /**
-     * Genera un código de funcionario nuevo (POST a /usuarios/codigos).
-     * Elige el rol que otorgará, lo guarda como "disponible" y redirige al
-     * panel mostrando el código generado para que el admin lo entregue.
-     */
+    /** Genera un código nuevo y redirige al panel mostrándolo. */
     public static function generarCodigo(): void
     {
-        requerir_login();
-        if (!self::esGestion()) {
-            header('Location: ' . base_path() . '/usuarios');
-            exit;
-        }
+        requerir_gestion();
 
         $rol = (string) ($_POST['rol'] ?? '');
         if (!in_array($rol, ['admin', 'superadmin', 'conductor', 'copiloto'], true)) {
@@ -96,7 +73,6 @@ final class UsuarioCodigosController
                 'creado_por' => $creadoPor !== 0 ? $creadoPor : null,
             ]);
 
-            // Recupera el código guardado para mostrarlo en el panel.
             $codigo = (string) $pdo->lastInsertId();
             $stmt = $pdo->prepare('SELECT codigo FROM codigo_funcionario WHERE id = :id');
             $stmt->execute(['id' => $codigo]);
@@ -109,10 +85,7 @@ final class UsuarioCodigosController
         exit;
     }
 
-    /**
-     * Genera un código único "ELY-XXXXXXXXXX" que aún no exista en la tabla.
-     * Como la columna codigo es UNIQUE, reintenta si por azar choca (muy raro).
-     */
+    /** Código único "ELY-XXXXXXXXXX"; reintenta si choca (columna UNIQUE). */
     private static function nuevoCodigo(PDO $pdo): string
     {
         do {

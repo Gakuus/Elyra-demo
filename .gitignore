@@ -1,16 +1,28 @@
 # Entorno / credenciales
 .env
+.env.*
+!.env.example
 
 # phpMyAdmin (instalación local de terceros)
 phpmyadmin/
 
 # Backups de base de datos (contienen datos reales)
 database/backups/
+database.tar.gz
 
 # Archivos generados en runtime
 storage/qrcodes/*
+storage/route-cache/*
+storage/geocode-cache/*
+storage/geoapify-cache/*
+storage/overpass-cache/*
+storage/rate-limit/*
+storage/logs/*
 public/uploads/*
 !storage/qrcodes/.gitkeep
+!storage/geocode-cache/.gitkeep
+!storage/rate-limit/.gitkeep
+!storage/logs/.gitkeep
 !public/uploads/.gitkeep
 
 # PDFs de documentos subidos por los usuarios (contenido real, no va al repo)
@@ -18,6 +30,22 @@ storage/docs/*
 
 # Planificación interna del equipo (cronograma y sprints)
 docs/
+
+# Auditoría de seguridad: documenta paso a paso cómo obtener las credenciales
+# de la base de datos y romper la aplicación. NUNCA va al repositorio.
+AUDITORIA_SEGURIDAD.md
+
+# Documento interno de preparación para la defensa oral (NADA de esto sube a GitHub)
+DEFENSA_ORAL.md
+DEFENSA_SISTEMA_PLANTILLAS.md
+DEFENSA_FLUJO_PETICIONES.md
+DEFENSA_CREAR_PAGINA.md
+EXPLICACION_CONEXIONES.md
+EXPLICACION_QR.md
+EXPLICACION_BASE_DE_DATOS.md
+EXPLICACION_TRAITS_DATA.md
+EXPLICACION_MVC.md
+EXPLICACION_CONSULTAS_SQL_PRACTICA.md
 
 # Sistema
 .DS_Store

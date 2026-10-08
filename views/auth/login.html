@@ -25,7 +25,12 @@
             <div class="titulo-caja-ingreso">Sistema de Gestión Hospitalaria</div>
             <p class="texto-atenuado texto-pequeno texto-centrado margen-inferior-3">Ingresá tus credenciales para acceder</p>
 
+            {{#hay_error}}
+            <div class="alert alert-danger py-2 texto-pequeno" role="alert">{{error}}</div>
+            {{/hay_error}}
+
             <form method="post">
+            <input type="hidden" name="_csrf" value="{{csrf_token}}">
                 <div class="grupo-formulario">
                     <label for="username" class="etiqueta-formulario">Usuario</label>
                     <input type="text" id="username" name="username" class="entrada-formulario ancho-completo" required autocomplete="username" placeholder="Ingrese su usuario" autofocus>

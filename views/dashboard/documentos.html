@@ -30,7 +30,7 @@
                 {{#documentos}}
                 <tr data-doc-id="{{fila.id}}" data-doc-activo="{{#fila.inactivo}}0{{/fila.inactivo}}{{^fila.inactivo}}1{{/fila.inactivo}}">
                     <td>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="ElyraDoc.verQR({{fila.id}})" title="Ver QR"><i class="bi bi-qr-code"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="ElyraDoc.verQR({{fila.id}}, '{{fila.token}}')" title="Ver QR"><i class="bi bi-qr-code"></i></button>
                     </td>
                     <td class="fw-semibold">{{fila.titulo}}{{#fila.inactivo}} <span class="badge bg-secondary ms-1">Inactivo</span>{{/fila.inactivo}}</td>
                     <td><span class="insignia">{{fila.tipo}}</span></td>

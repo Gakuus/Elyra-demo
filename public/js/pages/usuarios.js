@@ -93,7 +93,7 @@
 
         fetch((window.BASE_PATH || '') + '/usuarios/estado', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, window.Elyra.csrfHeaders()),
             body: 'id=' + encodeURIComponent(id) + '&activo=' + encodeURIComponent(activo)
         })
             .then(function (r) { return r.json(); })

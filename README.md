@@ -203,7 +203,7 @@ cd Elyra-demo
 #   DB_PORT=3306
 #   DB_DATABASE=elyra
 #   DB_USERNAME=elyra
-#   DB_PASSWORD=elyra_pass
+#   DB_PASSWORD=poné_una_contraseña_segura
 
 # 3. Crear la base de datos y importar el esquema
 mysql -u root -p < database/esquema.sql
@@ -220,7 +220,7 @@ El proyecto incluye un script para levantar phpMyAdmin localmente:
 ```bash
 bash iniciar-phpmyadmin.sh
 # phpMyAdmin en http://localhost:8081
-# Usuario BD: elyra / elyra_pass
+# Usuario BD: el definido en tu .env (DB_USERNAME / DB_PASSWORD)
 ```
 
 ---
@@ -242,7 +242,7 @@ bash iniciar-phpmyadmin.sh
    DB_PORT=3306
    DB_DATABASE=elyra
    DB_USERNAME=elyra
-   DB_PASSWORD=elyra_pass
+   DB_PASSWORD=poné_una_contraseña_segura
    ```
 6. Listo. La app queda accesible desde el mismo escritorio web y en https://itspvm.duckdns.org/proyectos/elyra.
 

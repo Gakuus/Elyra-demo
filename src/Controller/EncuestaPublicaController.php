@@ -3,17 +3,14 @@
 declare(strict_types=1);
 
 /**
- * EncuestaPublicaController: página pública para responder una encuesta sin
- * login (GET y POST a /publico/encuesta?id=N). La vista decide el estado con
- * flags: {{#es_404}}, {{#es_formulario}} o {{#es_gracias}}. La capa de datos
- * compartida con los demás controladores del módulo está en el trait
- * EncuestaData.
+ * EncuestaPublicaController: encuesta pública sin login (/publico/encuesta).
+ * La vista decide el estado con flags {{#es_404}}, {{#es_formulario}}, {{#es_gracias}}.
  */
 final class EncuestaPublicaController
 {
     use EncuestaData;
 
-    /** Enrutador interno; index.php delega aquí toda ruta /publico/encuesta. */
+    /** Enrutador interno: index.php delega acá /publico/encuesta. */
     public static function dispatch(string $path, string $method): void
     {
         match (true) {
@@ -23,11 +20,7 @@ final class EncuestaPublicaController
         };
     }
 
-    /**
-     * Muestra la encuesta activa para responder (GET a /publico/encuesta?id=N).
-     * La vista decide el estado con flags: {{#es_404}}, {{#es_formulario}} o
-     * {{#es_gracias}}.
-     */
+    /** Muestra la encuesta activa para responder. */
     public static function publica(): void
     {
         $id = (int) ($_GET['id'] ?? 0);
@@ -41,11 +34,7 @@ final class EncuestaPublicaController
         self::renderVistaPublica(self::datosVistaFormulario($resultado));
     }
 
-    /**
-     * Guarda las respuestas enviadas (POST a /publico/encuesta?id=N). Inserta
-     * una fila en respuesta por cada pregunta respondida; todas comparten el
-     * mismo sesion_token (la sesión anónima del envío).
-     */
+    /** Guarda las respuestas: una fila por pregunta, todas con el mismo sesion_token. */
     public static function publicaResponder(): void
     {
         $id = (int) ($_POST['encuesta_id'] ?? 0);
@@ -57,9 +46,18 @@ final class EncuestaPublicaController
             return;
         }
 
+        // Anti abuso: la encuesta es anónima y pública; se limita por IP para
+        // que nadie la llene en masa (no hay captcha).
+        if (!rate_limit_permitido('encuesta:' . ip_usuario(), 20, 3600)) {
+            log_seguridad('encuesta_bloqueada', ['encuesta_id' => $id]);
+            http_response_code(429);
+            self::renderVistaPublica(self::datosVistaFormulario($resultado, 'Recibimos demasiadas respuestas desde tu conexión. Probá más tarde.'));
+            return;
+        }
+
         $pdo = db_connect();
         $respuestasInput = (array) ($_POST['respuestas'] ?? []);
-        // Índice posicional: respuestas[i] corresponde a la i-ésima pregunta.
+        // respuestas[i] corresponde a la i-ésima pregunta.
         $respuestasPosicionales = array_values($respuestasInput);
 
         $faltanRequeridas = false;
@@ -106,7 +104,7 @@ final class EncuestaPublicaController
                 $stmtResp->execute([$id, $tokenSesion, $p['id'], $valorOpcion, $valorTexto, $valorNumerico]);
             }
 
-            // Faltan preguntas requeridas → deshace todo y vuelve al formulario.
+            // Faltan requeridas → deshace todo y vuelve al formulario.
             if ($faltanRequeridas) {
                 throw new InvalidArgumentException('Faltan responder algunas preguntas obligatorias.');
             }
@@ -125,17 +123,12 @@ final class EncuestaPublicaController
         self::renderVistaPublica(['es_gracias' => ['1']]);
     }
 
-    /** Renderiza la vista pública con los datos del estado correspondiente. */
     private static function renderVistaPublica(array $datos): void
     {
         render_vista(__DIR__ . '/../../views/publico/encuesta.html', $datos + ['titulo' => 'Encuesta']);
     }
 
-    /**
-     * Arma los datos de la vista pública en estado formulario: una fila por
-     * pregunta con sus flags de tipo ({{#fila.escala}}, {{#fila.multiple}},
-     * {{#fila.es_texto}}) ya escapados. $error llega del envío fallido.
-     */
+    /** Datos de la vista en estado formulario: una fila por pregunta con sus flags. */
     private static function datosVistaFormulario(array $resultado, string $error = ''): array
     {
         $preguntas = [];
@@ -157,7 +150,6 @@ final class EncuestaPublicaController
                 $item['escala'] = ['1'];
                 $item['valores'] = array_map(fn($v) => ['val' => $v], range(1, 5));
             } elseif ($p['tipo'] === 'multiple_choice') {
-                // El formulario manda el ID real de pregunta_opcion.
                 $item['multiple'] = ['1'];
                 $item['opciones'] = array_map(
                     fn($oid, $otexto) => ['oid' => (string) $oid, 'otexto' => htmlspecialchars((string) $otexto)],
@@ -186,10 +178,7 @@ final class EncuestaPublicaController
         ];
     }
 
-    /**
-     * Carga una encuesta ACTIVA con sus preguntas y opciones, lista para el
-     * formulario público. Devuelve null si no existe o no está activa.
-     */
+    /** Carga una encuesta ACTIVA con preguntas y opciones; null si no existe o está inactiva. */
     private static function cargarEncuestaPublica(int $id): ?array
     {
         $pdo = db_connect();

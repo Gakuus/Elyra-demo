@@ -2,9 +2,10 @@
     <div class="cabecera-panel"><i class="bi bi-pencil-square me-1"></i> Editar encuesta</div>
     <div class="cuerpo-panel">
 
-        {{error}}
+        {{{error}}}
 
         <form method="post" id="encuestaForm">
+        <input type="hidden" name="_csrf" value="{{csrf_token}}">
             <input type="hidden" name="id" value="{{encuesta_id}}">
 
             <div class="mb-3">
@@ -50,5 +51,5 @@
     </div>
 </div>
 
-<script>window.ENCUESTA_INICIAL = {{preguntas_json}};</script>
+<script>window.ENCUESTA_INICIAL = {{{preguntas_json}}};</script>
 <script src="public/js/pages/encuesta-formulario.js?v=1" defer></script>

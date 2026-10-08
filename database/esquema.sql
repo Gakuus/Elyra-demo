@@ -45,6 +45,17 @@ CREATE TABLE `ruta` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `ubicacion` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(200) NOT NULL,
+  `latitud` decimal(10,7) NOT NULL,
+  `longitud` decimal(10,7) NOT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_ubicacion_nombre` (`nombre`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `vehiculo` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `patente` varchar(20) NOT NULL,
@@ -142,6 +153,8 @@ CREATE TABLE `traslado` (
   `destino` varchar(200) NOT NULL,
   `destino_lat` decimal(10,7) DEFAULT NULL,
   `destino_lng` decimal(10,7) DEFAULT NULL,
+  `distancia_km` decimal(10,2) DEFAULT NULL,
+  `duracion_min` decimal(6,1) DEFAULT NULL,
   `hora_salida_estimada` datetime DEFAULT NULL,
   `hora_salida_efectiva` datetime DEFAULT NULL,
   `hora_llegada_destino` datetime DEFAULT NULL,

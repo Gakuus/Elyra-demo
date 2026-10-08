@@ -27,8 +27,8 @@
         <p class="text-muted mt-2">{{descripcion}}</p>
         {{/hay_descripcion}}
         <div class="d-flex gap-2 justify-content-center mt-3 flex-wrap">
-            <a href="publico/archivo?id={{id}}" class="btn btn-primary"><i class="bi bi-eye me-1"></i> Ver PDF</a>
-            <a href="publico/archivo?id={{id}}&descargar=1" class="btn btn-outline-secondary"><i class="bi bi-download me-1"></i> Descargar PDF</a>
+            <a href="publico/archivo?id={{id}}&t={{token}}" class="btn btn-primary"><i class="bi bi-eye me-1"></i> Ver PDF</a>
+            <a href="publico/archivo?id={{id}}&t={{token}}&descargar=1" class="btn btn-outline-secondary"><i class="bi bi-download me-1"></i> Descargar PDF</a>
             {{#hay_encuesta}}
             <a href="{{enlace_encuesta}}" class="btn btn-info"><i class="bi bi-chat-square-text me-1"></i> Encuesta de satisfacción</a>
             {{/hay_encuesta}}

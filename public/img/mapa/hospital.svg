@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 42" width="40" height="42" role="img" aria-label="Hospital">
+  <!-- Cuerpo del edificio -->
+  <rect x="7" y="13" width="26" height="26" rx="2.5" fill="#FFFFFF" stroke="#263238" stroke-width="2"/>
+  <!-- Cartel con la cruz -->
+  <rect x="11.5" y="3.5" width="17" height="10" rx="2" fill="#E53935" stroke="#263238" stroke-width="1.7"/>
+  <g fill="#FFFFFF">
+    <rect x="18" y="5" width="4" height="7" rx="0.7"/>
+    <rect x="16.5" y="6.5" width="7" height="4" rx="0.7"/>
+  </g>
+  <!-- Ventanas -->
+  <g fill="#90CAF9" stroke="#263238" stroke-width="0.9">
+    <rect x="10.5" y="17" width="6" height="5.5" rx="1"/>
+    <rect x="23.5" y="17" width="6" height="5.5" rx="1"/>
+    <rect x="10.5" y="25" width="6" height="5.5" rx="1"/>
+    <rect x="23.5" y="25" width="6" height="5.5" rx="1"/>
+  </g>
+  <!-- Puerta -->
+  <rect x="16.5" y="32" width="7" height="7" rx="1" fill="#263238"/>
+</svg>

@@ -60,7 +60,7 @@
 
         fetch((window.BASE_PATH || '') + '/encuestas/toggle', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, window.Elyra.csrfHeaders()),
             body: 'id=' + encodeURIComponent(id) + '&activa=' + (activa ? '1' : '0')
         })
             .then(function (r) { return r.json(); })
@@ -75,7 +75,12 @@
                         + (activa ? 'Activa' : 'Inactiva') + '</span>';
                 }
 
-                // El botón pasa a ofrecer la acción inversa.
+                // El botón pasa a ofrecer la acción inversa. Hay que reasignar
+                // el onclick: el atributo inline lleva el estado fijo, así que
+                // sin esto el botón seguiría mandando el mismo valor.
+                btn.onclick = activa
+                    ? function () { ElyraEnc.cambiarEstado(id, 0, btn); }
+                    : function () { ElyraEnc.cambiarEstado(id, 1, btn); };
                 btn.innerHTML = '<i class="bi bi-power"></i>';
                 btn.title = activa ? 'Desactivar' : 'Reactivar';
                 btn.classList.toggle('text-success', !activa);

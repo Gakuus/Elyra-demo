@@ -1,8 +1,9 @@
 <div class="panel">
     <div class="cabecera-panel"><i class="bi bi-truck me-1"></i> Agregar vehículo</div>
     <div class="cuerpo-panel">
-        {{mensaje_error}}
+        {{{mensaje_error}}}
         <form method="post" action="vehiculos/agregar" id="vehiculoForm">
+        <input type="hidden" name="_csrf" value="{{csrf_token}}">
             <div class="mb-3">
                 <label for="patente" class="form-label">Patente <span style="color:#C00;">*</span></label>
                 <input type="text" name="patente" id="patente" class="form-control" required maxlength="8"

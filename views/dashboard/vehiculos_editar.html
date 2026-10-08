@@ -1,8 +1,9 @@
 <div class="panel">
     <div class="cabecera-panel"><i class="bi bi-pencil-square me-1"></i> Editar vehículo</div>
     <div class="cuerpo-panel">
-        {{mensaje_error}}
+        {{{mensaje_error}}}
         <form method="post" action="vehiculos/editar" id="vehiculoForm">
+        <input type="hidden" name="_csrf" value="{{csrf_token}}">
             <input type="hidden" name="id" value="{{id}}">
 
             <div class="mb-3">

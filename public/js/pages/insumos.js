@@ -27,7 +27,7 @@
 
         fetch((window.BASE_PATH || '') + '/insumos/toggle', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, window.Elyra.csrfHeaders()),
             body: 'id=' + encodeURIComponent(id)
         })
             .then(function (r) { return r.json(); })

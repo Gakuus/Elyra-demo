@@ -1,0 +1,862 @@
+/* ---------- Modal de registro de traslado sobre el mapa ---------- */
+
+/* El modal NO es un overlay: entra en el flujo flex de .contenedor-mapa y
+   empuja al mapa para que se encoja. Así se sigue viendo el recorrido
+   mientras se elige, que es el sentido de "como en Google Maps". Por eso el
+   mapa queda con su ancho real y hay que avisarle con invalidateSize(). */
+.velo-traslado {
+    flex: 0 0 420px;
+    width: 420px;
+    max-width: 100%;
+    height: 100%;
+    background: var(--blanco);
+    border-left: 1px solid #DDD;
+    box-shadow: -4px 0 16px rgba(0, 0, 0, .10);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    animation: entra-traslado .25s ease;
+}
+
+.velo-traslado[hidden] {
+    display: none;
+}
+
+@keyframes entra-traslado {
+    from { transform: translateX(24px); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+
+.modal-traslado-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #E4E4E4;
+    background: var(--azul);
+    color: var(--blanco);
+    flex-shrink: 0;
+}
+
+.modal-traslado-cabecera h6 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.cerrar-traslado {
+    background: transparent;
+    border: 0;
+    color: var(--blanco);
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+    opacity: .85;
+}
+
+.cerrar-traslado:hover {
+    opacity: 1;
+}
+
+.modal-traslado-cuerpo {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 16px 20px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.modal-traslado-pie {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    padding: 12px 16px;
+    border-top: 1px solid #E4E4E4;
+    background: #F7F7F9;
+    flex-shrink: 0;
+}
+
+/* ---------- Avisos ---------- */
+.alerta-traslado {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 12px 16px 0;
+    padding: 9px 12px;
+    border-radius: var(--radio-btn);
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.alerta-traslado[hidden] {
+    display: none;
+}
+
+.alerta-traslado.info {
+    background: #E8F0FE;
+    border: 1px solid #C3D4F5;
+    color: #23427E;
+}
+
+.alerta-traslado.error {
+    background: #FDEAEA;
+    border: 1px solid #F3C4C4;
+    color: #8C2020;
+}
+
+/* ---------- Grupos y campos ---------- */
+.grupo-form {
+    margin-bottom: 18px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #EEE;
+}
+
+.grupo-form:last-child {
+    border-bottom: 0;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.grupo-titulo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: var(--texto-atenuado);
+    margin-bottom: 10px;
+}
+
+.campo {
+    display: block;
+    margin-bottom: 10px;
+}
+
+.campo:last-child {
+    margin-bottom: 0;
+}
+
+.campo > span {
+    display: block;
+    font-size: 13px;
+    color: var(--texto-atenuado);
+    margin-bottom: 4px;
+}
+
+.campo > span em {
+    color: #C00;
+    font-style: normal;
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+    width: 100%;
+    padding: 7px 9px;
+    font-size: var(--fuente-sm);
+    font-family: var(--fuente-familia);
+    color: var(--texto);
+    background: var(--blanco);
+    border: 1px solid var(--input-borde);
+    border-radius: var(--radio-btn);
+}
+
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
+    outline: none;
+    border-color: var(--input-enfoque);
+    box-shadow: 0 0 0 2px rgba(59, 89, 152, .15);
+}
+
+.campo[hidden] {
+    display: none;
+}
+
+.fila-campos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+/* ---------- Extremos del recorrido (origen / destino) ---------- */
+.extremo {
+    border: 1px solid #DCDCDC;
+    border-radius: var(--radio-btn);
+    padding: 10px;
+    margin-bottom: 6px;
+    background: #FCFCFD;
+    transition: border-color .15s ease, background .15s ease;
+}
+
+.extremo.activo {
+    border-color: var(--azul);
+    background: #F4F7FC;
+}
+
+.extremo-cabecera {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 8px;
+}
+
+.extremo-punto {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.extremo-nombre {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--texto);
+}
+
+.extremo-coord {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--texto-atenuado);
+    font-variant-numeric: tabular-nums;
+}
+
+.extremo-acciones {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 7px;
+}
+
+.mini-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-family: var(--fuente-familia);
+    color: var(--azul);
+    background: var(--blanco);
+    border: 1px solid var(--azul);
+    border-radius: var(--radio-btn);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.mini-btn:hover {
+    background: var(--azul);
+    color: var(--blanco);
+}
+
+.mini-select {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 8px;
+    font-size: 12px;
+    font-family: var(--fuente-familia);
+    color: var(--texto-atenuado);
+    background: var(--blanco);
+    border: 1px solid #D5D5D5;
+    border-radius: var(--radio-btn);
+}
+
+.flecha-extremos {
+    text-align: center;
+    color: var(--gris-medio);
+    margin: -2px 0 4px;
+    font-size: 13px;
+}
+
+.pista-mapa {
+    font-size: 12px;
+    color: var(--texto-atenuado);
+    margin: 8px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ---------- Buscador de direcciones ---------- */
+.buscador {
+    position: relative;
+}
+
+.buscador-input {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: var(--fuente-sm);
+    font-family: var(--fuente-familia);
+    color: var(--texto);
+    background: var(--blanco);
+    border: 1px solid var(--input-borde);
+    border-radius: var(--radio-btn);
+}
+
+.buscador-input:focus {
+    outline: none;
+    border-color: var(--input-enfoque);
+    box-shadow: 0 0 0 2px rgba(59, 89, 152, .15);
+}
+
+.sugerencias {
+    position: absolute;
+    top: calc(100% + 3px);
+    left: 0;
+    right: 0;
+    z-index: 30;
+    max-height: 230px;
+    overflow-y: auto;
+    background: var(--blanco);
+    border: 1px solid var(--panel-borde);
+    border-radius: var(--radio-btn);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .16);
+}
+
+.sugerencias[hidden] {
+    display: none;
+}
+
+/* Cuando no hay lugar abajo, el desplegable se abre hacia arriba para que el
+   cuerpo con overflow-y: auto no lo recorte. La clase la pone
+   ubicarSugerencias() en mapa_traslado.js. */
+.buscador.sugerencias-arriba .sugerencias {
+    top: auto;
+    bottom: calc(100% + 3px);
+}
+
+.sugerencia {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    padding: 8px 10px;
+    font-size: 13px;
+    color: var(--texto);
+    border-bottom: 1px solid #F0F0F0;
+    cursor: pointer;
+}
+
+.sugerencia:last-child {
+    border-bottom: 0;
+}
+
+.sugerencia:hover {
+    background: #F0F4FB;
+}
+
+/* El cruce de calles va primero en la lista y no es una dirección: se lo
+   distingue con un fondo y una línea de color para que se lea de un vistazo
+   que es la intersección y no una calle más. */
+.sugerencia.es-cruce {
+    background: #F2F8F2;
+    border-left: 3px solid #4CAF50;
+    padding-left: 7px;
+}
+
+.sugerencia.es-cruce:hover {
+    background: #E7F3E7;
+}
+
+.sugerencia.es-cruce i {
+    color: #2E7D32;
+}
+
+/* Fila que se puede elegir con el teclado (flechas + Enter). */
+.sugerencia-activa,
+.sugerencia:hover {
+    background: #E7EEFA;
+}
+
+.sugerencia i {
+    color: var(--azul);
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.sugerencia-texto {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.sugerencia-texto b {
+    font-weight: 700;
+}
+
+.sugerencia-texto small {
+    font-size: 11px;
+    color: var(--texto-atenuado);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sugerencia.vacia {
+    color: var(--texto-atenuado);
+    cursor: default;
+    font-style: italic;
+}
+
+.sugerencia.vacia:hover {
+    background: transparent;
+}
+
+/* ---------- Resumen de la ruta ---------- */
+.resumen-ruta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    padding: 9px 11px;
+    font-size: 13px;
+    color: var(--azul-oscuro);
+    background: #E8F0FE;
+    border: 1px solid #C3D4F5;
+    border-radius: var(--radio-btn);
+}
+
+.resumen-ruta[hidden] {
+    display: none;
+}
+
+.resumen-ruta i {
+    color: var(--azul);
+}
+
+.resumen-llegada {
+    margin-left: auto;
+    color: var(--texto);
+}
+
+/* ---------- Botones del pie ---------- */
+.btn-cancelar,
+.btn-guardar {
+    padding: 8px 16px;
+    font-size: var(--fuente-sm);
+    font-family: var(--fuente-familia);
+    border-radius: var(--radio-btn);
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.btn-cancelar {
+    background: var(--blanco);
+    border-color: #C9C9C9;
+    color: var(--texto-atenuado);
+}
+
+.btn-cancelar:hover {
+    background: #F1F1F1;
+}
+
+.btn-guardar {
+    background: var(--azul);
+    color: var(--blanco);
+    border-color: var(--azul);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-guardar:hover:not(:disabled) {
+    background: var(--azul-oscuro);
+}
+
+.btn-guardar:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+}
+
+/* ---------- Botón de nuevo traslado en el panel lateral ---------- */
+.btn-nuevo-traslado {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin: 0 14px 12px;
+    padding: 10px;
+    font-size: var(--fuente-sm);
+    font-family: var(--fuente-familia);
+    color: var(--blanco);
+    background: var(--azul);
+    border: 0;
+    border-radius: var(--radio-btn);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.btn-nuevo-traslado:hover {
+    background: var(--azul-oscuro);
+}
+
+/* ---------- Ficha de recorrido en la tarjeta del traslado ---------- */
+.ficha-recorrido {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--azul-oscuro);
+}
+
+.ficha-recorrido i {
+    color: var(--azul);
+}
+
+.ficha-recorrido .horario {
+    color: var(--texto-atenuado);
+    font-variant-numeric: tabular-nums;
+}
+
+.ficha-recorrido.vacio {
+    color: #A06000;
+}
+
+.ficha-recorrido.vacio i {
+    color: #D98324;
+}
+
+/* ---------- Aviso de registro en la barra del mapa ---------- */
+.estado-mapa.aviso-ok span {
+    color: #2E7D32;
+    font-weight: 700;
+}
+
+.estado-mapa.aviso-error span {
+    color: var(--peligro);
+    font-weight: 700;
+}
+
+/* ---------- Pantallas chicas ---------- */
+@media (max-width: 991px) {
+    /* El mapa ya no entra cómodo con 420px al lado, así que el modal se
+       superpone arriba a la derecha y el mapa queda como estaba. */
+    .velo-traslado {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        flex: none;
+        width: min(92vw, 420px);
+    }
+
+    .fila-campos {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    /* En el celular el formulario entra como hoja desde abajo: tapa casi
+       toda la pantalla pero deja el mapa arriba, que es donde se ajustan los
+       pines y se ve la ruta mientras se completa. El pie lleva safe-area
+       para que la barra del teléfono no tape los botones. */
+    .velo-traslado,
+    .velo-historial {
+        width: 100%;
+        left: 0;
+        right: 0;
+        top: auto;
+        bottom: 0;
+        height: 84vh;
+        height: 84dvh;
+        flex: none;
+        border-left: 0;
+        border-radius: 16px 16px 0 0;
+        box-shadow: 0 -8px 30px rgba(0, 0, 0, .28);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .modal-traslado-pie .btn-cancelar,
+    .modal-traslado-pie .btn-guardar {
+        flex: 1;
+        min-height: 44px;
+    }
+
+    .extremo-acciones {
+        flex-wrap: wrap;
+    }
+
+    .extremo-coord {
+        display: none;
+    }
+
+    /* Sin el zoom automático de iOS al tocar un input (exige 16px mínimos). */
+    .campo input,
+    .campo select,
+    .campo textarea,
+    .buscador-input {
+        font-size: 16px;
+    }
+}
+
+/* ---------- Historial de traslados (pestañas) ---------- */
+
+/* Comparte el panel lateral con el modal de registro: mismo ancho y mismo
+   empuje al mapa, para que el recorrido siga viéndose al revisar el
+   historial. */
+.velo-historial {
+    z-index: 21;
+}
+
+.btn-historial {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: transparent;
+    border: 1px solid #C8D0DE;
+    color: var(--azul);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.btn-historial:hover {
+    background: #F0F3F9;
+}
+
+.pestanas-historial {
+    display: flex;
+    border-bottom: 1px solid #E4E4E4;
+    background: #FAFBFC;
+    flex-shrink: 0;
+}
+
+.pestanas-historial .pestana {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    padding: 11px 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--texto-atenuado);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.pestanas-historial .pestana:hover {
+    color: var(--azul);
+}
+
+/* Solo se ve la pestaña elegida: el borde de abajo la marca y el fondo la
+   separa del panel, sin necesidad de mover el contenido. */
+.pestanas-historial .pestana.activa {
+    color: var(--azul);
+    border-bottom-color: var(--azul);
+    background: var(--blanco);
+}
+
+.pestana-cuenta {
+    background: #E8ECF3;
+    color: var(--azul-oscuro);
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 7px;
+}
+
+.pestanas-historial .pestana.activa .pestana-cuenta {
+    background: var(--azul);
+    color: var(--blanco);
+}
+
+.historial-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.historial-lista[hidden] {
+    display: none;
+}
+
+/* En el historial no hay botones de cambio de estado: nada de lo que se
+   muestra está en curso, así que ofrecerlos sería engañoso. */
+.historial-lista .acciones {
+    display: none;
+}
+
+.historial-lista .tarjeta-traslado {
+    cursor: default;
+    border-left: 3px solid #D8DEE8;
+}
+
+.historial-lista .tarjeta-traslado.cancelado {
+    opacity: .62;
+}
+
+@media (max-width: 768px) {
+    .velo-historial {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        flex: none;
+        width: min(92vw, 420px);
+    }
+}
+
+@media (max-width: 480px) {
+    .velo-historial {
+        width: 100vw;
+    }
+}
+
+/* La fecha no está en la tarjeta del mapa porque ahí el traslado está
+   en curso y la hora de llegada todavía no existe. En el historial es el dato
+   que más importa: cuándo me trasladaron. */
+.historial-lista .fecha-historial {
+    font-size: 11px;
+    color: var(--texto-atenuado);
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ==================================================================
+   Marcadores del mapa
+   Los iconos son SVG propios (public/img/mapa/) en vez de glifos de
+   Bootstrap Icons: se ven nítidos en cualquier zoom y no dependen del CDN.
+   El estado del traslado ya no se codifica solo con el color, sino con el
+   borde del badge (continuo / punteado si se perdió la señal).
+   ================================================================== */
+
+.mk {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 0;
+}
+
+/* Badge circular: lleva el color del estado y no rota, para que la
+   ambulancia pueda girar por separado sin deformar el círculo. */
+.mk-badge {
+    box-sizing: content-box;
+    border-radius: 50%;
+    border: 3px solid #FFF;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* El conductor dejó de reportar: borde punteado y atenuado, para no
+   pasar por posición confiable. */
+.mk-badge--sin-senal {
+    border-style: dashed;
+    opacity: .6;
+}
+
+.mk-ambulancia {
+    display: block;
+    width: 20px;
+    height: 13px;
+    /* El SVG apunta a la derecha, que es 0°: el rumbo entra directo. */
+    transform-origin: 50% 50%;
+}
+
+.mk-propia {
+    width: 24px;
+    height: 16px;
+}
+
+/* Pines de origen y destino: la punta va abajo, así que el ancla
+   vertical se corre para que la punta caiga en la coordenada. */
+.mk-pin {
+    display: block;
+    width: 28px;
+    height: 38px;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .35));
+}
+
+.mk-hosp {
+    display: block;
+    width: 28px;
+    height: 30px;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .3));
+}
+
+/* El hospital real es un punto de interés, no una ambulancia: sin badge. */
+.mk-hosp-badge {
+    border: 0;
+    box-shadow: none;
+    background: none;
+}
+
+/* Popup de un hospital con varios pabellones en la misma coordenada: se
+   listan en vez de amontonar marcadores encimados. */
+.lista-pabellones {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+    border-top: 1px solid #E4E7EB;
+}
+
+.lista-pabellones li {
+    font-size: .82rem;
+    padding: 3px 0;
+    color: var(--azul-oscuro);
+}
+
+.lista-pabellones li + li {
+    border-top: 1px dotted #E4E7EB;
+}
+
+/* Resaltado de lo que el usuario escribió dentro de la sugerencia: permite
+   escanear la lista sin leer los labels completos. */
+.sugerencia-texto mark {
+    background: #FFF3A0;
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+}
+
+/* Tipo de lugar y distancia. "A 350 m" es lo que distingue dos lugares con el
+   mismo nombre; el tipo ("Hospital", "Clínica") dice si es a donde se puede
+   llevar a un paciente. */
+.sugerencia-meta {
+    font-size: 10.5px;
+    font-style: normal;
+    color: var(--azul);
+    opacity: .85;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Estado de carga dentro del desplegable. */
+.sugerencia.vacia .spinner {
+    display: inline-block;
+    width: 11px;
+    height: 11px;
+    margin-right: 6px;
+    vertical-align: -1px;
+    border: 2px solid rgba(59, 89, 152, .25);
+    border-top-color: var(--azul);
+    border-radius: 50%;
+    animation: giro-sugerencia .7s linear infinite;
+}
+
+@keyframes giro-sugerencia {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sugerencia.vacia .spinner {
+        animation: none;
+    }
+}

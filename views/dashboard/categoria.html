@@ -1,0 +1,17 @@
+<div class="cabecera-panel">
+    <i class="bi bi-tags me-1"> </i> categorias
+</div>
+{{#categorias}}
+<ul class="list-group">
+    <li class="list-group-item">
+        {{fila.nombre}}
+    </li>
+</ul>
+{{/categorias}}
+
+
+{{^categorias}}
+
+<p>no hay nada q mostrar</p>
+
+{{/categorias}}

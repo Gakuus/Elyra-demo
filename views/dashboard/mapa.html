@@ -1,0 +1,350 @@
+<div class="contenedor-mapa">
+    <!-- data-rol / data-usuario-id le dicen al JS si tiene que activar el
+         reporte de geolocalización (rol conductor) o solo mostrar posiciones. -->
+    <div id="map" data-rol="{{rol}}" data-usuario-id="{{usuario_id}}"></div>
+
+    <div class="panel-mapa" id="panel-mapa">
+        <!-- Solo para conductores: el estado del GPS del propio dispositivo
+             y los controles de centrado / simulación. -->
+        {{#es_conductor}}
+        <div class="bloque-seguimiento" id="bloqueSeguimiento">
+            <div class="seguimiento-fila">
+                <span class="seguimiento-titulo">
+                    <i class="bi bi-broadcast-pin"></i> Mi ubicación
+                </span>
+                <span class="seguimiento-estado esperando" id="estadoSeguimiento">Iniciando…</span>
+            </div>
+            <div class="seguimiento-detalle" id="detalleSeguimiento">
+                Activando el GPS del dispositivo…
+            </div>
+            <div class="seguimiento-acciones">
+                <button type="button" class="btn-seguimiento" id="btnSeguir">
+                    <i class="bi bi-crosshair"></i> Centrar en mí
+                </button>
+                <button type="button" class="btn-seguimiento btn-simular" id="btnSimular">
+                    <i class="bi bi-broadcast"></i> Simular recorrido
+                </button>
+            </div>
+        </div>
+        {{/es_conductor}}
+
+        <div class="encabezado-lista">
+            {{#es_paciente}}
+            <!-- El paciente ve los suyos: los que están en curso más los que ya
+                 quedaron terminados. Por eso el rótulo no dice "activos". -->
+            <span>Mis traslados</span>
+            {{/es_paciente}}
+            {{^es_paciente}}
+            <span>Traslados activos</span>
+            {{/es_paciente}}
+            <span class="contador" id="contadorActivos">0 traslados</span>
+            <!-- El historial va en un panel aparte: en el mapa, los traslados
+                 ya terminados dejaban un marcador en el origen, otro en el
+                 destino y la línea de la calle, y con el tiempo el mapa quedaba
+                 tapado de lugares por donde se pasó hace meses. -->
+            <button type="button" class="btn-historial" id="btnHistorial"
+                    title="Ver traslados ya terminados">
+                <i class="bi bi-clock-history"></i> Historial
+            </button>
+        </div>
+
+        {{#puede_registrar}}
+        <button type="button" class="btn-nuevo-traslado" id="btnNuevoTraslado">
+            <i class="bi bi-plus-circle"></i> Registrar traslado
+        </button>
+        {{/puede_registrar}}
+
+        <div id="listaTraslados">
+            <div class="mapa-vacio">
+                <i class="bi bi-geo-alt"></i>
+                Cargando ubicaciones...
+            </div>
+        </div>
+    </div>
+
+    <button class="panel-mapa-toggle" id="btnAlternarBarra" title="Panel" type="button">
+        <i class="bi bi-list"></i>
+        <span class="etiqueta-panel-toggle">Traslados</span>
+    </button>
+
+    <div class="leyenda-mapa">
+        <div><span class="punto-leyenda" style="background:#4CAF50"></span> En curso</div>
+        <div><span class="punto-leyenda" style="background:#2196F3"></span> En retorno</div>
+        <div><span class="punto-leyenda" style="background:#FF9800"></span> En destino</div>
+        <div><span class="punto-leyenda" style="background:#9E9E9E"></span> Sin traslado activo</div>
+        <div><span class="punto-leyenda" style="background:#90A4AE;opacity:.55"></span> Sin señal (no reporta)</div>
+        <div><span class="punto-leyenda" style="background:#E91E63; width:14px; height:14px; border-radius:2px;"></span> Hospital</div>
+    </div>
+
+    <div class="estado-mapa" id="estadoMapa">
+        <div class="punto-pulso"></div>
+        <span>Conectando...</span>
+    </div>
+
+    {{#puede_registrar}}
+    <!-- ==================================================================
+         Modal de registro de traslado.
+
+         No tapa el mapa: se apoya contra el borde derecho para que quien
+         registra pueda ver los pines y la ruta mientras los mueve. La lógica
+         está en public/js/traslado/ (el modal) y public/js/mapa/ (el mapa).
+         ================================================================== -->
+    <div class="velo-traslado" id="veloTraslado" hidden>
+        <div class="modal-traslado" role="dialog" aria-modal="true" aria-labelledby="tituloModalTraslado">
+
+            <div class="modal-traslado-cabecera">
+                <h6 id="tituloModalTraslado"><i class="bi bi-plus-circle me-1"></i> Nuevo traslado</h6>
+                <button type="button" class="cerrar-traslado" id="btnCerrarTraslado" aria-label="Cerrar">&times;</button>
+            </div>
+
+            <div class="alerta-traslado" id="alertaTraslado" hidden></div>
+
+            <div class="modal-traslado-cuerpo">
+                <form id="formTraslado" novalidate>
+                <input type="hidden" name="_csrf" value="{{csrf_token}}">
+                <input type="hidden" name="origen_lat" id="origenLat">
+                <input type="hidden" name="origen_lng" id="origenLng">
+                <input type="hidden" name="destino_lat" id="destinoLat">
+                <input type="hidden" name="destino_lng" id="destinoLng">
+
+                <!-- ---------- Personal ---------- -->
+                <!--
+                    Si quien abre el modal es conductor o copiloto, el traslado
+                    es suyo: el select queda con una sola opción (él mismo) y
+                    deshabilitado. El select deshabilitado no viaja en el
+                    FormData, así que además se manda un input hidden con el
+                    mismo id para que el backend no reciba un campo faltante.
+                -->
+                <div class="grupo-form">
+                    <div class="grupo-titulo"><i class="bi bi-person-badge"></i> Personal</div>
+                    <div class="fila-campos">
+                        <label class="campo">
+                            <span>Conductor <em>*</em></span>
+                            {{#es_conductor}}
+                            <input type="hidden" name="conductor_id" id="conductorIdHidden" value="{{usuario_id}}">
+                            <select id="selConductor" disabled>
+                                <option value="{{usuario_id}}" selected>{{nombre_usuario}}</option>
+                            </select>
+                            {{/es_conductor}}
+                            {{^es_conductor}}
+                            <select name="conductor_id" id="selConductor" required>
+                                <option value="">Seleccionar conductor...</option>
+                                {{#conductores}}
+                                <option value="{{fila.id}}">{{fila.nombre}}</option>
+                                {{/conductores}}
+                            </select>
+                            {{/es_conductor}}
+                        </label>
+                        <label class="campo">
+                            <span>Copiloto</span>
+                            <select name="copiloto_id" id="selCopiloto">
+                                <option value="">Sin copiloto</option>
+                                {{#copilotos}}
+                                <option value="{{fila.id}}">{{fila.nombre}}</option>
+                                {{/copilotos}}
+                            </select>
+                        </label>
+                    </div>
+                    <label class="campo">
+                        <span>Vehículo <em>*</em></span>
+                        <select name="vehiculo_id" id="selVehiculo" required>
+                            <option value="">Seleccionar vehículo...</option>
+                            {{#vehiculos}}
+                            <option value="{{fila.id}}">{{fila.nombre}}</option>
+                            {{/vehiculos}}
+                        </select>
+                    </label>
+                </div>
+
+                <!-- ---------- Qué se traslada ---------- -->
+                <div class="grupo-form">
+                    <div class="grupo-titulo"><i class="bi bi-box"></i> Elemento a trasladar</div>
+                    <label class="campo">
+                        <span>Tipo <em>*</em></span>
+                        <select name="tipo" id="selTipo">
+                            <option value="paciente">Paciente</option>
+                            <option value="insumo">Insumo</option>
+                            <option value="equipamiento">Equipamiento</option>
+                            <option value="organo">Órgano</option>
+                        </select>
+                    </label>
+                    <label class="campo" id="campoPaciente">
+                        <span>Paciente <em>*</em></span>
+                        <div class="buscador">
+                            <input type="text" id="inputPaciente" class="buscador-input"
+                                   placeholder="Nombre, apellido o documento..." autocomplete="off" maxlength="80">
+                            <div class="sugerencias" id="sugerenciasPaciente" hidden></div>
+                        </div>
+                        <input type="hidden" name="paciente_id" id="inputPacienteId" value="">
+                    </label>
+                    <label class="campo" id="campoCatalogo" hidden>
+                        <span id="labelCatalogo">Elemento <em>*</em></span>
+                        <select name="catalogo_elemento_id" id="selElemento">
+                            <option value="">Seleccionar elemento...</option>
+                            {{#insumos}}
+                            <option value="{{fila.id}}" data-tipo="insumo">{{fila.nombre}}</option>
+                            {{/insumos}}
+                            {{#equipamientos}}
+                            <option value="{{fila.id}}" data-tipo="equipamiento">{{fila.nombre}}</option>
+                            {{/equipamientos}}
+                            {{#organos}}
+                            <option value="{{fila.id}}" data-tipo="organo">{{fila.nombre}}</option>
+                            {{/organos}}
+                        </select>
+                    </label>
+                </div>
+
+                <!-- ---------- Recorrido ---------- -->
+                <div class="grupo-form">
+                    <div class="grupo-titulo"><i class="bi bi-geo-alt"></i> Recorrido</div>
+
+                    <label class="campo">
+                        <span>Ruta predefinida</span>
+                        <select name="ruta_id" id="selRuta">
+                            <option value="">Elegir origen y destino a mano</option>
+                            {{#rutas}}
+                            <option value="{{fila.id}}" data-origen="{{fila.origen}}"
+                                    data-destino="{{fila.destino}}">{{fila.ruta_label}}</option>
+                            {{/rutas}}
+                        </select>
+                    </label>
+
+                    <!-- Origen -->
+                    <div class="extremo" id="bloqueOrigen" data-extremo="origen">
+                        <div class="extremo-cabecera">
+                            <span class="extremo-punto" style="background:#4CAF50"></span>
+                            <span class="extremo-nombre">Origen</span>
+                            <span class="extremo-coord" id="coordOrigen"></span>
+                        </div>
+
+                        <div class="extremo-acciones">
+                            <button type="button" class="mini-btn" id="btnMiUbicacion">
+                                <i class="bi bi-crosshair"></i> Usar mi ubicación
+                            </button>
+                            <select id="selCatalogoOrigen" class="mini-select" title="Elegir del catálogo">
+                                <option value="">Elegir del catálogo...</option>
+                                {{#catalogo}}
+                                <option value="{{fila.nombre}}" data-lat="{{fila.latitud}}" data-lng="{{fila.longitud}}">{{fila.nombre}}</option>
+                                {{/catalogo}}
+                            </select>
+                        </div>
+
+                        <div class="buscador">
+                            <input type="text" id="inputOrigen" class="buscador-input"
+                                   placeholder="O escribí una dirección..." autocomplete="off" maxlength="120">
+                            <div class="sugerencias" id="sugerenciasOrigen" hidden></div>
+                        </div>
+                    </div>
+
+                    <div class="flecha-extremos"><i class="bi bi-arrow-down"></i></div>
+
+                    <!-- Destino -->
+                    <div class="extremo activo" id="bloqueDestino" data-extremo="destino">
+                        <div class="extremo-cabecera">
+                            <span class="extremo-punto" style="background:#f44336"></span>
+                            <span class="extremo-nombre">Destino</span>
+                            <span class="extremo-coord" id="coordDestino"></span>
+                        </div>
+
+                        <div class="extremo-acciones">
+                            <button type="button" class="mini-btn" id="btnInvertirExtremos" title="Intercambiar origen y destino">
+                                <i class="bi bi-arrow-down-up"></i> Invertir
+                            </button>
+                            <select id="selCatalogoDestino" class="mini-select" title="Elegir del catálogo">
+                                <option value="">Elegir del catálogo...</option>
+                                {{#catalogo}}
+                                <option value="{{fila.nombre}}" data-lat="{{fila.latitud}}" data-lng="{{fila.longitud}}">{{fila.nombre}}</option>
+                                {{/catalogo}}
+                            </select>
+                        </div>
+
+                        <div class="buscador">
+                            <input type="text" id="inputDestino" class="buscador-input"
+                                   placeholder="Escribí la dirección de destino..." autocomplete="off" maxlength="120">
+                            <div class="sugerencias" id="sugerenciasDestino" hidden></div>
+                        </div>
+                    </div>
+
+                    <p class="pista-mapa">
+                        <i class="bi bi-hand-index-thumb"></i>
+                        Podés arrastrar los pines del mapa para ajustar el punto exacto.
+                    </p>
+
+                    <div class="resumen-ruta" id="resumenRuta" hidden>
+                        <span><i class="bi bi-signpost-split"></i> <b id="resumenKm">—</b></span>
+                        <span><i class="bi bi-clock"></i> <b id="resumenMin">—</b></span>
+                        <span class="resumen-llegada">Llegada: <b id="resumenLlegada">—</b></span>
+                    </div>
+                </div>
+
+                <!-- ---------- Tiempos ---------- -->
+                <div class="grupo-form">
+                    <div class="grupo-titulo"><i class="bi bi-clock"></i> Horarios</div>
+                    <div class="fila-campos">
+                        <label class="campo">
+                            <span>Fecha de salida <em>*</em></span>
+                            <input type="date" name="fecha_salida" id="inputFecha" required>
+                        </label>
+                        <label class="campo">
+                            <span>Hora de salida <em>*</em></span>
+                            <input type="time" name="hora_salida" id="inputHora" required>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="grupo-form">
+                    <div class="grupo-titulo"><i class="bi bi-chat-left-text"></i> Observaciones</div>
+                    <textarea name="observaciones" id="inputObservaciones" rows="2" maxlength="500"
+                              placeholder="Notas adicionales (opcional)"></textarea>
+                </div>
+                </form>
+            </div>
+
+            <div class="modal-traslado-pie">
+                <button type="button" class="btn-cancelar" id="btnCancelarTraslado">Cancelar</button>
+                <button type="submit" form="formTraslado" class="btn-guardar" id="btnGuardarTraslado">
+                    <i class="bi bi-check-lg"></i> Registrar traslado
+                </button>
+            </div>
+        </div>
+    </div>
+    {{/puede_registrar}}
+
+    <!-- Catálogo de ubicaciones ya cargadas en la base: lo consume el JS para
+         mostrar nombre + coordenadas al elegir un lugar conocido. Va fuera del
+         bloque anterior porque, aunque solo lo usa el modal, el mapa igual
+         necesita el script presente para no romper al paginar el template. -->
+    <script type="application/json" id="datosCatalogo">{{{catalogo_json}}}</script>
+
+    <!-- ==================================================================
+         Panel de historial, con pestañas. Es un panel lateral como el de
+         "Nuevo traslado" (no un overlay): entra en el flujo flex y empuja al
+         mapa, así se sigue viendo dónde está la ambulancia mientras se
+         revisan los traslados viejos. La lógica está en mapa.js.
+         ================================================================== -->
+    <div class="velo-traslado velo-historial" id="veloHistorial" hidden>
+        <div class="modal-traslado" role="dialog" aria-modal="true" aria-labelledby="tituloHistorial">
+
+            <div class="modal-traslado-cabecera">
+                <h6 id="tituloHistorial"><i class="bi bi-clock-history me-1"></i> Historial de traslados</h6>
+                <button type="button" class="cerrar-traslado" id="btnCerrarHistorial" aria-label="Cerrar">&times;</button>
+            </div>
+
+            <div class="pestanas-historial" role="tablist">
+                <button type="button" class="pestana activa" data-pestana="en-curso" role="tab"
+                        aria-selected="true" id="pestanaEnCurso">
+                    En curso <span class="pestana-cuenta" id="cuentaEnCurso">0</span>
+                </button>
+                <button type="button" class="pestana" data-pestana="anteriores" role="tab"
+                        aria-selected="false" id="pestanaAnteriores">
+                    Anteriores <span class="pestana-cuenta" id="cuentaAnteriores">0</span>
+                </button>
+            </div>
+
+            <div class="modal-traslado-cuerpo">
+                <div class="historial-lista" id="historialEnCurso" role="tabpanel" aria-labelledby="pestanaEnCurso"></div>
+                <div class="historial-lista" id="historialAnteriores" role="tabpanel" aria-labelledby="pestanaAnteriores" hidden></div>
+            </div>
+        </div>
+    </div>
+</div>

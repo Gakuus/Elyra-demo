@@ -3,30 +3,29 @@
 declare(strict_types=1);
 
 /**
- * DocumentoPublicoController: vistas públicas de un documento.
- *
- * Es lo que el paciente abre al escanear el QR (la ruta /publico/doc) y el
- * PDF propiamente dicho (ruta /publico/archivo). NO requieren sesión: son la
- * cara pública del QR que el centro entrega. Si una encuesta de satisfacción
- * está marcada para el documento, se muestra también el botón para votar con
- * el enlace a la encuesta. Nada de HTML acá: las vistas lo arman.
+ * DocumentoPublicoController: vistas públicas de un documento (lo que el
+ * paciente abre desde el QR). No requieren sesión.
  */
 final class DocumentoPublicoController
 {
     use DocumentoData;
 
-    /**
-     * Página pública de un documento (GET a /publico/doc?id=N).
-     * Muestra título, tipo, descripción y enlaces para ver o descargar el
-     * PDF. No hace falta estar logueado, pero el documento debe estar activo
-     * y no pertenecer a la historia de un paciente (privacidad).
-     */
+    /** Página pública del documento (/publico/doc). Solo activos y generales. */
     public static function publicoDoc(): void
     {
         $pdo = db_connect();
         $id = (int) ($_GET['id'] ?? 0);
+        $token = isset($_GET['t']) ? (string) $_GET['t'] : '';
 
-        // Solo documentos ACTIVOS y GENERALES (sin paciente): si no, 404.
+        // El enlace público viaja firmado (HMAC del id). Sin token válido no se
+        // revela nada, ni siquiera si el documento existe: así no se puede
+        // recorrer el repositorio probando ids (1, 2, 3...).
+        if (!token_documento_valido($id, $token)) {
+            pagina_404();
+            return;
+        }
+
+        // Solo documentos activos y sin paciente: si no, 404.
         $stmt = $pdo->prepare(
             'SELECT d.id, d.titulo, d.descripcion, d.created_at, d.encuesta_id,
                     t.nombre AS tipo_nombre
@@ -37,18 +36,14 @@ final class DocumentoPublicoController
         $stmt->execute(['id' => $id]);
         $doc = $stmt->fetch();
 
-        // Si no existe (o fue desactivado) → página 404.
         if (!$doc) {
             pagina_404();
             return;
         }
 
-        // Decide si la encuesta de satisfacción debe aparecer: usa la que el
-        // documento tenga vinculada (si sigue activa) o la primera encuesta
-        // activa del sistema como respaldo. Null = no mostrar botón.
+        // Encuesta vinculada o la primera activa como respaldo; null = sin botón.
         $encuestaId = self::resolverEncuestaPublica($pdo, $doc['encuesta_id'] !== null ? (int) $doc['encuesta_id'] : null);
 
-        // Si hay encuesta, la vista muestra el botón con el enlace directo.
         $hayEncuesta = $encuestaId !== null ? ['1'] : [];
         $enlaceEncuesta = $encuestaId !== null
             ? base_path() . '/publico/encuesta?id=' . $encuestaId
@@ -57,80 +52,69 @@ final class DocumentoPublicoController
         $descripcion = (string) ($doc['descripcion'] ?? '');
 
         render_vista(__DIR__ . '/../../views/publico/documento.html', [
-            'titulo' => htmlspecialchars((string) $doc['titulo']),
-            'tipo' => htmlspecialchars((string) ($doc['tipo_nombre'] ?? '')),
+            'titulo' => (string) $doc['titulo'],
+            'tipo' => (string) ($doc['tipo_nombre'] ?? ''),
             'fecha' => date('d/m/Y', (int) strtotime((string) $doc['created_at'])),
             'descripcion' => $descripcion,
             'hay_descripcion' => $descripcion !== '' ? ['1'] : [],
             'id' => (string) $id,
-            // La vista decide con {{#hay_encuesta}} si muestra el botón.
+            'token' => $token,
             'hay_encuesta' => $hayEncuesta,
             'enlace_encuesta' => $enlaceEncuesta,
         ]);
     }
 
-    /**
-     * Sirve el PDF de un documento al público (GET a /publico/archivo?id=N).
-     * Igual que la ruta interna pero SIN pedir sesión y solo para
-     * documentos activos y generales. Un documento inactivo da 404.
-     */
+    /** Sirve el PDF al público (/publico/archivo). Sin sesión; solo activos y generales. */
     public static function publicoArchivo(): void
     {
         $pdo = db_connect();
         $id = (int) ($_GET['id'] ?? 0);
+        $token = isset($_GET['t']) ? (string) $_GET['t'] : '';
 
-        if ($id > 0) {
-            // requiereAuth=false: el público puede verlo (más la regla de
-            // activo/general que aplica servirPdf igual).
+        if (token_documento_valido($id, $token)) {
             self::servirPdfPublico($pdo, $id, !empty($_GET['descargar']));
         } else {
             http_response_code(404);
         }
     }
 
-    /**
-     * Entrega el PDF al navegador para la ruta pública. Es la misma idea de
-     * servirPdf() del controlador interno, pero sin pedir sesión.
-     *
-     * $pdo:       conexión activa.
-     * $id:        id del documento.
-     * $descargar: true fuerza descarga (attachment); false lo muestra inline.
-     */
+    /** Entrega el PDF por la ruta pública (misma lógica que la interna, sin sesión). */
     private static function servirPdfPublico(PDO $pdo, int $id, bool $descargar): void
     {
-        // Trae solo lo necesario para servir el archivo.
         $sql = 'SELECT id, archivo_path, archivo_contenido, archivo_nombre, activo, paciente_id FROM documento WHERE id = :id';
         $stmt = $pdo->prepare($sql);
         $stmt->execute(['id' => $id]);
         $doc = $stmt->fetch();
 
-        // Un documento inactivo o de paciente NO se sirve de forma pública.
+        // Inactivo o de paciente no se sirve de forma pública.
         if (!$doc || !$doc['activo'] || $doc['paciente_id'] !== null) {
             pagina_404();
             return;
         }
 
-        // El PDF puede vivir en disco (archivo_path) o en la base (contenido).
-        $path = (string) $doc['archivo_path'];
+        // El PDF vive en disco (archivo_path) o en la base (archivo_contenido).
+        // La ruta de disco se valida contra storage/docs: si un archivo_path
+        // manipulado apunta a otra parte del disco, se ignora.
         $content = $doc['archivo_contenido'] ?? null;
-        if (!is_file($path) && $content === null) {
+        $path = $content === null ? ruta_pdf_segura((string) $doc['archivo_path']) : null;
+        if ($content === null && $path === null) {
             pagina_404();
             return;
         }
 
-        // Nombre de descarga limpio (sin rutas).
         $nombre = basename((string) $doc['archivo_nombre']);
 
-        // Cabeceras HTTP para servir el PDF correctamente.
         header('Content-Type: application/pdf');
-        header('Content-Disposition: ' . ($descargar ? 'attachment' : 'inline') . '; filename="' . $nombre . '"');
+        // El nombre viene del archivo que subió el usuario: se sanea para no
+        // romper la cabecera con comillas o caracteres de control.
+        header(content_disposition($descargar ? 'attachment' : 'inline', $nombre));
 
         if ($content !== null) {
             header('Content-Length: ' . strlen($content));
             echo $content;
         } else {
-            header('Content-Length: ' . filesize($path));
-            readfile($path);
+            header('Content-Length: ' . filesize((string) $path));
+            readfile((string) $path);
         }
     }
 }
