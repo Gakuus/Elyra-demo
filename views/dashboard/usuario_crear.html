@@ -1,0 +1,104 @@
+<div class="panel">
+    <div class="cabecera-panel"><i class="bi bi-person-plus me-1"></i> Nuevo usuario</div>
+    <div class="cuerpo-panel">
+        {{#hay_credenciales}}
+        <div class="alert alert-warning">
+            <h6 class="alert-heading"><i class="bi bi-exclamation-triangle me-1"></i> No se pudo enviar el correo</h6>
+            <p class="mb-2">La cuenta se creó correctamente, pero no se pudieron enviar las credenciales por correo.
+                Compartilas con la persona de forma segura; esta contraseña no se vuelve a mostrar.</p>
+            <ul class="mb-3">
+                <li>Usuario: <strong>{{usuario_generado}}</strong></li>
+                <li>Contraseña temporal: <strong>{{clave_generada}}</strong></li>
+            </ul>
+            <a href="usuarios/ver?id={{id_creado}}" class="btn btn-primary btn-sm">
+                <i class="bi bi-person-badge me-1"></i> Ver ficha del usuario</a>
+        </div>
+        {{/hay_credenciales}}
+
+        {{#hay_error}}<div class="mensaje-error">{{error}}</div>{{/hay_error}}
+
+        <form method="post" action="usuarios/crear" id="crearUserForm">
+        <input type="hidden" name="_csrf" value="{{csrf_token}}">
+
+            <div class="mb-3">
+                <label for="tipo" class="form-label">Tipo de cuenta <span class="requerido">*</span></label>
+                <select name="tipo" id="tipo" class="form-select" required>
+                    <option value="funcionario" {{#tipo_funcionario}}selected{{/tipo_funcionario}}>Funcionario</option>
+                    <option value="paciente" {{#tipo_paciente}}selected{{/tipo_paciente}}>Paciente</option>
+                </select>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="nombre" class="form-label">Nombre <span class="requerido">*</span></label>
+                    <input type="text" name="nombre" id="nombre" class="form-control" required minlength="2" maxlength="100"
+                           placeholder="Ej: Carlos" value="{{valor_nombre}}">
+                </div>
+                <div class="col-md-6">
+                    <label for="apellido" class="form-label">Apellido <span class="requerido">*</span></label>
+                    <input type="text" name="apellido" id="apellido" class="form-control" required minlength="2" maxlength="100"
+                           placeholder="Ej: Martinez" value="{{valor_apellido}}">
+                </div>
+                <div class="col-md-6">
+                    <label for="email" class="form-label">Email <span class="requerido">*</span></label>
+                    <input type="email" name="email" id="email" class="form-control" required maxlength="150"
+                           placeholder="Ej: carlos@ejemplo.com" value="{{valor_email}}">
+                    <div class="form-text">Ahí se envían las credenciales de acceso.</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="documento" class="form-label">Cédula (8 dígitos) <span class="requerido">*</span></label>
+                    <input type="text" name="documento" id="documento" class="form-control" required maxlength="8"
+                           inputmode="numeric" pattern="[0-9]{8}" data-numeric
+                           placeholder="Ej: 44556677" value="{{valor_cedula}}">
+                </div>
+                <div class="col-md-6">
+                    <label for="telefono" class="form-label">Teléfono (8 o 9 dígitos)</label>
+                    <input type="text" name="telefono" id="telefono" class="form-control" maxlength="9"
+                           inputmode="numeric" pattern="[0-9]{8,9}" data-numeric
+                           placeholder="Ej: 99123456" value="{{valor_telefono}}">
+                </div>
+                <div class="col-md-6">
+                    <label for="username" class="form-label">Nombre de usuario <span class="requerido">*</span></label>
+                    <input type="text" name="username" id="username" class="form-control" required minlength="3" maxlength="50"
+                           pattern="[A-Za-z0-9._-]{3,50}" autocomplete="off"
+                           placeholder="Ej: cmartinez" value="{{valor_username}}">
+                </div>
+                <div class="col-md-6" id="campoRol">
+                    <label for="rol" class="form-label">Rol <span class="requerido">*</span></label>
+                    <select name="rol" id="rol" class="form-select">
+                        <option value="admin" {{#rol_admin}}selected{{/rol_admin}}>Administrador</option>
+                        <option value="superadmin" {{#rol_superadmin}}selected{{/rol_superadmin}}>Superadministrador</option>
+                        <option value="conductor" {{#rol_conductor}}selected{{/rol_conductor}}>Conductor</option>
+                        <option value="copiloto" {{#rol_copiloto}}selected{{/rol_copiloto}}>Copiloto</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="alert alert-info py-2 mt-3 small">
+                <i class="bi bi-info-circle me-1"></i>
+                El sistema genera una contraseña temporal y la envía por correo a la persona.
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i> Crear usuario</button>
+                <a href="usuarios" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    var tipo = document.getElementById('tipo');
+    var campoRol = document.getElementById('campoRol');
+    var rol = document.getElementById('rol');
+    function actualizar() {
+        var esFuncionario = tipo.value === 'funcionario';
+        campoRol.style.display = esFuncionario ? '' : 'none';
+        rol.required = esFuncionario;
+    }
+    tipo.addEventListener('change', actualizar);
+    actualizar();
+})();
+</script>

@@ -502,15 +502,12 @@ function render_dashboard(string $vista, string $titulo, string $seccion, array 
     ] + $datos);
 
     // Enlace activo del menú según la sección en la que el usuario está parado.
-    $activo = [
-        'inicio'          => ['activo_inicio' => ' active', 'activo_encuestas' => '', 'activo_documentos' => '', 'activo_vehiculos' => '', 'activo_usuarios' => '', 'activo_insumos' => '', 'activo_mapa' => ''],
-        'mapa'            => ['activo_inicio' => '', 'activo_encuestas' => '', 'activo_documentos' => '', 'activo_vehiculos' => '', 'activo_usuarios' => '', 'activo_insumos' => '', 'activo_mapa' => ' active'],
-        'encuestas'       => ['activo_inicio' => '', 'activo_encuestas' => ' active', 'activo_documentos' => '', 'activo_vehiculos' => '', 'activo_usuarios' => '', 'activo_insumos' => '', 'activo_mapa' => ''],
-        'documentos'      => ['activo_inicio' => '', 'activo_encuestas' => '', 'activo_documentos' => ' active', 'activo_vehiculos' => '', 'activo_usuarios' => '', 'activo_insumos' => '', 'activo_mapa' => ''],
-        'vehiculos'       => ['activo_inicio' => '', 'activo_encuestas' => '', 'activo_documentos' => '', 'activo_vehiculos' => ' active', 'activo_usuarios' => '', 'activo_insumos' => '', 'activo_mapa' => ''],
-        'usuarios'        => ['activo_inicio' => '', 'activo_encuestas' => '', 'activo_documentos' => '', 'activo_vehiculos' => '', 'activo_usuarios' => ' active', 'activo_insumos' => '', 'activo_mapa' => ''],
-        'insumos'         => ['activo_inicio' => '', 'activo_encuestas' => '', 'activo_documentos' => '', 'activo_vehiculos' => '', 'activo_usuarios' => '', 'activo_insumos' => ' active', 'activo_mapa' => ''],
-    ][$seccion] ?? [];
+    // Cada sección recibe sus claves activo_* (y el resto en '').
+    $secciones = ['inicio', 'mapa', 'encuestas', 'documentos', 'vehiculos', 'usuarios', 'insumos', 'equipamiento'];
+    $activo = [];
+    foreach ($secciones as $s) {
+        $activo['activo_' . $s] = $s === $seccion ? ' active' : '';
+    }
 
     // Visibilidad del menú según el rol: los bloques {{#es_gestion}} y
     // {{#es_vehiculo}} del layout solo se muestran cuando corresponda.
