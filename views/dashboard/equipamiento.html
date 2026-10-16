@@ -1,0 +1,69 @@
+<div class="panel">
+    <div class="cabecera-panel d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-heart-pulse me-1"></i> Equipamiento médico</span>
+        <a href="equipamiento/agregar" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Agregar equipamiento</a>
+    </div>
+    <div class="cuerpo-panel">
+        {{#hay_aviso}}
+        <div class="alert alert-success py-2"><i class="bi bi-check-lg me-1"></i>{{aviso}}</div>
+        {{/hay_aviso}}
+
+        <!-- Buscador por texto (nombre o descripción) -->
+        <form method="get" class="d-flex gap-2 mb-3">
+            <input type="hidden" name="estado" value="{{estado_sel}}">
+            <input type="text" name="q" class="form-control" placeholder="Buscar por nombre o descripción..." value="{{q}}">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i> Buscar</button>
+        </form>
+
+        <!-- Filtro de estado -->
+        <div class="btn-group btn-group-sm filtro-estado mb-3" role="group" aria-label="Filtrar por estado">
+            <a href="equipamiento?estado=activos&q={{q_url}}" class="btn btn-outline-secondary{{estado_activos}}">Activos</a>
+            <a href="equipamiento?estado=inactivos&q={{q_url}}" class="btn btn-outline-secondary{{estado_inactivos}}">Inactivos</a>
+            <a href="equipamiento?estado=todos&q={{q_url}}" class="btn btn-outline-secondary{{estado_todos}}">Todos</a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="tabla-panel" id="tablaEquipamiento">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th style="width:90px;">Stock</th>
+                        <th>Registrado</th>
+                        <th style="width:100px;">Estado</th>
+                        <th style="width:110px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#equipos}}
+                    <tr data-equipamiento-id="{{fila.id}}">
+                        <td class="fw-semibold">{{fila.nombre}}</td>
+                        <td>{{fila.descripcion}}</td>
+                        <td>{{fila.stock}}</td>
+                        <td class="text-muted small">{{fila.fecha}}</td>
+                        <td>
+                            {{#fila.activo}}<span class="badge text-bg-success">Activo</span>{{/fila.activo}}
+                            {{#fila.inactivo}}<span class="badge text-bg-secondary">Inactivo</span>{{/fila.inactivo}}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="equipamiento/editar?id={{fila.id}}" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
+                                <button type="button" class="btn btn-sm {{#fila.activo}}btn-outline-warning{{/fila.activo}}{{#fila.inactivo}}btn-outline-success{{/fila.inactivo}}" title="Activar/Desactivar"
+                                        onclick="ElyraEquipamiento.toggle({{fila.id}}, this)"><i class="bi bi-power"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                    {{/equipos}}
+                </tbody>
+            </table>
+        </div>
+
+        {{^equipos}}
+        <div class="text-center text-muted p-3 mensaje-vacio">
+            <img src="public/img/silk/wrench.png" alt="" class="d-block mx-auto mb-2" style="width:48px;height:48px;">No hay equipamiento para mostrar.
+        </div>
+        {{/equipos}}
+    </div>
+</div>
+
+        <script src="public/js/pages/equipamiento.js?v=2" defer></script>

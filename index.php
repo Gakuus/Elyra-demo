@@ -31,7 +31,26 @@ if (file_exists($envFile)) {
 }
 
 // ------------------------------------------------------------------
-// 1.b) Zona horaria
+// 1.b) Configuración por PHP (opcional, recomendada en producción)
+// ------------------------------------------------------------------
+// Además del .env se admite config/env.php: un archivo PHP que devuelve un
+// array con las mismas claves. En producción conviene usar este y borrar el
+// .env, porque el servidor EJECUTA los .php (nunca expone su contenido por
+// HTTP), mientras que un .env es un archivo de texto que puede quedar
+// accesible por URL si el docroot apunta a la raíz del proyecto.
+// Sus valores pisan a los del .env. Ver config/env.example.php.
+$envPhp = __DIR__ . '/config/env.php';
+if (is_file($envPhp)) {
+    $configPhp = require $envPhp;
+    if (is_array($configPhp)) {
+        foreach ($configPhp as $clave => $valor) {
+            $_ENV[(string) $clave] = (string) $valor;
+        }
+    }
+}
+
+// ------------------------------------------------------------------
+// 1.c) Zona horaria
 // ------------------------------------------------------------------
 // PHP por defecto usa UTC, pero el sistema (y por lo tanto MySQL) está en
 // hora local de Uruguay. Sin esto, el saludo y los "hace X" quedaban 3 horas
@@ -103,7 +122,8 @@ if ($staticRel !== '/' && !str_contains($staticRel, '.php')) {
 // ------------------------------------------------------------------
 // Los require_once incluyen cada archivo una sola vez (evita redefiniciones).
 require_once __DIR__ . '/config/database.php';      // Función db_connect().
-require_once __DIR__ . '/src/Auth.php';             // Clase Auth (login, registro).
+require_once __DIR__ . '/src/Auth.php';
+require_once __DIR__ . '/src/MailService.php';             // Clase Auth (login, registro).
 require_once __DIR__ . '/src/helpers.php';          // Funciones auxiliares (base_path, render...).
 require_once __DIR__ . '/src/GeoapifyService.php';    // Geoapify (mapa/rutas) con caída a OSRM.
 require_once __DIR__ . '/src/InterseccionService.php'; // "calle A y calle B" -> punto de cruce (Overpass).
@@ -122,10 +142,14 @@ require_once __DIR__ . '/src/Controller/EncuestaPublicaController.php';
 require_once __DIR__ . '/src/Controller/VehiculoController.php';
 require_once __DIR__ . '/src/Controller/InsumoData.php';                 // Trait de datos del módulo de insumos.
 require_once __DIR__ . '/src/Controller/InsumoController.php';
+require_once __DIR__ . '/src/Controller/EquipamientoData.php';           // Trait de datos del módulo de equipamiento.
+require_once __DIR__ . '/src/Controller/EquipamientoController.php';
 require_once __DIR__ . '/src/Controller/UsuarioData.php';                 // Trait de datos del módulo de usuarios.
 require_once __DIR__ . '/src/Controller/UsuarioController.php';
 require_once __DIR__ . '/src/Controller/UsuarioEdicionController.php';
 require_once __DIR__ . '/src/Controller/UsuarioCodigosController.php';
+require_once __DIR__ . '/src/Controller/UsuarioCreacionController.php';
+require_once __DIR__ . '/src/Controller/PerfilController.php';          // Perfil propio (/perfil).
 
 // ------------------------------------------------------------------
 // 4) Cabeceras de seguridad
@@ -168,13 +192,20 @@ switch (true) {
     // el dispatch interno del controlador, que decide la acción según la ruta
     // exacta y el método. Páginas públicas (sin sesión).
     case $path === '/' || $path === ''
-        || $path === '/login' || $path === '/registro' || $path === '/logout':
+        || $path === '/login' || $path === '/registro' || $path === '/logout'
+        || $path === '/recuperar' || $path === '/restablecer':
         AuthController::dispatch($path, $method);
         break;
 
     // Panel de gestión.
     case $path === '/dashboard':
         DashboardController::inicio();
+        break;
+
+    // Perfil del propio usuario (ver datos, editar contacto y cambiar
+    // contraseña). Se llega desde el menú del header donde figura el nombre.
+    case str_starts_with($path, '/perfil'):
+        PerfilController::dispatch($path, $method);
         break;
 
     // Mapa interactivo del panel: página y datos JSON que consume el mapa.
@@ -249,6 +280,12 @@ switch (true) {
     // accesible para admin/superadmin (guards internos).
     case str_starts_with($path, '/insumos'):
         InsumoController::dispatch($path, $method);
+        break;
+
+    // Módulo de equipamiento médico: listado, alta, edición y
+    // activar/desactivar. Solo accesible para admin/superadmin (guards internos).
+    case str_starts_with($path, '/equipamiento'):
+        EquipamientoController::dispatch($path, $method);
         break;
 
     // Módulo de documentos: delega en el dispatch interno del controlador,

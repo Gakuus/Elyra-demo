@@ -2,6 +2,8 @@
 .env
 .env.*
 !.env.example
+# Configuración por PHP (recomendada en producción). Nunca se versiona.
+config/env.php
 
 # phpMyAdmin (instalación local de terceros)
 phpmyadmin/

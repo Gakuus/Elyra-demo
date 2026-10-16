@@ -30,13 +30,15 @@
                 <td>{{fila.cant_respuestas}}</td>
                 <td><span class="{{#fila.activa}}estado-activo{{/fila.activa}}{{^fila.activa}}estado-inactivo{{/fila.activa}}">{{#fila.activa}}Activa{{/fila.activa}}{{^fila.activa}}Inactiva{{/fila.activa}}</span></td>
                 <td>{{fila.creada}}</td>
-                <td class="celda-nowrap">
-                    <button type="button" class="btn btn-sm" title="Ver QR público" onclick="ElyraEnc.verQR({{fila.id}})"><i class="bi bi-qr-code"></i></button>
-                    <a href="encuestas/resultados?id={{fila.id}}" class="btn btn-sm" title="Ver resultados"><i class="bi bi-bar-chart"></i></a>
-                    <a href="encuestas/editar?id={{fila.id}}" class="btn btn-sm" title="Editar"><i class="bi bi-pencil"></i></a>
-                    {{#fila.activa}}<button type="button" class="btn btn-sm" title="Desactivar" onclick="ElyraEnc.cambiarEstado({{fila.id}}, 0, this)"><i class="bi bi-power"></i></button>{{/fila.activa}}
-                    {{^fila.activa}}<button type="button" class="btn btn-sm text-success" title="Reactivar" onclick="ElyraEnc.cambiarEstado({{fila.id}}, 1, this)"><i class="bi bi-power"></i></button>{{/fila.activa}}
-                    <button type="button" class="btn btn-sm" title="Copiar enlace público" onclick="ElyraEnc.copiarEnlace({{fila.id}}, this)"><i class="bi bi-link-45deg"></i></button>
+                <td>
+                    <div class="d-flex flex-wrap gap-1 justify-content-end">
+                        <button type="button" class="btn btn-sm" title="Ver QR público" onclick="ElyraEnc.verQR({{fila.id}})"><i class="bi bi-qr-code"></i></button>
+                        <a href="encuestas/resultados?id={{fila.id}}" class="btn btn-sm" title="Ver resultados"><i class="bi bi-bar-chart"></i></a>
+                        <a href="encuestas/editar?id={{fila.id}}" class="btn btn-sm" title="Editar"><i class="bi bi-pencil"></i></a>
+                        {{#fila.activa}}<button type="button" class="btn btn-sm" title="Desactivar" onclick="ElyraEnc.cambiarEstado({{fila.id}}, 0, this)"><i class="bi bi-power"></i></button>{{/fila.activa}}
+                        {{^fila.activa}}<button type="button" class="btn btn-sm text-success" title="Reactivar" onclick="ElyraEnc.cambiarEstado({{fila.id}}, 1, this)"><i class="bi bi-power"></i></button>{{/fila.activa}}
+                        <button type="button" class="btn btn-sm" title="Copiar enlace público" onclick="ElyraEnc.copiarEnlace({{fila.id}}, this)"><i class="bi bi-link-45deg"></i></button>
+                    </div>
                 </td>
             </tr>
             {{/encuestas}}

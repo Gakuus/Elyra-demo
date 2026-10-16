@@ -96,7 +96,13 @@
 
         if (dom.panel && dom.btnAlternar) {
             dom.btnAlternar.addEventListener('click', function () {
-                dom.panel.classList.toggle('collapsed');
+                // En celular la hoja se muestra con "abierto" (arranca oculta
+                // por CSS); en escritorio el botón pliega el panel a un costado.
+                if (window.matchMedia('(max-width: 768px)').matches) {
+                    dom.panel.classList.toggle('abierto');
+                } else {
+                    dom.panel.classList.toggle('collapsed');
+                }
             });
         }
 
@@ -215,13 +221,13 @@
             var ctx = mod.crearContexto();
             leerDom(ctx);
 
-            // En pantallas chicas el panel arranca cerrado: el mapa es lo que
-            // importa primero y la lista se abre con la pestaña flotante.
-            // La excepción es el conductor, que necesita ver de entrada el
-            // estado del GPS y el botón de centrar.
+            // En pantallas chicas el panel arranca cerrado (oculto por CSS):
+            // el mapa es lo que importa primero y la lista se abre con la
+            // pestaña flotante. La excepción es el conductor, que necesita ver
+            // de entrada el estado del GPS y el botón de centrar.
             if (ctx.dom.panel && window.matchMedia('(max-width: 768px)').matches &&
-                    !document.getElementById('bloqueSeguimiento')) {
-                ctx.dom.panel.classList.add('collapsed');
+                    document.getElementById('bloqueSeguimiento')) {
+                ctx.dom.panel.classList.add('abierto');
             }
 
             // Todos los módulos comparten el mismo ctx y la misma tabla de APIs:

@@ -54,8 +54,11 @@ body {
 
 /* ---------- Portada---------- */
 .seccion-portada {
-    background: url('/img/hospital-de-clinicas.jpg') center/cover no-repeat;
-    padding: 150px 0 120px;
+    /* Ruta relativa al CSS: con "/img/..." se rompía cuando la app vive bajo
+       una subcarpeta (ej: /proyectos/elyra), porque apuntaba a la raíz del
+       dominio en vez de a public/img. */
+    background: url('../../../img/hospital-de-clinicas.jpg') center/cover no-repeat;
+    padding: clamp(70px, 15vw, 150px) 0 clamp(56px, 12vw, 120px);
     text-align: center;
     color: #fff;
     position: relative;
@@ -206,4 +209,171 @@ body {
     border-color: #3B5998;
     background: #EEF2FA;
     text-decoration: none;
+}
+
+/* ---------- Pantallas chicas ---------- */
+@media (max-width: 768px) {
+    .navegacion-interior {
+        flex-direction: column;
+        gap: 10px;
+        padding: 14px 0;
+    }
+
+    .marca-navegacion {
+        font-size: 22px;
+        text-align: center;
+    }
+
+    .marca-navegacion img {
+        height: 38px;
+    }
+
+    .enlaces-navegacion {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 14px 18px;
+    }
+
+    .enlaces-navegacion a {
+        font-size: 16px;
+    }
+
+    .boton-acceso-nav {
+        margin: 0;
+    }
+
+    .seccion-portada h1 {
+        font-size: 32px;
+    }
+
+    .seccion-portada .lead {
+        font-size: 18px;
+        margin-bottom: 22px;
+    }
+
+    .boton-portada .btn {
+        font-size: 17px;
+        padding: 13px 26px;
+    }
+
+    .seccion {
+        padding: 54px 0;
+    }
+
+    .titulo-seccion {
+        font-size: 27px;
+    }
+
+    .subtitulo-seccion {
+        margin-bottom: 28px;
+    }
+
+    .lista-contacto {
+        font-size: 16px;
+        line-height: 1.9;
+    }
+
+    .pie-publico {
+        font-size: 15px;
+    }
+
+    /* Los enlaces ancla quedan debajo de la barra pegajosa. */
+    #servicios,
+    #contacto {
+        scroll-margin-top: 96px;
+    }
+}
+
+@media (max-width: 480px) {
+    .navegacion-interior {
+        padding: 12px 0;
+        gap: 8px;
+    }
+
+    .marca-navegacion {
+        font-size: 18px;
+        gap: 8px;
+    }
+
+    .marca-navegacion img {
+        height: 32px;
+    }
+
+    .enlaces-navegacion {
+        gap: 10px 14px;
+    }
+
+    .enlaces-navegacion a {
+        font-size: 15px;
+    }
+
+    .seccion-portada img {
+        height: 64px;
+    }
+
+    .seccion-portada h1 {
+        font-size: 27px;
+        margin: 12px 0 8px;
+    }
+
+    .seccion-portada .lead {
+        font-size: 16px;
+    }
+
+    .boton-portada .btn {
+        width: 100%;
+        font-size: 16px;
+        padding: 13px 18px;
+    }
+
+    .seccion {
+        padding: 42px 0;
+    }
+
+    .titulo-seccion {
+        font-size: 23px;
+    }
+
+    .subtitulo-seccion {
+        font-size: 16px;
+        margin-bottom: 22px;
+    }
+
+    .tarjeta-servicio {
+        padding: 24px 14px;
+    }
+
+    .icono-servicio {
+        font-size: 42px;
+        margin-bottom: 10px;
+    }
+
+    .tarjeta-servicio h6 {
+        font-size: 17px !important;
+    }
+
+    .tarjeta-servicio p {
+        font-size: 14px !important;
+    }
+
+    .lista-contacto {
+        font-size: 15px;
+        line-height: 1.8;
+        word-break: break-word;
+    }
+
+    .enlace-rapido {
+        font-size: 15px;
+        padding: 10px 12px;
+    }
+
+    .pie-publico {
+        padding: 22px 0;
+        font-size: 14px;
+    }
+
+    #servicios,
+    #contacto {
+        scroll-margin-top: 76px;
+    }
 }

@@ -18,6 +18,8 @@ final class UsuarioController
             $path === '/usuarios' && $method === 'GET' => self::listar(),
             $path === '/usuarios/buscar' && $method === 'GET' => self::buscarAjax(),
             $path === '/usuarios/ver' && $method === 'GET' => self::ver(),
+            $path === '/usuarios/crear' && $method === 'GET' => UsuarioCreacionController::formularioCrear(),
+            $path === '/usuarios/crear' && $method === 'POST' => UsuarioCreacionController::crear(),
             $path === '/usuarios/editar' && $method === 'GET' => UsuarioEdicionController::formularioEditar(),
             $path === '/usuarios/editar' && $method === 'POST' => UsuarioEdicionController::editar(),
             $path === '/usuarios/estado' && $method === 'POST' => UsuarioEdicionController::estado(),
@@ -150,6 +152,8 @@ final class UsuarioController
             'licencia' => htmlspecialchars((string) ($u['licencia'] ?? '—')),
             'fecha_registro' => date('d/m/Y', (int) strtotime((string) $u['created_at'])),
             'activo' => $activo ? ['1'] : [],
+            'creado' => isset($_GET['creado']) ? ['1'] : [],
+            'editado' => isset($_GET['editado']) ? ['1'] : [],
             'documentos' => $filasDocs,
             'hay_documentos' => $filasDocs === [] ? [] : ['1'],
         ]);

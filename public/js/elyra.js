@@ -185,10 +185,101 @@
     };
 
     /**
+     * inicializarMenuMovil: abre/cierra el menú lateral en celulares
+     * (off-canvas). El botón hamburguesa, el panel, el botón de cerrar y el
+     * fondo solo existen en el layout del dashboard; si falta alguno, no hace
+     * nada. En la página del mapa también funciona: es la forma de volver al
+     * dashboard desde el celular.
+     */
+    function inicializarMenuMovil() {
+        var boton = document.getElementById('btnMenu');
+        var barra = document.getElementById('barraLateral');
+        var fondo = document.getElementById('menuBackdrop');
+        var cerrar = document.getElementById('btnCerrarMenu');
+        if (!boton || !barra || !fondo) return;
+
+        var abrir = function () {
+            barra.classList.add('abierta');
+            fondo.classList.add('visible');
+            document.body.classList.add('menu-abierto');
+            boton.setAttribute('aria-expanded', 'true');
+        };
+        var esconder = function () {
+            barra.classList.remove('abierta');
+            fondo.classList.remove('visible');
+            document.body.classList.remove('menu-abierto');
+            boton.setAttribute('aria-expanded', 'false');
+        };
+
+        boton.addEventListener('click', abrir);
+        fondo.addEventListener('click', esconder);
+        if (cerrar) cerrar.addEventListener('click', esconder);
+
+        // Al elegir un enlace de navegación, el menú se cierra.
+        barra.querySelectorAll('.enlace-barra').forEach(function (enlace) {
+            enlace.addEventListener('click', esconder);
+        });
+
+        // Si la ventana pasa a tamaño de escritorio, se resetea el estado.
+        window.addEventListener('resize', function () {
+            if (window.innerWidth > 768) esconder();
+        });
+    }
+
+    /**
+     * prepararTablasResponsive: copia el texto de cada <th> al atributo
+     * data-label de las celdas de su columna. En celular, componentes.css usa
+     * ese atributo para dibujar cada fila como una tarjeta con su etiqueta al
+     * lado del valor. Sin esto, las tablas quedarían solo con scroll lateral.
+     */
+    function prepararTablasResponsive() {
+        document.querySelectorAll('.tabla-panel').forEach(function (tabla) {
+            var encabezados = tabla.querySelectorAll('thead th');
+            if (!encabezados.length) return;
+
+            var etiquetas = [];
+            encabezados.forEach(function (th) {
+                etiquetas.push((th.textContent || '').trim());
+            });
+
+            tabla.querySelectorAll('tbody tr').forEach(function (fila) {
+                Array.prototype.forEach.call(fila.children, function (celda, indice) {
+                    if (!celda.hasAttribute('data-label')) {
+                        celda.setAttribute('data-label', etiquetas[indice] || '');
+                    }
+                });
+            });
+        });
+    }
+
+    /**
+     * vigilarTablas: vuelve a etiquetar las tablas cuando el contenido cambia
+     * (por ejemplo, al buscar usuarios y reemplazar los resultados con fetch).
+     * Solo observa cambios de nodos, no de atributos, así que no se repite.
+     */
+    function vigilarTablas() {
+        if (!window.MutationObserver) return;
+        var pendiente = false;
+        var observador = new MutationObserver(function () {
+            if (pendiente) return;
+            pendiente = true;
+            window.requestAnimationFrame(function () {
+                pendiente = false;
+                prepararTablasResponsive();
+            });
+        });
+        observador.observe(document.body, { childList: true, subtree: true });
+    }
+
+    /**
      * Al cargar la página, todo elemento marcado con data-numeric queda
      * limitado a dígitos (0-9). Lo usan los formularios con campos numéricos.
      */
     document.addEventListener('DOMContentLoaded', function () {
+        inicializarMenuMovil();
+        prepararTablasResponsive();
+        vigilarTablas();
+
         document.querySelectorAll('[data-numeric]').forEach(function (el) {
             window.Elyra.setInputFilter(el, function (value) {
                 return /^\d*$/.test(value);
