@@ -100,7 +100,8 @@
 ```
 /
 ├── config/
-│   └── database.php            → Conexion PDO a MySQL
+│   ├── database.php            → Conexion PDO a MySQL
+│   └── env.example.php         → Plantilla de configuracion por PHP (copiar a env.php)
 ├── database/
 │   ├── esquema.sql             → Esquema completo de la base de datos (21 tablas)
 │   └── script_menu_bd.sh       → Script de administracion de BD por terminal
@@ -272,27 +273,42 @@ bash iniciar-phpmyadmin.sh
    git clone git@github.com:Gakuus/Elyra-demo.git elyra
    ```
 4. Abrir phpMyAdmin desde el escritorio, crear la base de datos `elyra` e importar el esquema desde `database/esquema.sql`.
-5. Crear el archivo `.env` en la raiz del proyecto con las credenciales de la BD:
+5. Configurar las credenciales. **En producción se recomienda `config/env.php`** (no `.env`):
+   ```bash
+   cd /var/www/elyra
+   cp config/env.example.php config/env.php
+   nano config/env.php        # completar APP_URL, DB_* y MAIL_*
    ```
-   APP_URL=http://itspvm.duckdns.org/proyectos/elyra
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_DATABASE=elyra
-   DB_USERNAME=elyra
-   DB_PASSWORD=poné_una_contraseña_segura
+   El motivo es de seguridad: el servidor ejecuta los `.php` y **nunca expone
+   su contenido por HTTP**, mientras que un `.env` es texto plano y puede quedar
+   accesible por URL (`https://itspvm.duckdns.org/proyectos/elyra/.env`). Si
+   igual preferís `.env`, existe la plantilla `.env.example`, pero entonces es
+   imprescindible lo del paso 6. Usá `APP_URL` con **https**.
 
-   # Correo saliente (recuperación de contraseña). Usar una "contraseña de
-   # aplicación" de Gmail, no la contraseña de la cuenta.
-   MAIL_HOST=smtp.gmail.com
-   MAIL_PORT=587
-   MAIL_USERNAME=tu_correo@gmail.com
-   MAIL_PASSWORD=contraseña_de_aplicación
-   MAIL_FROM=tu_correo@gmail.com
-   MAIL_FROM_NAME=Elyra
+6. Endurecer el directorio. El docroot es la **raíz del proyecto** y nginx
+   **ignora `.htaccess`**, así que sacá del servidor lo que no debe ser público:
+   ```bash
+   cd /var/www/elyra
+   rm -rf .git phpmyadmin     # historial de git y herramientas locales
+   rm -f .env                 # si usás config/env.php
    ```
-6. Listo. La app queda accesible desde el mismo escritorio web y en https://itspvm.duckdns.org/proyectos/elyra.
 
-> La recuperación de contraseña se envía por Gmail (SMTP) usando PHPMailer. Sin las variables `MAIL_*` la app funciona igual, solo no se envían los correos de restablecimiento.
+7. Bloquear lo que quede expuesto. Los `.php` se ejecutan (no filtran), pero los
+   archivos estáticos sí. Si tenés acceso a la configuración de nginx, agregá
+   este bloque; si no, pasáselo al administrador del servidor:
+   ```nginx
+   # Bloquea estáticos sensibles del proyecto bajo la subruta.
+   location ~ ^/proyectos/elyra/(\.git/|\.env|database/.*\.sql|storage/docs/|README\.md) {
+       deny all;
+   }
+   ```
+
+8. Listo. La app queda accesible desde el mismo escritorio web y en https://itspvm.duckdns.org/proyectos/elyra.
+
+> La recuperación de contraseña se envía por Gmail (SMTP) usando PHPMailer. Las
+> variables deben llamarse `MAIL_*` (`MAIL_USERNAME`, `MAIL_PASSWORD`,
+> `MAIL_FROM`), **no** `SMTP_*`. Sin ellas la app funciona igual, solo no se
+> envían los correos de restablecimiento.
 
 ---
 

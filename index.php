@@ -31,7 +31,26 @@ if (file_exists($envFile)) {
 }
 
 // ------------------------------------------------------------------
-// 1.b) Zona horaria
+// 1.b) Configuración por PHP (opcional, recomendada en producción)
+// ------------------------------------------------------------------
+// Además del .env se admite config/env.php: un archivo PHP que devuelve un
+// array con las mismas claves. En producción conviene usar este y borrar el
+// .env, porque el servidor EJECUTA los .php (nunca expone su contenido por
+// HTTP), mientras que un .env es un archivo de texto que puede quedar
+// accesible por URL si el docroot apunta a la raíz del proyecto.
+// Sus valores pisan a los del .env. Ver config/env.example.php.
+$envPhp = __DIR__ . '/config/env.php';
+if (is_file($envPhp)) {
+    $configPhp = require $envPhp;
+    if (is_array($configPhp)) {
+        foreach ($configPhp as $clave => $valor) {
+            $_ENV[(string) $clave] = (string) $valor;
+        }
+    }
+}
+
+// ------------------------------------------------------------------
+// 1.c) Zona horaria
 // ------------------------------------------------------------------
 // PHP por defecto usa UTC, pero el sistema (y por lo tanto MySQL) está en
 // hora local de Uruguay. Sin esto, el saludo y los "hace X" quedaban 3 horas
