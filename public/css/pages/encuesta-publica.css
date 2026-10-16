@@ -105,3 +105,19 @@
     font-size: 30px;
     color: #3B5998;
 }
+
+/* ---------- Pantallas chicas ---------- */
+@media (max-width: 480px) {
+    .contenedor-encuesta {
+        margin: 20px auto 40px;
+    }
+
+    .contenedor-encuesta .cuerpo-panel {
+        padding: 18px;
+    }
+
+    .escala-label span {
+        width: 38px;
+        height: 38px;
+    }
+}

@@ -15,11 +15,23 @@
     z-index: 20;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
     animation: entra-traslado .25s ease;
 }
 
 .velo-traslado[hidden] {
     display: none;
+}
+
+/* Contenedor interno: reparte el alto entre cabecera, cuerpo y pie. Sin esto
+   (era el caso) el cuerpo no tenía caja que scrollear y el pie con
+   "Registrar traslado" quedaba fuera de pantalla en el celular. */
+.modal-traslado {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
 }
 
 @keyframes entra-traslado {
@@ -87,6 +99,7 @@
     border-radius: var(--radio-btn);
     font-size: 13px;
     line-height: 1.35;
+    flex-shrink: 0;
 }
 
 .alerta-traslado[hidden] {

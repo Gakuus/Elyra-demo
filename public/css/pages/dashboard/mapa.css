@@ -357,8 +357,11 @@
     }
 
     .contenedor-mapa {
-        height: calc(100vh - 52px);
-        height: calc(100dvh - 52px);
+        /* 54px es el alto exacto del encabezado en celular (ver layout.css).
+           También se descuenta la barra de accesos inferior para que el mapa
+           termine justo encima de ella. */
+        height: calc(100vh - 54px - var(--alto-nav-inferior));
+        height: calc(100dvh - 54px - var(--alto-nav-inferior) - env(safe-area-inset-bottom));
         flex-direction: column;
         position: relative;
         overflow: hidden;
@@ -379,14 +382,26 @@
         bottom: 0;
         top: auto;
         width: 100%;
+        /* Altura fija: la pestaña que cierra el panel se apoya contra su borde
+           superior. Si la altura dependiera del contenido, con pocos traslados
+           la hoja sería baja y la pestaña quedaría flotando lejos, arriba. */
+        height: 46vh;
+        height: 46dvh;
         max-height: 46vh;
+        max-height: 46dvh;
         border-left: none;
         border-top: 1px solid #DDD;
         border-radius: 14px 14px 0 0;
         box-shadow: 0 -6px 22px rgba(0, 0, 0, .18);
         padding-bottom: env(safe-area-inset-bottom);
-        transform: translateY(0);
+        /* Oculta por defecto: así el mapa arranca despejado aunque el JS tarde
+           o falle. Se muestra agregando la clase "abierto". */
+        transform: translateY(103%);
         transition: transform 0.3s ease;
+    }
+
+    .panel-mapa.abierto {
+        transform: translateY(0);
     }
 
     .panel-mapa.collapsed {
@@ -397,7 +412,7 @@
     .panel-mapa-toggle {
         position: fixed;
         right: 12px;
-        bottom: calc(12px + env(safe-area-inset-bottom));
+        bottom: calc(var(--alto-nav-inferior) + 12px + env(safe-area-inset-bottom));
         top: auto;
         z-index: 110;
         display: inline-flex;
@@ -430,13 +445,18 @@
         border-radius: 22px;
     }
 
-    /* Con la hoja abierta la pestaña sube y queda como un asa para cerrarla. */
-    .panel-mapa:not(.collapsed) ~ .panel-mapa-toggle {
-        bottom: calc(46vh + 12px + env(safe-area-inset-bottom));
+    /* Con la hoja abierta la pestaña sube y queda pegada a su borde superior,
+       como un asa para cerrarla. */
+    .panel-mapa.abierto ~ .panel-mapa-toggle {
+        bottom: calc(var(--alto-nav-inferior) + 46vh + 12px + env(safe-area-inset-bottom));
+        bottom: calc(var(--alto-nav-inferior) + 46dvh + 12px + env(safe-area-inset-bottom));
     }
 
     /* Con el modal o el historial abierto, la pestaña del panel no tiene
-       sentido: el pie del formulario usa el mismo borde de abajo. */
+       sentido: el pie del formulario usa el mismo borde de abajo. Se oculta
+       con la clase que dejan los JS (más :has() como respaldo). */
+    body.velo-traslado-abierto .panel-mapa-toggle,
+    body.velo-historial-abierto .panel-mapa-toggle,
     body:has(.velo-traslado:not([hidden])) .panel-mapa-toggle,
     body:has(.velo-historial:not([hidden])) .panel-mapa-toggle {
         display: none;

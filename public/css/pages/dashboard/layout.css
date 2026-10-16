@@ -1,3 +1,15 @@
+/* Alto de la barra de accesos inferior en celular. El mapa y su botón
+   flotante lo usan para no quedar tapados por la barra. */
+:root {
+    --alto-nav-inferior: 56px;
+}
+
+/* La barra de accesos inferior solo existe en celular: en escritorio manda la
+   barra lateral. Su estilo completo está en el @media de pantallas chicas. */
+.nav-inferior {
+    display: none;
+}
+
 /* ---------- Encabezado del sistema ---------- */
 .encabezado-sistema {
     background: linear-gradient(135deg, #2A4780, #3B5998);
@@ -39,33 +51,137 @@
     display: flex;
     align-items: center;
     gap: 14px;
+    min-width: 0;
     font-size: 19px;
     color: #B8C9E8;
 }
 
-.usuario-encabezado a {
+/* ---------- Menú del usuario (perfil / salir) ---------- */
+/* El nombre del header abre un desplegable de Bootstrap con "Mi perfil" y
+   "Cerrar sesión". El disparador se pinta como texto, sin fondo ni borde. */
+.menu-usuario {
+    min-width: 0;
+}
+
+.btn-usuario {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    padding: 6px 10px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: #FFF;
+    font-size: 19px;
+    line-height: 1.3;
+    cursor: pointer;
+}
+
+.btn-usuario:hover,
+.btn-usuario:focus,
+.btn-usuario.show {
+    background: rgba(255, 255, 255, .12);
     color: #FFF;
     text-decoration: none;
 }
 
-.usuario-encabezado a:hover {
-    text-decoration: underline;
+.btn-usuario:focus-visible {
+    outline: 2px solid #FFF;
+    outline-offset: 2px;
 }
 
-/* ---------- Logout en la barra superior ---------- */
-.form-en-linea {
-    display: inline;
+.btn-usuario .nombre-usuario {
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.btn-logout,
-.btn-logout:hover {
-    color: #000000;
-    text-decoration: none;
+.menu-usuario-lista {
+    min-width: 200px;
+    font-size: 16px;
+}
+
+.menu-usuario-lista .dropdown-item {
+    cursor: pointer;
+}
+
+/* ---------- Menú móvil (off-canvas) ----------
+   En escritorio no existen el botón hamburguesa, el de cerrar ni el fondo:
+   solo se activan en pantallas chicas (ver media query al final). */
+.btn-menu-movil {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, .35);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, .12);
+    color: #FFF;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.btn-menu-movil:hover {
+    background: rgba(255, 255, 255, .22);
+}
+
+.cerrar-barra {
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, .15);
+    color: #FFF;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.menu-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1040;
+    background: rgba(0, 0, 0, .5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .2s ease, visibility .2s ease;
+}
+
+.menu-backdrop.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+body.menu-abierto {
+    overflow: hidden;
 }
 
 /* ---------- Cuerpo principal ---------- */
+/* El body es una columna que ocupa toda la pantalla: el contenido se estira y
+   el pie queda siempre pegado abajo, aunque la página tenga poco contenido
+   (en celular sin esto el pie subía y quedaba en el medio). */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: auto;
+}
+
 .contenedor-principal {
     display: flex;
+    flex: 1 0 auto;
     min-height: calc(100vh - 110px);
 }
 
@@ -119,6 +235,13 @@
     margin-top: -2px;
 }
 
+.enlace-barra .icono-barra {
+    font-size: 16px;
+    vertical-align: middle;
+    margin-right: 6px;
+    margin-top: -2px;
+}
+
 .contenido-principal {
     flex: 1;
     padding: 30px 38px;
@@ -138,9 +261,89 @@
 
 /* ---------- Pantallas chicas ---------- */
 @media (max-width: 768px) {
+    /* Alto fijo y conocido: el mapa calcula su alto con 100dvh - este valor.
+       Si el encabezado creciera por content, el mapa desbordaría la pantalla y
+       la hoja de traslados quedaría corrida. 54px = contenido + borde inferior. */
     .encabezado-sistema {
-        padding: 10px 14px;
+        height: 54px;
+        padding: 0 14px;
         gap: 8px;
+        position: sticky;
+        top: 0;
+        z-index: 1030;
+    }
+
+    /* En celular la navegación va abajo (estilo app), así que el botón
+       hamburguesa y su panel deslizante ya no se usan. */
+    .btn-menu-movil {
+        display: none;
+    }
+
+    .barra-lateral,
+    .menu-backdrop {
+        display: none;
+    }
+
+    /* Reserva el alto de la barra inferior para que no tape el pie/contenido. */
+    body {
+        padding-bottom: calc(var(--alto-nav-inferior) + env(safe-area-inset-bottom));
+    }
+
+    /* ---------- Barra de accesos inferior ---------- */
+    .nav-inferior {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1040;
+        display: flex;
+        align-items: stretch;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        background: #FFF;
+        border-top: 1px solid #D5D9E0;
+        box-shadow: 0 -2px 12px rgba(0, 0, 0, .12);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .nav-inferior-item {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        padding: 8px 2px 7px;
+        color: #5b6a82;
+        text-decoration: none;
+        font-size: 10px;
+        line-height: 1.1;
+        white-space: nowrap;
+        border-top: 2px solid transparent;
+    }
+
+    .nav-inferior-item i {
+        font-size: 20px;
+    }
+
+    .nav-inferior-item span {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .nav-inferior-item:hover,
+    .nav-inferior-item:focus {
+        color: #2A4780;
+        text-decoration: none;
+    }
+
+    .nav-inferior-item.active {
+        color: #2A4780;
+        border-top-color: #2A4780;
+        background: #EEF2FA;
     }
 
     .logo-encabezado img {
@@ -157,26 +360,53 @@
         min-width: 0;
     }
 
-    .usuario-encabezado > span {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        max-width: 42vw;
+    .btn-usuario {
+        font-size: 15px;
+        padding: 4px 8px;
     }
 
-    /* En la página del mapa la barra lateral y el pie no dejan lugar: el
-       celular es pantalla completa para el mapa. La navegación queda a cargo
-       del navegador (volver atrás), que es lo que hace un chofer. */
-    .contenedor-principal:has(.contenedor-mapa) .barra-lateral {
-        display: none;
+    .btn-usuario .nombre-usuario {
+        max-width: 40vw;
     }
 
+    /* El contenido principal ocupa todo el ancho: la navegación es la barra
+       inferior, así que no hay panel lateral en celular. */
+    .contenedor-principal {
+        min-height: auto;
+    }
+
+    .contenido-principal {
+        width: 100%;
+        padding: 16px 14px;
+        overflow-x: hidden;
+    }
+
+    /* En la página del mapa el pie no deja lugar: la barra inferior ya ofrece
+       el acceso de vuelta al dashboard. */
     .contenedor-principal:has(.contenedor-mapa) + .pie-pagina {
         display: none;
     }
 
+    /* El mapa calcula su alto descontando la barra inferior; el pie (que aquí
+       se oculta) no, así que no hace falta reservar espacio en el body. */
+    body:has(.contenedor-mapa) {
+        padding-bottom: 0;
+    }
+}
+
+/* En tablet vertical la barra fija todavía deja poco espacio: se angosta. */
+@media (min-width: 769px) and (max-width: 992px) {
+    .barra-lateral {
+        width: 220px;
+        min-width: 220px;
+    }
+
+    .enlace-barra {
+        font-size: 17px;
+        padding: 13px 16px 13px 20px;
+    }
+
     .contenido-principal {
-        padding: 16px 14px;
-        overflow-x: hidden;
+        padding: 22px 20px;
     }
 }

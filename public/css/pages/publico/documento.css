@@ -30,3 +30,33 @@ body {
     background: #4F74B8;
     color: #FFF;
 }
+
+/* ---------- Modal de vista previa del PDF ---------- */
+.pdf-frame {
+    display: block;
+    width: 100%;
+    height: 75vh;
+    border: 0;
+}
+
+@media (max-width: 575.98px) {
+    .pdf-frame {
+        height: calc(100vh - 130px);
+    }
+
+    .doc-publico {
+        margin: 24px auto;
+    }
+
+    .tarjeta-doc {
+        padding: 22px 18px;
+    }
+
+    .tarjeta-doc h1 {
+        font-size: 21px;
+    }
+
+    .icono-doc {
+        font-size: 42px;
+    }
+}

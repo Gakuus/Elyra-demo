@@ -136,3 +136,103 @@
     margin-bottom: 16px;
     font-size: 16px;
 }
+
+/* ---------- Pantallas chicas ---------- */
+@media (max-width: 768px) {
+    .cabecera-panel {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 12px 14px;
+        font-size: 18px;
+    }
+
+    .cuerpo-panel {
+        padding: 16px 14px;
+    }
+
+    /* Los botones de acción de las tablas pueden quedar pegados:
+       se les da un poco de aire y se evita que se estiren. */
+    .tabla-panel .btn-sm {
+        white-space: nowrap;
+    }
+}
+
+/* ---------- Tablas como tarjetas en celular ----------
+   En pantallas chicas cada fila se muestra como una tarjeta y cada celda
+   como una línea "Etiqueta  valor", usando el data-label que arma elyra.js
+   a partir de los <th>. Es más legible que el scroll horizontal. */
+@media (max-width: 768px) {
+    .table-responsive {
+        overflow: visible;
+    }
+
+    .tabla-panel {
+        display: block;
+        border-collapse: separate;
+    }
+
+    .tabla-panel thead {
+        display: none;
+    }
+
+    .tabla-panel tbody,
+    .tabla-panel tr,
+    .tabla-panel td {
+        display: block;
+        width: 100%;
+    }
+
+    .tabla-panel tr {
+        background: #FFF;
+        border: 1px solid #E3E7EE;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        padding: 4px 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+    }
+
+    .tabla-panel td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        text-align: right;
+        padding: 8px 14px;
+        border-bottom: 1px solid #F1F3F7;
+        font-size: 16px;
+    }
+
+    .tabla-panel tr td:last-child {
+        border-bottom: none;
+    }
+
+    /* Etiqueta de cada celda (nombre de la columna). */
+    .tabla-panel td::before {
+        content: attr(data-label);
+        flex: 0 0 auto;
+        font-weight: 600;
+        color: #667085;
+        font-size: 13px;
+        text-align: left;
+    }
+
+    /* Las acciones quedan alineadas a la derecha dentro de la tarjeta y
+       pueden pasar a una segunda línea si no entran (ej: encuestas). */
+    .tabla-panel td:last-child {
+        flex-wrap: wrap;
+    }
+
+    .tabla-panel td > .d-flex {
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        min-width: 0;
+    }
+
+    /* El ancho fijo de las columnas de acciones no aplica en tarjetas. */
+    .tabla-panel .th-acciones,
+    .tabla-panel .th-acciones-sm,
+    .tabla-panel .th-acciones-min,
+    .tabla-panel .th-qr {
+        width: auto;
+    }
+}

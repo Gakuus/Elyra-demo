@@ -1,6 +1,7 @@
 /* ---------- Pantalla completa ---------- */
 .pagina-ingreso {
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -16,8 +17,9 @@
     flex-shrink: 0;
 }
 
-/* Caja de registro más ancha que la de login */
-.caja-registro {
+/* Caja de registro más ancha que la de login. Va con la doble clase para
+   ganarle a la regla de .caja-ingreso, que si no la dejaba en 580px. */
+.caja-ingreso.caja-registro {
     max-width: 640px;
 }
 
@@ -77,4 +79,85 @@
     justify-content: center;
     padding: 16px 12px;
     font-size: 19px;
+}
+
+/* ---------- Pantallas chicas ---------- */
+@media (max-width: 768px) {
+    .pagina-ingreso {
+        padding: 18px 16px;
+    }
+
+    .cuerpo-caja-ingreso {
+        padding: 24px 22px;
+    }
+
+    .cabecera-caja-ingreso {
+        padding: 16px 18px;
+        font-size: 20px;
+    }
+
+    .logo-caja-ingreso {
+        margin-bottom: 12px;
+    }
+
+    .caja-ingreso .grupo-formulario {
+        margin-bottom: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Se mantiene centrada vertical y horizontalmente. Si el formulario es más
+       alto que la pantalla (registro), el contenedor crece y scrollea solo.
+       Ritmo vertical compacto para que la tarjeta no se vea alargada. */
+    .pagina-ingreso {
+        padding: 16px 14px;
+        align-items: center;
+    }
+
+    .caja-ingreso {
+        margin: 0 auto;
+    }
+
+    .cabecera-caja-ingreso {
+        padding: 13px 16px;
+        font-size: 18px;
+    }
+
+    .cuerpo-caja-ingreso {
+        padding: 20px 20px;
+    }
+
+    .logo-caja-ingreso {
+        margin-bottom: 10px;
+    }
+
+    .logo-caja-ingreso img {
+        max-height: 54px;
+    }
+
+    .titulo-caja-ingreso {
+        font-size: 19px;
+        margin-bottom: 4px;
+    }
+
+    .caja-ingreso .grupo-formulario {
+        margin-bottom: 14px;
+    }
+
+    .caja-ingreso .entrada-formulario {
+        height: 46px;
+        padding: 10px 14px;
+        font-size: 16px;
+    }
+
+    .caja-ingreso .btn-primary {
+        padding: 13px 12px;
+        font-size: 16px;
+        margin-top: 0;
+    }
+
+    /* Los enlaces del pie, más juntos para no estirar la tarjeta. */
+    .cuerpo-caja-ingreso > p {
+        margin-top: 8px;
+    }
 }

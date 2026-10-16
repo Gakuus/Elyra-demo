@@ -89,6 +89,7 @@
 
             pintar(ctx.traslados);
             velo.hidden = false;
+            document.body.classList.add('velo-historial-abierto');
 
             // El panel entra en el flujo flex y empuja al mapa, igual que el modal
             // de registro: sin esto Leaflet sigue creyendo que tiene el ancho
@@ -102,6 +103,7 @@
             if (!velo || velo.hidden) return;
 
             velo.hidden = true;
+            document.body.classList.remove('velo-historial-abierto');
             if (ctx.mapa) ctx.mapa.invalidateSize();
             if (ctx.dom.btnHistorial) ctx.dom.btnHistorial.focus();
         }

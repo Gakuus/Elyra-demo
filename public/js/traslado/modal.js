@@ -57,7 +57,13 @@
             if (!ctx.dom.velo) return;
 
             ctx.dom.velo.hidden = false;
+            document.body.classList.add('velo-traslado-abierto');
             api.ui.limpiarAviso();
+
+            // En celular se cierra la hoja del panel para que el formulario
+            // quede solo sobre el mapa; al cerrar el modal se puede reabrir.
+            var panel = document.querySelector('.panel-mapa');
+            if (panel) panel.classList.remove('abierto');
 
             if (ctx.puente && ctx.puente.pausarPolling) ctx.puente.pausarPolling(true);
 
@@ -80,6 +86,7 @@
             if (!ctx.dom.velo) return;
 
             ctx.dom.velo.hidden = true;
+            document.body.classList.remove('velo-traslado-abierto');
             api.direcciones.ocultar('origen');
             api.direcciones.ocultar('destino');
 
