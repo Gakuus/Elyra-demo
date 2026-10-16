@@ -71,11 +71,18 @@ final class Auth
         }
 
         $pdo = db_connect();
-        $usuario = self::buscarUsuario($pdo, $username);
+        $usuario = self::buscarUsuario($pdo, $username, false);
 
-        // Se rechaza igual para no revelar si el usuario existe o está inactivo.
-        if ($usuario === null || !password_verify($password, $usuario['password_hash'])) {
-            return ['success' => false, 'error' => 'Credenciales inválidas'];
+        // Mensajes distintos: usuario inexistente, cuenta desactivada o
+        // contraseña incorrecta.
+        if ($usuario === null) {
+            return ['success' => false, 'error' => 'El usuario no existe'];
+        }
+        if (!$usuario['activo']) {
+            return ['success' => false, 'error' => 'Tu cuenta está desactivada. Contactá al administrador'];
+        }
+        if (!password_verify($password, (string) $usuario['password_hash'])) {
+            return ['success' => false, 'error' => 'Usuario o contraseña incorrectos'];
         }
 
         // Login correcto: se renueva la sesión (por si alguien había fijado el
@@ -210,6 +217,243 @@ final class Auth
         }
     }
 
+    /**
+     * Genera un token de restablecimiento para el email indicado. Devuelve los
+     * datos necesarios para armar el correo, o null si no hay cuenta con ese
+     * email (el controlador responde igual para no revelar qué correos existen).
+     *
+     * El token se guarda como hash SHA-256 (64 caracteres hex, justo el ancho
+     * de la columna) en usuario.reset_token, así que aunque alguien lea la base
+     * no puede usar el token. Vence a los 60 minutos.
+     *
+     * @return array{token:string,nombre:string,email:string}|null
+     */
+    public static function generarTokenReset(string $email): ?array
+    {
+        $pdo = db_connect();
+        $stmt = $pdo->prepare("SELECT id, nombre FROM usuario WHERE email = ? LIMIT 1");
+        $stmt->execute([$email]);
+        $usuario = $stmt->fetch();
+
+        if ($usuario === false) {
+            return null;
+        }
+
+        $token = bin2hex(random_bytes(32));
+        $hash = hash('sha256', $token);
+
+        $upd = $pdo->prepare(
+            "UPDATE usuario
+             SET reset_token = :hash,
+                 reset_token_expires_at = DATE_ADD(NOW(), INTERVAL 60 MINUTE)
+             WHERE id = :id"
+        );
+        $upd->execute(['hash' => $hash, 'id' => $usuario['id']]);
+
+        return [
+            'token'  => $token,
+            'nombre' => trim((string) $usuario['nombre']),
+            'email'  => $email,
+        ];
+    }
+
+    /**
+     * Restablece la contraseña a partir de un token válido y sin vencer.
+     * El token es de un solo uso: se limpia siempre, salga bien o mal el cambio.
+     *
+     * @return array{success: bool, error?: string}
+     */
+    public static function restablecerPassword(string $token, string $password, string $password2): array
+    {
+        if (strlen($token) !== 64 || !ctype_xdigit($token)) {
+            return ['success' => false, 'error' => 'El enlace no es válido o ya venció'];
+        }
+        if (strlen($password) < 8) {
+            return ['success' => false, 'error' => 'La contraseña debe tener al menos 8 caracteres'];
+        }
+        if ($password !== $password2) {
+            return ['success' => false, 'error' => 'Las contraseñas no coinciden'];
+        }
+
+        $pdo = db_connect();
+        $stmt = $pdo->prepare(
+            "SELECT id, tipo
+             FROM usuario
+             WHERE reset_token = ? AND reset_token_expires_at > NOW()
+             LIMIT 1"
+        );
+        $stmt->execute([hash('sha256', $token)]);
+        $usuario = $stmt->fetch();
+
+        if ($usuario === false) {
+            return ['success' => false, 'error' => 'El enlace no es válido o ya venció'];
+        }
+
+        $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+        $tabla = $usuario['tipo'] === 'funcionario' ? 'funcionario' : 'paciente';
+
+        try {
+            $pdo->beginTransaction();
+
+            $upd = $pdo->prepare("UPDATE {$tabla} SET password_hash = ? WHERE id = ?");
+            $upd->execute([$hash, $usuario['id']]);
+
+            $limpiar = $pdo->prepare(
+                "UPDATE usuario SET reset_token = NULL, reset_token_expires_at = NULL WHERE id = ?"
+            );
+            $limpiar->execute([$usuario['id']]);
+
+            $pdo->commit();
+            return ['success' => true];
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            return ['success' => false, 'error' => 'No se pudo restablecer la contraseña. Intentá de nuevo.'];
+        }
+    }
+
+    /**
+     * Devuelve los datos de perfil de una cuenta por id: identidad (usuario),
+     * credenciales/rol/teléfono (funcionario o paciente) y la fecha de alta.
+     * Se arma con un LEFT JOIN a las dos tablas, igual que buscarUsuario().
+     *
+     * @return array<string,mixed>|null
+     */
+    public static function obtenerPerfil(int $id): ?array
+    {
+        if ($id <= 0) {
+            return null;
+        }
+
+        $pdo = db_connect();
+        $stmt = $pdo->prepare("
+            SELECT u.id, u.nombre, u.apellido, u.email, u.tipo,
+                   u.documento_identidad, u.created_at,
+                   COALESCE(f.username, p.username) AS username,
+                   COALESCE(f.rol, 'paciente') AS rol,
+                   COALESCE(f.licencia, '') AS licencia,
+                   COALESCE(f.telefono, p.telefono) AS telefono,
+                   COALESCE(f.password_hash, p.password_hash) AS password_hash,
+                   COALESCE(f.activo, p.activo) AS activo
+            FROM usuario u
+            LEFT JOIN funcionario f ON f.id = u.id
+            LEFT JOIN paciente p ON p.id = u.id
+            WHERE u.id = :id
+            LIMIT 1
+        ");
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $row;
+    }
+
+    /**
+     * Actualiza los datos editables del propio perfil: nombre, apellido, email
+     * y teléfono. La cédula, el usuario y el rol no se cambian desde acá.
+     *
+     * @return array{success: bool, error?: string}
+     */
+    public static function actualizarPerfil(
+        int $id,
+        string $nombre,
+        string $apellido,
+        string $email,
+        string $telefono
+    ): array {
+        if (mb_strlen($nombre) < 2) {
+            return ['success' => false, 'error' => 'Ingresá un nombre válido'];
+        }
+        if (mb_strlen($apellido) < 2) {
+            return ['success' => false, 'error' => 'Ingresá un apellido válido'];
+        }
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'error' => 'Ingresá un correo electrónico válido'];
+        }
+        if ($telefono !== '' && !preg_match('/^\d{8,9}$/', $telefono)) {
+            return ['success' => false, 'error' => 'El teléfono debe tener 8 o 9 dígitos'];
+        }
+
+        $perfil = self::obtenerPerfil($id);
+        if ($perfil === null) {
+            return ['success' => false, 'error' => 'No se encontró la cuenta'];
+        }
+
+        $pdo = db_connect();
+
+        // El email es único en todo el sistema: se descarta la propia fila.
+        $existe = $pdo->prepare("SELECT id FROM usuario WHERE email = ? AND id <> ? LIMIT 1");
+        $existe->execute([$email, $id]);
+        if ($existe->fetch()) {
+            return ['success' => false, 'error' => 'Ese correo ya está registrado por otra cuenta'];
+        }
+
+        $tabla = $perfil['tipo'] === 'funcionario' ? 'funcionario' : 'paciente';
+
+        try {
+            $pdo->beginTransaction();
+
+            $upd = $pdo->prepare("UPDATE usuario SET nombre = ?, apellido = ?, email = ? WHERE id = ?");
+            $upd->execute([$nombre, $apellido, $email, $id]);
+
+            $updC = $pdo->prepare("UPDATE {$tabla} SET telefono = ? WHERE id = ?");
+            $updC->execute([$telefono, $id]);
+
+            $pdo->commit();
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            return ['success' => false, 'error' => 'No se pudieron guardar los cambios. Intentá de nuevo.'];
+        }
+
+        // El header del dashboard muestra el nombre desde la sesión.
+        $_SESSION['usuario_nombre'] = trim($nombre . ' ' . $apellido);
+
+        return ['success' => true];
+    }
+
+    /**
+     * Cambia la contraseña del propio perfil. Exige la contraseña actual: sin
+     * eso, alguien con la sesión abierta podría cambiarla sin conocerla.
+     *
+     * @return array{success: bool, error?: string}
+     */
+    public static function cambiarPassword(
+        int $id,
+        string $passwordActual,
+        string $passwordNueva,
+        string $passwordNueva2
+    ): array {
+        if (strlen($passwordNueva) < 8) {
+            return ['success' => false, 'error' => 'La contraseña nueva debe tener al menos 8 caracteres'];
+        }
+        if ($passwordNueva !== $passwordNueva2) {
+            return ['success' => false, 'error' => 'Las contraseñas nuevas no coinciden'];
+        }
+
+        $perfil = self::obtenerPerfil($id);
+        if ($perfil === null) {
+            return ['success' => false, 'error' => 'No se encontró la cuenta'];
+        }
+        if (!password_verify($passwordActual, (string) $perfil['password_hash'])) {
+            return ['success' => false, 'error' => 'La contraseña actual no es correcta'];
+        }
+
+        $hash = password_hash($passwordNueva, PASSWORD_BCRYPT, ['cost' => 12]);
+        $tabla = $perfil['tipo'] === 'funcionario' ? 'funcionario' : 'paciente';
+
+        try {
+            $pdo = db_connect();
+            $upd = $pdo->prepare("UPDATE {$tabla} SET password_hash = ? WHERE id = ?");
+            $upd->execute([$hash, $id]);
+        } catch (PDOException $e) {
+            return ['success' => false, 'error' => 'No se pudo cambiar la contraseña. Intentá de nuevo.'];
+        }
+
+        return ['success' => true];
+    }
+
     public static function logout(): void
     {
         $_SESSION = [];
@@ -224,7 +468,7 @@ final class Auth
      * Busca a una persona por usuario. Lee de la tabla que corresponde
      * (funcionario o paciente) a través del LEFT JOIN y de COALESCE.
      */
-    private static function buscarUsuario(PDO $pdo, string $username): ?array
+    private static function buscarUsuario(PDO $pdo, string $username, bool $soloActivos = true): ?array
     {
         $stmt = $pdo->prepare("
             SELECT u.id, u.nombre, u.apellido, u.email, u.tipo,
@@ -241,8 +485,9 @@ final class Auth
         $stmt->execute(['u1' => $username, 'u2' => $username]);
         $row = $stmt->fetch();
 
-        // Sin fila o usuario dado de baja no cuenta como válido.
-        if ($row === false || !$row['activo']) return null;
+        // Sin fila no existe; con $soloActivos también se descarta el dado de baja.
+        if ($row === false) return null;
+        if ($soloActivos && !$row['activo']) return null;
 
         $row['rol'] = $row['tipo'] === 'funcionario' ? ($row['rol'] ?? 'funcionario') : 'paciente';
         return $row;

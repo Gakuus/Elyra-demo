@@ -1,0 +1,107 @@
+<div class="panel">
+    <div class="cabecera-panel"><i class="bi bi-person-gear me-1"></i> Mi perfil</div>
+    <div class="cuerpo-panel">
+        {{#hay_exito}}<div class="alert alert-success py-2"><i class="bi bi-check-lg me-1"></i> {{exito}}</div>{{/hay_exito}}
+        {{#hay_error}}<div class="mensaje-error"><i class="bi bi-exclamation-triangle me-1"></i> {{error}}</div>{{/hay_error}}
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="text-muted small">Cédula</div>
+                <div class="fw-semibold">{{cedula}}</div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-muted small">Usuario</div>
+                <div class="fw-semibold">{{username}}</div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-muted small">Rol</div>
+                <div class="fw-semibold">{{rol}}</div>
+            </div>
+            {{#es_funcionario}}
+            <div class="col-md-4">
+                <div class="text-muted small">Licencia</div>
+                <div class="fw-semibold">{{licencia}}</div>
+            </div>
+            {{/es_funcionario}}
+            <div class="col-md-4">
+                <div class="text-muted small">Registrado</div>
+                <div class="fw-semibold">{{fecha_registro}}</div>
+            </div>
+        </div>
+
+        <h6 class="text-muted mb-3"><i class="bi bi-pencil-square me-1"></i> Datos de contacto</h6>
+        <form method="post" action="perfil/datos">
+        <input type="hidden" name="_csrf" value="{{csrf_token}}">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="nombre" class="form-label">Nombre <span class="requerido">*</span></label>
+                    <input type="text" name="nombre" id="nombre" class="form-control" required minlength="2" maxlength="100"
+                           placeholder="Ej: Carlos" value="{{nombre}}">
+                </div>
+                <div class="col-md-6">
+                    <label for="apellido" class="form-label">Apellido <span class="requerido">*</span></label>
+                    <input type="text" name="apellido" id="apellido" class="form-control" required minlength="2" maxlength="100"
+                           placeholder="Ej: Martinez" value="{{apellido}}">
+                </div>
+                <div class="col-md-6">
+                    <label for="email" class="form-label">Email <span class="requerido">*</span></label>
+                    <input type="email" name="email" id="email" class="form-control" required maxlength="150"
+                           placeholder="Ej: carlos@ejemplo.com" value="{{email}}">
+                    <div class="form-text">Ahí llegan las notificaciones y el enlace para restablecer la contraseña.</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="telefono" class="form-label">Teléfono (8 o 9 dígitos)</label>
+                    <input type="text" name="telefono" id="telefono" class="form-control" maxlength="9"
+                           inputmode="numeric" pattern="[0-9]{8,9}" data-numeric
+                           placeholder="Ej: 99123456" value="{{telefono}}">
+                </div>
+            </div>
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Guardar cambios</button>
+                <a href="dashboard" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+
+        <hr class="my-4">
+
+        <h6 class="text-muted mb-3"><i class="bi bi-key me-1"></i> Cambiar contraseña</h6>
+        <form method="post" action="perfil/password">
+        <input type="hidden" name="_csrf" value="{{csrf_token}}">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="passwordActual" class="form-label">Contraseña actual <span class="requerido">*</span></label>
+                    <div class="input-group">
+                        <input type="password" name="password_actual" id="passwordActual" class="form-control"
+                               required autocomplete="current-password">
+                        <button type="button" class="btn btn-outline-secondary"
+                                onclick="window.togglePassword('passwordActual', 'pwActualIcon')"
+                                aria-label="Mostrar u ocultar contraseña">
+                            <i id="pwActualIcon" class="bi bi-eye-slash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label for="passwordNueva" class="form-label">Contraseña nueva <span class="requerido">*</span></label>
+                    <div class="input-group">
+                        <input type="password" name="password" id="passwordNueva" class="form-control"
+                               required minlength="8" autocomplete="new-password">
+                        <button type="button" class="btn btn-outline-secondary"
+                                onclick="window.togglePassword('passwordNueva', 'pwNuevaIcon')"
+                                aria-label="Mostrar u ocultar contraseña">
+                            <i id="pwNuevaIcon" class="bi bi-eye-slash"></i>
+                        </button>
+                    </div>
+                    <div class="form-text">Mínimo 8 caracteres.</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="passwordNueva2" class="form-label">Repetir contraseña nueva <span class="requerido">*</span></label>
+                    <input type="password" name="password2" id="passwordNueva2" class="form-control"
+                           required minlength="8" autocomplete="new-password">
+                </div>
+            </div>
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-key me-1"></i> Cambiar contraseña</button>
+            </div>
+        </form>
+    </div>
+</div>
