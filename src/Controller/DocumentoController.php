@@ -65,25 +65,28 @@ final class DocumentoController
                 $safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', pathinfo((string) $archivo['name'], PATHINFO_FILENAME));
                 $filename = mb_substr((string) $safeName, 0, 80) . '_' . time() . '.pdf';
 
-                $storageDir = __DIR__ . '/../../storage/docs';
-                if (!is_dir($storageDir)) {
-                    mkdir($storageDir, 0775, true);
-                }
-                $destPath = $storageDir . '/' . $filename;
-
-                if (!move_uploaded_file($archivo['tmp_name'], $destPath)) {
+                // Dónde vive el PDF lo decide AlmacenPdf (disco o BD). Guarda
+                // una clave relativa, no una ruta absoluta.
+                try {
+                    $guardado = AlmacenPdf::guardar($archivo, $filename);
+                } catch (RuntimeException $e) {
+                    $guardado = null;
+                    // El motivo real queda en storage/logs/seguridad-*.log.
                     $error = 'Error al guardar el archivo. Verificá los permisos del servidor.';
-                } else {
-                    // Archivo en disco → se registra la RUTA, no el archivo.
+                }
+
+                if ($guardado !== null) {
+                    // archivo_contenido va en null cuando el PDF quedó en disco.
                     $stmt = $pdo->prepare(
-                        'INSERT INTO documento (titulo, descripcion, archivo_path, archivo_nombre, tipo_documento_id, subido_por, activo)
-                         VALUES (:titulo, :descripcion, :path, :nombre, :tipo, :usuario, 1)'
+                        'INSERT INTO documento (titulo, descripcion, archivo_path, archivo_nombre, archivo_contenido, tipo_documento_id, subido_por, activo)
+                         VALUES (:titulo, :descripcion, :path, :nombre, :contenido, :tipo, :usuario, 1)'
                     );
                     $stmt->execute([
                         'titulo' => $titulo,
                         'descripcion' => $descripcion !== '' ? $descripcion : null,
-                        'path' => $destPath,
+                        'path' => $guardado['path'],
                         'nombre' => $filename,
+                        'contenido' => $guardado['contenido'],
                         'tipo' => $tipoId,
                         'usuario' => (int) ($_SESSION['usuario_id'] ?? 0),
                     ]);
@@ -250,12 +253,13 @@ final class DocumentoController
             return;
         }
 
-        // El PDF vive en disco (archivo_path) o en la base (archivo_contenido).
-        // La ruta de disco se valida contra storage/docs: si un archivo_path
-        // manipulado apunta a otra parte del disco, se ignora.
-        $content = $doc['archivo_contenido'] ?? null;
-        $path = $content === null ? ruta_pdf_segura((string) $doc['archivo_path']) : null;
-        if ($content === null && $path === null) {
+        // El PDF puede estar en disco o en la base: lo resuelve AlmacenPdf
+        // (y valida que la ruta de disco siga dentro de storage/docs).
+        $ubicacion = AlmacenPdf::ubicar(
+            (string) ($doc['archivo_path'] ?? ''),
+            $doc['archivo_contenido'] ?? null
+        );
+        if ($ubicacion === null) {
             pagina_404();
             return;
         }
@@ -267,12 +271,12 @@ final class DocumentoController
         // sanea porque lo eligió el usuario al subir el archivo.
         header(content_disposition($descargar ? 'attachment' : 'inline', $nombre));
 
-        if ($content !== null) {
-            header('Content-Length: ' . strlen($content));
-            echo $content;
+        if (isset($ubicacion['bd'])) {
+            header('Content-Length: ' . strlen($ubicacion['bd']));
+            echo $ubicacion['bd'];
         } else {
-            header('Content-Length: ' . filesize((string) $path));
-            readfile((string) $path);
+            header('Content-Length: ' . filesize($ubicacion['disco']));
+            readfile($ubicacion['disco']);
         }
     }
 }
