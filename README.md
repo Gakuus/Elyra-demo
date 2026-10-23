@@ -115,7 +115,7 @@
 │   │   └── pages/              → JS por modulo
 │   ├── img/                    → Logos e imagenes
 │   ├── manifest.json           → PWA basica
-│   └── uploads/                → Archivos subidos por usuarios
+│   └── uploads/                → Reservada para archivos públicos (sin uso hoy)
 ├── src/
 │   ├── Auth.php                → Autenticacion (login, registro, sesion)
 │   ├── helpers.php             → Funciones auxiliares (render, guards, CSRF, tokens)
@@ -302,6 +302,57 @@ bash iniciar-phpmyadmin.sh
    ```
 
 8. Listo. La app queda accesible desde el mismo escritorio web y en https://itspvm.duckdns.org/proyectos/elyra.
+
+### Rutas de almacenamiento
+
+Todo lo que la app escribe (PDFs, logs, rate-limit y cachés) cuelga de una
+sola raíz, configurable con `STORAGE_PATH`:
+
+- **Vacío (por defecto)**: `<raíz del proyecto>/storage`, que en el servidor es
+  `/var/www/elyra/storage`. Si el proyecto se clona ahí, no hay que tocar nada.
+- **Absoluta**: por ejemplo `/var/www/elyra/storage`, si preferís dejarlo
+  explícito en `config/env.php`.
+- **Relativa**: se resuelve desde la raíz del proyecto.
+
+Las subcarpetas (`docs`, `logs`, `rate-limit`, `*-cache`) se crean solas; lo
+que importa es que el usuario de PHP (`www-data`) pueda escribir en la raíz.
+Para verificarlo y, si hay root, corregir permisos:
+
+```bash
+cd /var/www/elyra
+sudo -u www-data sh -c 'for d in storage storage/docs storage/logs storage/rate-limit; do
+  [ -w "$d" ] && echo "OK   $d" || echo "FAIL $d"; done'
+
+chgrp -R www-data storage
+find storage -type d -exec chmod 2775 {} \;
+find storage -type f -exec chmod 664 {} \;
+```
+
+`public/uploads` **no se usa**: ningún controlador lee ni escribe ahí. Los
+documentos son privados y viven en `storage/docs` (los sirve el controlador,
+nunca directo por URL). No la uses para PDFs: todo lo que está bajo `public/`
+se sirve sin autenticación.
+
+### Almacenamiento de PDFs (subida de documentos)
+
+En el servidor, el usuario de PHP (`www-data`) no suele ser el dueño de
+`storage/docs` (lo crea el `git clone` con tu usuario). Si no hay root para
+hacer `chown`, `move_uploaded_file()` falla y la subida de PDFs da error. El
+proyecto lo resuelve con la variable `PDF_DRIVER` (ver `config/env.example.php`):
+
+- `auto` (por defecto): intenta guardar en `storage/docs` y, si no tiene
+  permisos, guarda el PDF en MySQL (`documento.archivo_contenido`). El visor y
+  los enlaces siguen funcionando igual.
+- `disco`: solo `storage/docs`. Requiere que el usuario de PHP pueda escribir.
+- `bd`: siempre en MySQL (útil si el disco es de solo lectura o efímero).
+
+El motivo real de cualquier fallo de disco queda en
+`storage/logs/seguridad-AAAA-MM-DD.log` (evento `pdf_fallback_bd`).
+
+Además, `php.ini` del servidor trae `upload_max_filesize = 2M`, pero la app
+acepta PDFs de hasta 10 MB. Sin root no se puede editar `php.ini`, pero
+PHP-FPM sí lee el archivo `.user.ini` del proyecto (ya versionado), que sube el
+límite a 10 MB. Verificá con `php -i | grep user_ini` que esté habilitado.
 
 > La recuperación de contraseña se envía por Gmail (SMTP) usando PHPMailer. Las
 > variables deben llamarse `MAIL_*` (`MAIL_USERNAME`, `MAIL_PASSWORD`,

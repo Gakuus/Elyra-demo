@@ -33,6 +33,19 @@ return [
     'DB_PASSWORD'    => 'tu_contrasena_segura',
     'DB_SOCKET'      => '',
 
+    // --- Almacenamiento ---
+    // Raíz del almacenamiento privado (PDFs, logs, rate-limit y cachés).
+    // Vacío = <raíz del proyecto>/storage. En el servidor ITS P se puede
+    // dejar vacío si el proyecto se clona en /var/www/elyra, o poner la ruta
+    // absoluta si el hosting habilita otra carpeta escribible para www-data.
+    'STORAGE_PATH'   => '',
+
+    // --- Almacenamiento de documentos (PDFs) ---
+    // disco = archivo en storage/docs | bd = bytes en MySQL | auto = prueba
+    // disco y, si el usuario de PHP no puede escribir, cae a BD (recomendado
+    // en el servidor ITS P, donde no hay root para cambiar permisos).
+    'PDF_DRIVER'     => 'auto',
+
     // --- Geocodificación / rutas ---
     'GEOAPIFY_API_KEY' => '',
     'GEOPROVIDER'      => 'geoapify',

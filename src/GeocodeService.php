@@ -29,7 +29,11 @@ final class GeocodeService
     private const BASE_URL = 'https://nominatim.openstreetmap.org/';
     private const USER_AGENT = 'Elyra-Hospital/1.0 (sistema de traslados; https://github.com/Gakuus/Elyra-demo)';
 
-    private const CACHE_DIR = __DIR__ . '/../storage/geocode-cache';
+    /** Carpeta de caché (configurable con STORAGE_PATH). */
+    private static function cacheDir(): string
+    {
+        return storage_path('geocode-cache');
+    }
     private const CACHE_TTL_BUSQUEDA = 604800 * 7;   // 7 días
     private const CACHE_TTL_REVERSA = 86400 * 30;   // 30 días
     private const CACHE_TTL_SIN_RESULTADOS = 600;
@@ -541,7 +545,7 @@ private static function priorizarUruguay(array $sugerencias, int $limite): array
 
     private static function marcaTurno(): string
     {
-        return self::CACHE_DIR . '/.ultima-consulta';
+        return self::cacheDir() . '/.ultima-consulta';
     }
 
     /** Última línea "HTTP/1.1 200 OK" de las cabeceras de la respuesta. */
@@ -585,8 +589,8 @@ private static function priorizarUruguay(array $sugerencias, int $limite): array
     private static function escribirCache(string $clave, array $valor, int $ttl): void
     {
         $ruta = self::rutaCache($clave);
-        if (!is_dir(self::CACHE_DIR)) {
-            @mkdir(self::CACHE_DIR, 0750, true);
+        if (!is_dir(self::cacheDir())) {
+            @mkdir(self::cacheDir(), 0750, true);
         }
         if (@file_put_contents($ruta, json_encode($valor, JSON_UNESCAPED_UNICODE)) !== false) {
             // El TTL no está en el nombre del archivo (así se comparte entre
@@ -599,7 +603,7 @@ private static function priorizarUruguay(array $sugerencias, int $limite): array
     {
         // La clave viene de texto tipeado por el usuario, así que se pasa por
         // md5 antes de tocar el disco: evita separadores de ruta y nombres largos.
-        return self::CACHE_DIR . '/' . md5($clave) . '.json';
+        return self::cacheDir() . '/' . md5($clave) . '.json';
     }
 
     // ------------------------------------------------------------------

@@ -92,12 +92,13 @@ final class DocumentoPublicoController
             return;
         }
 
-        // El PDF vive en disco (archivo_path) o en la base (archivo_contenido).
-        // La ruta de disco se valida contra storage/docs: si un archivo_path
-        // manipulado apunta a otra parte del disco, se ignora.
-        $content = $doc['archivo_contenido'] ?? null;
-        $path = $content === null ? ruta_pdf_segura((string) $doc['archivo_path']) : null;
-        if ($content === null && $path === null) {
+        // El PDF puede estar en disco o en la base: lo resuelve AlmacenPdf
+        // (y valida que la ruta de disco siga dentro de storage/docs).
+        $ubicacion = AlmacenPdf::ubicar(
+            (string) ($doc['archivo_path'] ?? ''),
+            $doc['archivo_contenido'] ?? null
+        );
+        if ($ubicacion === null) {
             pagina_404();
             return;
         }
@@ -109,12 +110,12 @@ final class DocumentoPublicoController
         // romper la cabecera con comillas o caracteres de control.
         header(content_disposition($descargar ? 'attachment' : 'inline', $nombre));
 
-        if ($content !== null) {
-            header('Content-Length: ' . strlen($content));
-            echo $content;
+        if (isset($ubicacion['bd'])) {
+            header('Content-Length: ' . strlen($ubicacion['bd']));
+            echo $ubicacion['bd'];
         } else {
-            header('Content-Length: ' . filesize((string) $path));
-            readfile((string) $path);
+            header('Content-Length: ' . filesize($ubicacion['disco']));
+            readfile($ubicacion['disco']);
         }
     }
 }
