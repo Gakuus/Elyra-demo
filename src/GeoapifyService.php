@@ -44,7 +44,11 @@ final class GeoapifyService
 {
     private const BASE_URL = 'https://api.geoapify.com/v1/';
 
-    private const CACHE_DIR = __DIR__ . '/../storage/geoapify-cache';
+    /** Carpeta de caché (configurable con STORAGE_PATH). */
+    private static function cacheDir(): string
+    {
+        return storage_path('geoapify-cache');
+    }
 
     /** Geoapify es un servicio comercial con cuota: la caché la cuida. */
     private const CACHE_TTL = 86400 * 30;
@@ -947,7 +951,7 @@ final class GeoapifyService
 
     private static function rutaCache(string $clave): string
     {
-        return self::CACHE_DIR . '/' . $clave . '.json';
+        return self::cacheDir() . '/' . $clave . '.json';
     }
 
     /**
@@ -957,7 +961,7 @@ final class GeoapifyService
      */
     private static function archivoEspera(): string
     {
-        return self::CACHE_DIR . '/proveedor-caido.json';
+        return self::cacheDir() . '/proveedor-caido.json';
     }
 
     private static function marcarFallo(): void

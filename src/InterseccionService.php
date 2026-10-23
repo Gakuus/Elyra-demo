@@ -80,8 +80,11 @@ final class InterseccionService
      */
     private const CACHE_TTL_FALLO = 180;
 
-    /** Dónde se guardan las respuestas de Overpass. */
-    private const CACHE_DIR = __DIR__ . '/../storage/overpass-cache';
+    /** Carpeta de caché (configurable con STORAGE_PATH). */
+    private static function cacheDir(): string
+    {
+        return storage_path('overpass-cache');
+    }
 
     /**
      * Un mes. La red vial cambia muy poco y esto evita pegarle a Overpass en
@@ -770,7 +773,7 @@ final class InterseccionService
 
     private static function marcarFreno(): void
     {
-        $dir = self::CACHE_DIR;
+        $dir = self::cacheDir();
         if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
             return;
         }
@@ -779,7 +782,7 @@ final class InterseccionService
 
     private static function rutaFreno(): string
     {
-        return self::CACHE_DIR . '/ov_freno';
+        return self::cacheDir() . '/ov_freno';
     }
 
     /**
@@ -1157,7 +1160,7 @@ final class InterseccionService
 
     private static function escribirCache(string $clave, array $valor, int $ttl): void
     {
-        $dir = self::CACHE_DIR;
+        $dir = self::cacheDir();
         if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
             return;
         }
@@ -1174,6 +1177,6 @@ final class InterseccionService
 
     private static function rutaCache(string $clave): string
     {
-        return self::CACHE_DIR . '/' . $clave . '.json';
+        return self::cacheDir() . '/' . $clave . '.json';
     }
 }

@@ -169,6 +169,43 @@ function token_documento_valido(int $id, ?string $token): bool
 }
 
 /**
+ * Ruta absoluta dentro del almacenamiento privado del proyecto.
+ *
+ * Por defecto es <raíz del proyecto>/storage, que al desplegar en
+ * /var/www/elyra equivale a /var/www/elyra/storage. La variable STORAGE_PATH
+ * permite apuntarlo a otra ubicación (por ejemplo, un volumen donde www-data
+ * sí tiene permisos) sin hardcodear rutas de un servidor en el código.
+ *
+ * Las subcarpetas (docs, logs, rate-limit, *-cache) las crea la app cuando
+ * hacen falta, así que alcanza con que la raíz sea escribible.
+ */
+function storage_path(string $sub = ''): string
+{
+    $configurada = trim((string) ($_ENV['STORAGE_PATH'] ?? ''));
+
+    if ($configurada === '') {
+        $base = dirname(__DIR__) . '/storage';
+    } elseif (preg_match('#^(/|[A-Za-z]:[\\\\/])#', $configurada) === 1) {
+        // Ruta absoluta (Linux o Windows).
+        $base = $configurada;
+    } else {
+        // Ruta relativa: se interpreta desde la raíz del proyecto.
+        $base = dirname(__DIR__) . '/' . $configurada;
+    }
+
+    $base = rtrim(str_replace('\\', '/', $base), '/');
+
+    $sub = trim(str_replace('\\', '/', $sub), '/');
+
+    // Nunca permitir que una subruta se escape de la raíz de almacenamiento.
+    if ($sub === '' || str_contains($sub, '..')) {
+        return $base;
+    }
+
+    return $base . '/' . $sub;
+}
+
+/**
  * Valida que una ruta de PDF esté realmente dentro de storage/docs y devuelve
  * su ruta real (o null). Evita que un archivo_path manipulado en la BD haga
  * que el servidor lea/entregue cualquier archivo del disco.
@@ -178,7 +215,7 @@ function ruta_pdf_segura(?string $ruta): ?string
     if ($ruta === null || $ruta === '') {
         return null;
     }
-    $base = realpath(__DIR__ . '/../storage/docs');
+    $base = realpath(storage_path('docs'));
     $real = realpath($ruta);
     if ($base === false || $real === false || $real === $base) {
         return null;
@@ -208,7 +245,7 @@ function ip_usuario(): string
  */
 function rate_limit_permitido(string $clave, int $max = 5, int $ventanaSeg = 900): bool
 {
-    $dir = __DIR__ . '/../storage/rate-limit';
+    $dir = storage_path('rate-limit');
     if (!is_dir($dir) && !@mkdir($dir, 0770, true) && !is_dir($dir)) {
         return true; // sin almacenamiento no bloqueamos el servicio
     }
@@ -244,7 +281,7 @@ function rate_limit_permitido(string $clave, int $max = 5, int $ventanaSeg = 900
 /** Borra el contador de intentos de una clave (p. ej. tras un login correcto). */
 function rate_limit_reset(string $clave): void
 {
-    $archivo = __DIR__ . '/../storage/rate-limit/' . hash('sha256', $clave) . '.json';
+    $archivo = storage_path('rate-limit') . '/' . hash('sha256', $clave) . '.json';
     if (is_file($archivo)) {
         @unlink($archivo);
     }
@@ -257,7 +294,7 @@ function rate_limit_reset(string $clave): void
  */
 function log_seguridad(string $evento, array $contexto = []): void
 {
-    $dir = __DIR__ . '/../storage/logs';
+    $dir = storage_path('logs');
     if (!is_dir($dir) && !@mkdir($dir, 0770, true) && !is_dir($dir)) {
         return;
     }

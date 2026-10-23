@@ -16,7 +16,11 @@ declare(strict_types=1);
 final class RutaService
 {
     private const OSRM_URL = 'https://router.project-osrm.org/route/v1/driving/';
-    private const CACHE_DIR = __DIR__ . '/../storage/route-cache';
+    /** Carpeta de caché (configurable con STORAGE_PATH). */
+    private static function cacheDir(): string
+    {
+        return storage_path('route-cache');
+    }
     private const CACHE_TTL = 86400 * 30;
     // Tope de archivos de caché: si se supera, se borran los más viejos.
     private const CACHE_MAX_ARCHIVOS = 2000;
@@ -151,7 +155,7 @@ final class RutaService
 
     private static function leerCache(string $clave): ?array
     {
-        $archivo = self::CACHE_DIR . '/' . md5($clave) . '.json';
+        $archivo = self::cacheDir() . '/' . md5($clave) . '.json';
         if (!is_file($archivo)) {
             return null;
         }
@@ -216,10 +220,10 @@ final class RutaService
 
     private static function escribirCache(string $clave, array $ruta): void
     {
-        if (!is_dir(self::CACHE_DIR)) {
-            @mkdir(self::CACHE_DIR, 0750, true);
+        if (!is_dir(self::cacheDir())) {
+            @mkdir(self::cacheDir(), 0750, true);
         }
-        $archivo = self::CACHE_DIR . '/' . md5($clave) . '.json';
+        $archivo = self::cacheDir() . '/' . md5($clave) . '.json';
         @file_put_contents($archivo, json_encode($ruta, JSON_UNESCAPED_UNICODE));
         self::podarCache();
     }
@@ -227,7 +231,7 @@ final class RutaService
     /** Mantiene la caché acotada: si supera el tope, borra los archivos más viejos. */
     private static function podarCache(): void
     {
-        $archivos = @glob(self::CACHE_DIR . '/*.json');
+        $archivos = @glob(self::cacheDir() . '/*.json');
         if ($archivos === false || count($archivos) <= self::CACHE_MAX_ARCHIVOS) {
             return;
         }
