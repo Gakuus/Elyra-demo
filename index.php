@@ -147,6 +147,8 @@ require_once __DIR__ . '/src/Controller/InsumoData.php';                 // Trai
 require_once __DIR__ . '/src/Controller/InsumoController.php';
 require_once __DIR__ . '/src/Controller/EquipamientoData.php';           // Trait de datos del módulo de equipamiento.
 require_once __DIR__ . '/src/Controller/EquipamientoController.php';
+require_once __DIR__ . '/src/Controller/OrganoData.php';                 // Trait de datos del módulo de órganos.
+require_once __DIR__ . '/src/Controller/OrganoController.php';
 require_once __DIR__ . '/src/Controller/UsuarioData.php';                 // Trait de datos del módulo de usuarios.
 require_once __DIR__ . '/src/Controller/UsuarioController.php';
 require_once __DIR__ . '/src/Controller/UsuarioEdicionController.php';
@@ -301,6 +303,12 @@ switch (true) {
     // activar/desactivar. Solo accesible para admin/superadmin (guards internos).
     case str_starts_with($path, '/equipamiento'):
         EquipamientoController::dispatch($path, $method);
+        break;
+
+    // Módulo de órganos: listado, alta, edición y activar/desactivar.
+    // Solo accesible para admin/superadmin (guards internos).
+    case str_starts_with($path, '/organos'):
+        OrganoController::dispatch($path, $method);
         break;
 
     // Módulo de documentos: delega en el dispatch interno del controlador,

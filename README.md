@@ -62,6 +62,10 @@
 - ABM de equipamiento con control de stock.
 - Activar/desactivar equipamiento (solo admin).
 
+### Gestion de organos
+- ABM de organos para traslado con control de stock.
+- Activar/desactivar organos (solo admin).
+
 ### Gestion de usuarios
 - Creacion de usuarios, busqueda por cedula o nombre y ficha con edicion de datos.
 - Gestion de codigos de funcionario para el registro.
@@ -73,7 +77,7 @@
 
 ### Panel de administracion
 - Dashboard con acceso diferenciado por rol.
-- Menu lateral con secciones: Inicio, Mapa, Vehiculos, Insumos, Equipamiento, Documentos, Encuestas, Usuarios.
+- Menu lateral con secciones: Inicio, Mapa, Vehiculos, Insumos, Equipamiento, Organos, Documentos, Encuestas, Usuarios.
 
 ### Pagina publica
 - Home publico con informacion del hospital.
@@ -151,6 +155,8 @@
 │       ├── I18nController.php          → Selector y API de idioma
 │       ├── InsumoController.php
 │       ├── InsumoData.php              → Trait de datos (insumos)
+│       ├── OrganoController.php
+│       ├── OrganoData.php              → Trait de datos (organos)
 │       ├── PerfilController.php        → Perfil propio (/perfil)
 │       ├── UsuarioController.php
 │       ├── UsuarioData.php             → Trait de datos (usuarios)
@@ -487,6 +493,12 @@ El selector usa `GET /idioma?lang=es|en&volver=<ruta>`. La API `GET/POST /api/id
 | GET | `/equipamiento/editar` | EquipamientoController | Formulario de edicion (`?id=`) |
 | POST | `/equipamiento/editar` | EquipamientoController | Procesar edicion |
 | POST | `/equipamiento/toggle` | EquipamientoController | Activar/desactivar |
+| GET | `/organos` | OrganoController | Listado de organos |
+| GET | `/organos/agregar` | OrganoController | Formulario de alta |
+| POST | `/organos/agregar` | OrganoController | Procesar alta |
+| GET | `/organos/editar` | OrganoController | Formulario de edicion (`?id=`) |
+| POST | `/organos/editar` | OrganoController | Procesar edicion |
+| POST | `/organos/toggle` | OrganoController | Activar/desactivar |
 | GET | `/usuarios` | UsuarioController | Listado de usuarios |
 | GET | `/usuarios/buscar` | UsuarioController | Busqueda AJAX (`?q=`) |
 | GET | `/usuarios/ver` | UsuarioController | Ficha de usuario (`?id=`) |

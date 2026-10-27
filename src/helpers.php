@@ -564,7 +564,7 @@ function render_dashboard(string $vista, string $titulo, string $seccion, array 
 
     // Enlace activo del menú según la sección en la que el usuario está parado.
     // Cada sección recibe sus claves activo_* (y el resto en '').
-    $secciones = ['inicio', 'mapa', 'encuestas', 'documentos', 'vehiculos', 'usuarios', 'insumos', 'equipamiento'];
+    $secciones = ['inicio', 'mapa', 'encuestas', 'documentos', 'vehiculos', 'usuarios', 'insumos', 'equipamiento', 'organos'];
     $activo = [];
     foreach ($secciones as $s) {
         $activo['activo_' . $s] = $s === $seccion ? ' active' : '';
