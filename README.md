@@ -80,6 +80,12 @@
 - Vista de documentos escaneando QR.
 - Formulario de registro para pacientes.
 
+### Idiomas (espanol / ingles)
+- Interfaz completa en espanol o ingles, incluido el panel, los modulos y las vistas publicas.
+- Selector ES | EN en el encabezado y en las paginas de login, registro y acceso publico.
+- Preferencia persistida en sesion y cookie, con deteccion automatica del idioma del navegador.
+- Diccionario propio en `src/lang/en.php` (sin servicios externos de traduccion).
+
 ---
 
 ## Stack tecnologico
@@ -111,7 +117,7 @@
 │   │   └── pages/              → Estilos por seccion
 │   ├── js/
 │   │   ├── elyra.js            → Funciones generales
-│   │   ├── comun/              → Utilidades compartidas
+│   │   ├── comun/              → Utilidades compartidas (incluye idioma.js)
 │   │   ├── mapa/               → Modulos del mapa en vivo
 │   │   ├── traslado/           → Modal de registro de traslado
 │   │   └── pages/              → JS por modulo
@@ -120,7 +126,10 @@
 │   └── uploads/                → Reservada para archivos públicos (sin uso hoy)
 ├── src/
 │   ├── Auth.php                → Autenticacion (login, registro, sesion)
+│   ├── I18n.php                → Motor de idiomas (espanol / ingles)
 │   ├── helpers.php             → Funciones auxiliares (render, guards, CSRF, tokens)
+│   ├── lang/
+│   │   └── en.php              → Diccionario espanol → ingles
 │   ├── MailService.php         → Envio de correo (PHPMailer sobre SMTP)
 │   ├── GeocodeService.php      → Texto <-> coordenadas (Nominatim)
 │   ├── GeoapifyService.php     → Geocodificacion/ruteo (Geoapify)
@@ -139,6 +148,7 @@
 │       ├── EncuestaResultadosController.php
 │       ├── EquipamientoController.php
 │       ├── EquipamientoData.php        → Trait de datos (equipamiento)
+│       ├── I18nController.php          → Selector y API de idioma
 │       ├── InsumoController.php
 │       ├── InsumoData.php              → Trait de datos (insumos)
 │       ├── PerfilController.php        → Perfil propio (/perfil)
@@ -389,6 +399,18 @@ php -S 127.0.0.1:8000
 # La app recarga automaticamente los cambios en PHP.
 ```
 
+### Idiomas
+
+El espanol es el idioma de origen: los textos se escriben directamente en espanol y, cuando el idioma activo es ingles, se traducen con el diccionario `src/lang/en.php`.
+
+- En PHP: `I18n::t('texto')`. Acepta parametros: `I18n::t('Traslado :codigo', ['codigo' => $codigo])`.
+- En plantillas: `{{t('texto')}}` (escapado) o `{{{t('texto')}}}` (HTML crudo).
+- En JavaScript: `window.ElyraIdioma.t('texto')`. El script tambien traduce automaticamente el DOM que se inserta despues y los `alert` / `confirm` / `prompt`.
+- Para agregar un texto nuevo, sumalo como clave en `src/lang/en.php`; si falta, se muestra el espanol.
+- El idioma se guarda en `$_SESSION['idioma']` y en la cookie `elyra_idioma`. Sin preferencia guardada se usa `Accept-Language` y, si no hay datos, espanol.
+
+El selector usa `GET /idioma?lang=es|en&volver=<ruta>`. La API `GET/POST /api/idioma` responde JSON; el POST exige el token CSRF global.
+
 ---
 
 ## API de rutas
@@ -410,6 +432,9 @@ php -S 127.0.0.1:8000
 | GET | `/publico/archivo` | DocumentoPublicoController | Descargar archivo via QR (token HMAC) |
 | GET | `/publico/encuesta` | EncuestaPublicaController | Mostrar encuesta |
 | POST | `/publico/encuesta` | EncuestaPublicaController | Responder encuesta |
+| GET | `/idioma` | I18nController | Cambiar idioma y volver a la pagina anterior (`?lang=es\|en`) |
+| GET | `/api/idioma` | I18nController | Consultar el idioma activo (JSON) |
+| POST | `/api/idioma` | I18nController | Cambiar el idioma activo (JSON, requiere CSRF) |
 
 ### Autenticadas (requieren sesion)
 

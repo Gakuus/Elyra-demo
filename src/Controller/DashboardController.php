@@ -166,10 +166,10 @@ final class DashboardController
             $sinSenal = (bool) $c['sin_senal'];
             $codigo = (string) ($c['traslado_codigo'] ?? '');
             $detalle = $sinSenal
-                ? 'Sin señal · ' . self::haceCuanto((string) $c['updated_at'])
+                ? I18n::t('Sin señal') . ' · ' . self::haceCuanto((string) $c['updated_at'])
                 : ($codigo !== ''
-                    ? 'Llevando ' . $codigo
-                    : 'Disponible · ' . self::haceCuanto((string) $c['updated_at']));
+                    ? I18n::t('Llevando') . ' ' . $codigo
+                    : I18n::t('Disponible') . ' · ' . self::haceCuanto((string) $c['updated_at']));
 
             $flota[] = [
                 'nombre'    => (string) $c['nombre'],
@@ -206,7 +206,7 @@ final class DashboardController
         }
 
         return [
-            'saludo'           => $saludo,
+            'saludo'           => I18n::t($saludo),
             'fecha_larga'      => self::fechaLarga($ahora),
             'es_gestion'       => $esGestion ? ['1'] : [],
             'es_operacion'     => $esOperacion ? ['1'] : [],
@@ -277,30 +277,32 @@ final class DashboardController
 
         $segundos = max(0, time() - $t);
         if ($segundos < 60) {
-            return 'recién';
+            return I18n::t('recién');
         }
         $minutos = intdiv($segundos, 60);
         if ($minutos < 60) {
-            return 'hace ' . $minutos . ' min';
+            return I18n::esIngles() ? $minutos . ' min ago' : 'hace ' . $minutos . ' min';
         }
         $horas = intdiv($minutos, 60);
         if ($horas < 24) {
-            return 'hace ' . $horas . ' h';
+            return I18n::esIngles() ? $horas . ' h ago' : 'hace ' . $horas . ' h';
         }
-        return 'hace ' . intdiv($horas, 24) . ' d';
+        return I18n::esIngles()
+            ? intdiv($horas, 24) . ' d ago'
+            : 'hace ' . intdiv($horas, 24) . ' d';
     }
 
     /** Etiqueta legible de un estado de traslado. */
     private static function etiquetaEstado(string $estado): string
     {
-        return [
+        return I18n::t([
             'pendiente'  => 'Pendiente',
             'en_curso'   => 'En curso',
             'en_destino' => 'En destino',
             'en_retorno' => 'En retorno',
             'completado' => 'Completado',
             'cancelado'  => 'Cancelado',
-        ][$estado] ?? '';
+        ][$estado] ?? '');
     }
 
     /** Iniciales (hasta dos) del nombre, para el avatar de la flota. */
@@ -323,8 +325,15 @@ final class DashboardController
         $meses = [1 => 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
             'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
-        return $dias[(int) $d->format('w')] . ' ' . (int) $d->format('j')
-            . ' de ' . $meses[(int) $d->format('n')] . ' de ' . $d->format('Y');
+        $dia = I18n::t($dias[(int) $d->format('w')]);
+        $mes = I18n::t($meses[(int) $d->format('n')]);
+
+        if (I18n::esIngles()) {
+            return $dia . ', ' . $mes . ' ' . (int) $d->format('j') . ', ' . $d->format('Y');
+        }
+
+        return $dia . ' ' . (int) $d->format('j')
+            . ' de ' . $mes . ' de ' . $d->format('Y');
     }
 
     /**
@@ -574,6 +583,7 @@ final class DashboardController
             if (!$ok) {
                 http_response_code($codigoHttp);
             }
+            $mensaje = I18n::t($mensaje);
             echo json_encode(['ok' => $ok, 'error' => $ok ? null : $mensaje, 'mensaje' => $ok ? $mensaje : null] + $extra, JSON_UNESCAPED_UNICODE);
             exit;
         };
@@ -627,7 +637,9 @@ final class DashboardController
 
         if ($exactitud !== null && $exactitud !== false) {
             if ($exactitud > self::PRECISION_MAXIMA_M) {
-                $responder(false, 'Señal GPS demasiado imprecisa (' . round($exactitud) . ' m).', [
+                $responder(false, I18n::t('Señal GPS demasiado imprecisa (:metros m).', [
+                    'metros' => round($exactitud),
+                ]), [
                     'exactitud' => round($exactitud),
                 ], 422);
             }
@@ -915,7 +927,7 @@ final class DashboardController
         if (!$coordenadasOk($origenLat, $origenLng) || !$coordenadasOk($destinoLat, $destinoLng)) {
             header('Content-Type: application/json');
             http_response_code(400);
-            echo json_encode(['error' => 'Coordenadas inválidas'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['error' => I18n::t('Coordenadas inválidas')], JSON_UNESCAPED_UNICODE);
             exit;
         }
 
@@ -1014,7 +1026,7 @@ final class DashboardController
         if ($lat !== false && $lng !== false && $lat !== null && $lng !== null) {
             if (!GeocodeService::coordenadaValida((float) $lat, (float) $lng)) {
                 http_response_code(400);
-                echo json_encode(['ok' => false, 'error' => 'Coordenadas fuera de rango'], JSON_UNESCAPED_UNICODE);
+                echo json_encode(['ok' => false, 'error' => I18n::t('Coordenadas fuera de rango')], JSON_UNESCAPED_UNICODE);
                 exit;
             }
 
@@ -1173,6 +1185,7 @@ final class DashboardController
             if (!$ok) {
                 http_response_code($codigoHttp);
             }
+            $mensaje = I18n::t($mensaje);
             echo json_encode(['ok' => $ok, 'error' => $ok ? null : $mensaje, 'mensaje' => $ok ? $mensaje : null] + $extra, JSON_UNESCAPED_UNICODE);
             exit;
         };
@@ -1420,7 +1433,7 @@ final class DashboardController
             $responder(false, 'No se pudo guardar el traslado. Intentalo de nuevo.', [], 500);
         }
 
-        $responder(true, 'Traslado ' . $codigo . ' registrado.', [
+        $responder(true, I18n::t('Traslado :codigo registrado.', ['codigo' => $codigo]), [
             'traslado_id' => $trasladoId,
             'codigo'      => $codigo,
             'distancia_km' => $distanciaKm,
@@ -1544,6 +1557,7 @@ final class DashboardController
             if (!$ok) {
                 http_response_code($codigoHttp);
             }
+            $mensaje = I18n::t($mensaje);
             echo json_encode(['ok' => $ok, 'error' => $ok ? null : $mensaje, 'mensaje' => $ok ? $mensaje : null] + $extra, JSON_UNESCAPED_UNICODE);
             exit;
         };
@@ -1583,7 +1597,10 @@ final class DashboardController
 
         $actual = (string) $traslado['estado'];
         if (!in_array($nuevoEstado, self::TRANSICIONES[$actual] ?? [], true)) {
-            $responder(false, 'No se puede pasar de ' . $actual . ' a ' . $nuevoEstado . '.', [], 400);
+            $responder(false, I18n::t('No se puede pasar de :actual a :nuevo.', [
+                'actual' => I18n::t(self::etiquetaEstado($actual)),
+                'nuevo'  => I18n::t(self::etiquetaEstado($nuevoEstado)),
+            ]), [], 400);
         }
 
         if ($nuevoEstado === 'cancelado' && $motivo === '') {
@@ -1648,7 +1665,7 @@ final class DashboardController
             $responder(false, 'No se pudo actualizar el estado del traslado.', [], 500);
         }
 
-        $responder(true, 'Traslado ' . (string) $traslado['codigo'] . ' actualizado.',
+        $responder(true, I18n::t('Traslado :codigo actualizado.', ['codigo' => (string) $traslado['codigo']]),
             ['estado' => $nuevoEstado, 'traslado_id' => $trasladoId]);
     }
 }

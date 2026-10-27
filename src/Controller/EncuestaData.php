@@ -57,11 +57,11 @@ trait EncuestaData
             $idRecibido = (int) ($p['id'] ?? 0);
 
             if (strlen($texto) < 3) {
-                $errores[] = 'La pregunta ' . ($i + 1) . ' debe tener al menos 3 caracteres.';
+                $errores[] = I18n::t('La pregunta :n debe tener al menos 3 caracteres.', ['n' => $i + 1]);
                 continue;
             }
             if (!in_array($tipo, ['multiple_choice', 'escala', 'texto_libre'], true)) {
-                $errores[] = 'Tipo inválido en la pregunta ' . ($i + 1) . '.';
+                $errores[] = I18n::t('Tipo inválido en la pregunta :n.', ['n' => $i + 1]);
                 continue;
             }
 
@@ -72,7 +72,7 @@ trait EncuestaData
                     fn($o) => $o !== ''
                 ));
                 if (count($opciones) < 2) {
-                    $errores[] = 'La pregunta ' . ($i + 1) . ' necesita al menos 2 opciones.';
+                    $errores[] = I18n::t('La pregunta :n necesita al menos 2 opciones.', ['n' => $i + 1]);
                     continue;
                 }
             }

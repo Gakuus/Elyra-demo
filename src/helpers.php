@@ -105,7 +105,7 @@ function denegar(): void
     log_seguridad('acceso_denegado');
     header('Content-Type: application/json');
     http_response_code(403);
-    echo json_encode(['ok' => false, 'error' => 'Permiso denegado.']);
+    echo json_encode(['ok' => false, 'error' => I18n::t('Permiso denegado.')]);
     exit;
 }
 
@@ -366,6 +366,21 @@ function cabeceras_seguridad(): void
  */
 function reemplazar_marcadores(string $html, array $datos): string
 {
+    // Traducciones inline: {{t('texto')}} escapa y {{{t('texto')}}} deja el
+    // HTML crudo (para mensajes que incluyen <strong>, enlaces, etc.).
+    if (class_exists('I18n', false)) {
+        $html = preg_replace_callback(
+            '/\{\{\{t\((["\'])(.*?)\1\)\}\}\}/s',
+            static fn(array $m): string => I18n::t($m[2]),
+            $html
+        );
+        $html = preg_replace_callback(
+            '/\{\{t\((["\'])(.*?)\1\)\}\}/s',
+            static fn(array $m): string => htmlspecialchars(I18n::t($m[2]), ENT_QUOTES, 'UTF-8'),
+            $html
+        );
+    }
+
     foreach ($datos as $clave => $valor) {
         $rx = preg_quote($clave, '/');
 
@@ -483,8 +498,12 @@ function render_vista(string $archivo, array $datos): void
         return;
     }
     // base_path y csrf_token se inyectan siempre: todas las vistas los usan.
-    $datos = ['base_path' => base_path(), 'csrf_token' => csrf_token()] + $datos;
-    echo reemplazar_marcadores($html, $datos);
+    // Los datos de idioma van primero para que el controlador pueda pisarlos
+    // (por ejemplo, el selector del encabezado del dashboard).
+    $datos = array_merge(I18n::datos(), $datos);
+    $datos['base_path'] = base_path();
+    $datos['csrf_token'] = csrf_token();
+    echo I18n::traducirHtml(reemplazar_marcadores($html, $datos));
 }
 
 /**
@@ -494,20 +513,24 @@ function render_vista(string $archivo, array $datos): void
 function render_contenido(string $vista, array $datos): string
 {
     $html = file_get_contents(__DIR__ . '/../views/dashboard/fragmentos/' . $vista . '.html');
-    return $html !== false ? reemplazar_marcadores($html, $datos) : '';
+    return $html !== false ? I18n::traducirHtml(reemplazar_marcadores($html, $datos)) : '';
 }
 
 /** Página de error 404 del sistema. */
 function pagina_404(): void
 {
     http_response_code(404);
-    $html = '<!DOCTYPE html><html lang="es"><head>'
+    $idioma = I18n::idioma();
+    $titulo = I18n::t('404 — Página no encontrada');
+    $html = '<!DOCTYPE html><html lang="' . htmlspecialchars($idioma) . '"><head>'
         . '<meta charset="UTF-8">'
         . '<base href="' . htmlspecialchars(base_path() . '/') . '">'
-        . '<title>404 — Página no encontrada</title>'
-        . '<link href="css/base.css?v=' . time() . '" rel="stylesheet">'
+        . '<title>' . htmlspecialchars($titulo) . '</title>'
+        . '<link href="public/css/base.css" rel="stylesheet">'
         . '</head><body>'
-        . '<h1 class="pagina-404">404 — Página no encontrada</h1>'
+        . I18n::selector('flotante')
+        . '<h1 class="pagina-404">' . htmlspecialchars($titulo) . '</h1>'
+        . I18n::script()
         . '</body></html>';
     echo $html;
 }
@@ -533,10 +556,11 @@ function render_dashboard(string $vista, string $titulo, string $seccion, array 
     // datos, el cleanup de reemplazar_marcadores() borra el {{csrf_token}} de
     // los formularios de la vista y los deja con value="" — o sea, todos los
     // <form method="post"> del dashboard rebotaban con 403.
-    $contenido = reemplazar_marcadores($contenido, [
-        'usuario'    => $usuario,
-        'csrf_token' => csrf_token(),
-    ] + $datos);
+    $contenido = reemplazar_marcadores($contenido, array_merge(
+        I18n::datos(),
+        $datos,
+        ['usuario' => $usuario, 'csrf_token' => csrf_token()]
+    ));
 
     // Enlace activo del menú según la sección en la que el usuario está parado.
     // Cada sección recibe sus claves activo_* (y el resto en '').
@@ -556,10 +580,16 @@ function render_dashboard(string $vista, string $titulo, string $seccion, array 
         'es_paciente' => es_rol('paciente') ? ['1'] : [],
     ];
 
-    render_vista($base . 'layout.html', array_merge([
-        'titulo'    => $titulo,
-        'usuario'   => $usuario,
-        'contenido' => $contenido,
-        'base_path' => base_path(),
-    ], $activo, $menu));
+    render_vista($base . 'layout.html', array_merge(
+        I18n::datos(),
+        [
+            'titulo'          => I18n::t($titulo),
+            'usuario'         => $usuario,
+            'contenido'       => $contenido,
+            'base_path'       => base_path(),
+            'selector_idioma' => I18n::selector('dashboard'),
+        ],
+        $activo,
+        $menu
+    ));
 }

@@ -16,6 +16,10 @@
     var contenedor = null;
     var timer = null;
 
+    function tr(texto) {
+        return window.ElyraIdioma ? window.ElyraIdioma.t(texto) : texto;
+    }
+
     /**
      * Inicializa la búsqueda en vivo cuando el DOM está listo. Solo aplica
      * si la página tiene el input #buscarUsuario (es decir, la vista /usuarios).
@@ -76,7 +80,7 @@
                 // Contador de resultados sobre la tabla.
                 if (data.total > 0 && contenedor.querySelector('table')) {
                     var cab = '<div class="text-muted small mb-1"><i class="bi bi-people me-1"></i>'
-                        + data.total + ' resultado' + (data.total === 1 ? '' : 's') + '</div>';
+                        + data.total + ' ' + tr(data.total === 1 ? 'resultado' : 'resultados') + '</div>';
                     contenedor.insertAdjacentHTML('afterbegin', cab);
                 }
             })
@@ -106,14 +110,14 @@
                 if (fila) {
                     var celdaEstado = fila.children[4];
                     celdaEstado.innerHTML = '<span class="' + (activo ? 'estado-activo' : 'estado-inactivo') + '">'
-                        + (activo ? 'Activo' : 'Inactivo') + '</span>';
+                        + tr(activo ? 'Activo' : 'Inactivo') + '</span>';
 
                     var celdaNombre = fila.children[1];
                     var badge = celdaNombre.querySelector('.badge');
                     if (String(activo) === '0' && !badge) {
                         badge = document.createElement('span');
                         badge.className = 'badge bg-secondary ms-1';
-                        badge.textContent = 'Inactivo';
+                        badge.textContent = tr('Inactivo');
                         celdaNombre.appendChild(badge);
                     } else if (String(activo) === '1' && badge) {
                         badge.remove();
@@ -124,18 +128,18 @@
                 var badgeEstado = document.querySelector('.estado-activo, .estado-inactivo');
                 if (badgeEstado && !fila) {
                     badgeEstado.className = activo ? 'estado-activo' : 'estado-inactivo';
-                    badgeEstado.textContent = activo ? 'Activo' : 'Inactivo';
+                    badgeEstado.textContent = tr(activo ? 'Activo' : 'Inactivo');
                 }
 
                 // Invierte el botón (desactivar ↔ reactivar).
                 btn.disabled = false;
                 if (String(activo) === '0') {
                     btn.className = 'btn btn-outline-success';
-                    btn.innerHTML = '<i class="bi bi-power me-1"></i> Reactivar';
+                    btn.innerHTML = '<i class="bi bi-power me-1"></i> ' + tr('Reactivar');
                     btn.onclick = function () { ElyraUsuario.cambiarEstado(id, 1, btn); };
                 } else {
                     btn.className = 'btn btn-outline-danger';
-                    btn.innerHTML = '<i class="bi bi-power me-1"></i> Desactivar';
+                    btn.innerHTML = '<i class="bi bi-power me-1"></i> ' + tr('Desactivar');
                     btn.onclick = function () { ElyraUsuario.cambiarEstado(id, 0, btn); };
                 }
             })

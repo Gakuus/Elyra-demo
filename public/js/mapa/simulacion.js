@@ -13,6 +13,10 @@
     var cfg = mod.config;
     var aj = mod.ajustes;
 
+    function tr(texto, parametros) {
+        return root.ElyraIdioma ? root.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     mod.simulacion = function (ctx, api) {
         var esc = mod.util.escaparHtml;
 
@@ -98,12 +102,12 @@
             sim().idPreferido = null;
 
             if (ctx.dom.btnSimular) {
-                ctx.dom.btnSimular.innerHTML = '<i class="bi bi-broadcast"></i> Simular recorrido';
+                ctx.dom.btnSimular.innerHTML = '<i class="bi bi-broadcast"></i> ' + tr('Simular recorrido');
                 ctx.dom.btnSimular.classList.remove('activo');
             }
 
             if (mensaje) {
-                api.seguimiento.mostrar('esperando', 'Simulación detenida', esc(mensaje));
+                api.seguimiento.mostrar('esperando', tr('Simulación detenida'), esc(mensaje));
             }
 
             // Vuelve al GPS real: al empezar la simulación se había cortado el
@@ -171,7 +175,7 @@
                 // Llegó al final del recorrido. Se anotan traslado y código
                 // ANTES de detener(), que deja el estado en null.
                 var terminado = sim().estado.traslado;
-                detener('Llegó al destino de ' + (terminado ? terminado.codigo : '') + '.');
+                detener(tr('Llegó al destino de') + ' ' + (terminado ? terminado.codigo : '') + '.');
 
                 // Llegar es el gesto de "en destino": es el mismo cambio de
                 // estado que hace el botón del panel.
@@ -234,16 +238,16 @@
 
             var traslado = obtenerTrasladoParaSimular();
             if (!traslado) {
-                api.seguimiento.mostrar('esperando', 'Sin traslado',
-                    'Para simular hace falta un traslado activo con origen y destino. Pedile a un administrador que cree uno.');
+                api.seguimiento.mostrar('esperando', tr('Sin traslado'),
+                    tr('Para simular hace falta un traslado activo con origen y destino. Pedile a un administrador que cree uno.'));
                 return;
             }
 
             var puntos = api.ruta.trazaDe(traslado.id);
             if (!puntos || puntos.length < 2) {
                 // Todavía no llegó la ruta de OSRM: se reintenta en un segundo.
-                api.seguimiento.mostrar('esperando', 'Calculando ruta…', 'Esperando el trazado de ' +
-                    esc(traslado.codigo) + ' para empezar la simulación.');
+                api.seguimiento.mostrar('esperando', tr('Calculando ruta…'), tr('Esperando el trazado de') + ' ' +
+                    esc(traslado.codigo) + ' ' + tr('para empezar la simulación.'));
                 setTimeout(function () {
                     if (!estaActiva()) iniciar();
                 }, 1000);
@@ -270,11 +274,13 @@
             };
 
             if (ctx.dom.btnSimular) {
-                ctx.dom.btnSimular.innerHTML = '<i class="bi bi-stop-circle"></i> Detener simulación';
+                ctx.dom.btnSimular.innerHTML = '<i class="bi bi-stop-circle"></i> ' + tr('Detener simulación');
                 ctx.dom.btnSimular.classList.add('activo');
             }
-            api.seguimiento.mostrar('simulando', 'Simulando', 'Recorriendo <strong>' + esc(traslado.codigo) +
-                '</strong> a ' + aj.simVelocidad + ' km/h simulados. El despacho ve el movimiento.');
+            api.seguimiento.mostrar('simulando', tr('Simulando'), tr(
+                'Recorriendo <strong>:codigo</strong> a :velocidad km/h simulados. El despacho ve el movimiento.',
+                { codigo: esc(traslado.codigo), velocidad: aj.simVelocidad }
+            ));
 
             // Si el traslado todavía no arrancó, lo arranca la simulación: es el
             // mismo gesto que el botón "Iniciar". Sin esto la unidad se movería
@@ -292,7 +298,7 @@
         /** Botón "Simular recorrido" / "Detener simulación". */
         function alternar() {
             if (estaActiva()) {
-                detener('La simulación se detuvo a pedido.');
+                detener(tr('La simulación se detuvo a pedido.'));
             } else {
                 iniciar();
             }

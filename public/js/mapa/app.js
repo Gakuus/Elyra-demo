@@ -15,6 +15,10 @@
     var mod = root.ElyraMapaMod = root.ElyraMapaMod || {};
     var cfg = mod.config;
 
+    function tr(texto, parametros) {
+        return root.ElyraIdioma ? root.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     function cargarEstilos(href) {
         var link = document.createElement('link');
         link.rel = 'stylesheet';
@@ -28,7 +32,7 @@
         script.onload = alCargar;
         script.onerror = function () {
             if (ctx.dom.estadoBar) {
-                ctx.dom.estadoBar.innerHTML = '<span>Error al cargar el mapa</span>';
+                ctx.dom.estadoBar.innerHTML = '<span>' + tr('Error al cargar el mapa') + '</span>';
             }
         };
         document.head.appendChild(script);
@@ -121,8 +125,8 @@
                 } else if (api.simulacion.puntoActual()) {
                     ctx.mapa.setView(api.simulacion.puntoActual(), cfg.ZOOM_SEGUIMIENTO, { animate: true });
                 } else {
-                    api.seguimiento.mostrar('esperando', 'Sin posición',
-                        'Todavía no hay ninguna posición tuya para centrar.');
+                    api.seguimiento.mostrar('esperando', tr('Sin posición'),
+                        tr('Todavía no hay ninguna posición tuya para centrar.'));
                 }
             });
         }

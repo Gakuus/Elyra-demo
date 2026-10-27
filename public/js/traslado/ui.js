@@ -11,6 +11,10 @@
     var mod = root.ElyraTrasladoMod = root.ElyraTrasladoMod || {};
     var esc = root.ElyraFmt.escaparHtml;
 
+    function tr(texto, parametros) {
+        return root.ElyraIdioma ? root.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     mod.ui = function (ctx) {
         /** Atajo de getElementById: el modal trabaja por id casi siempre. */
         function $(id) {
@@ -198,7 +202,7 @@
 
             setTimeout(function () {
                 barra.classList.remove('aviso-ok', 'aviso-error');
-                barra.innerHTML = '<div class="punto-pulso"></div><span>Actualizando cada 5s</span>';
+                barra.innerHTML = '<div class="punto-pulso"></div><span>' + tr('Actualizando cada 5s') + '</span>';
             }, 4000);
         }
 

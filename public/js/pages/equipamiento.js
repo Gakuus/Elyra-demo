@@ -9,6 +9,10 @@
 (function () {
     'use strict';
 
+    function tr(texto, parametros) {
+        return window.ElyraIdioma ? window.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     /**
      * toggle: activa o desactiva un equipo (POST /equipamiento/toggle).
      * Pide confirmación primero y, si el servidor responde ok, actualiza el
@@ -18,8 +22,8 @@
         var fila = document.querySelector('tr[data-equipamiento-id="' + id + '"]');
         var estaActivo = !!(fila && fila.querySelector('.text-bg-success'));
         var mensaje = estaActivo
-            ? '¿Seguro que querés desactivar este equipamiento?'
-            : '¿Seguro que querés activar este equipamiento?';
+            ? tr('¿Seguro que querés desactivar este equipamiento?')
+            : tr('¿Seguro que querés activar este equipamiento?');
         if (!window.confirm(mensaje)) return;
 
         btn.disabled = true;
@@ -38,16 +42,16 @@
                 var activo = !!(data.activo);
 
                 fila.children[4].innerHTML = '<span class="badge ' + (activo ? 'text-bg-success' : 'text-bg-secondary') + '">'
-                    + (activo ? 'Activo' : 'Inactivo') + '</span>';
+                    + tr(activo ? 'Activo' : 'Inactivo') + '</span>';
 
                 btn.disabled = false;
                 btn.className = 'btn btn-sm ' + (activo ? 'btn-outline-warning' : 'btn-outline-success');
-                btn.title = activo ? 'Desactivar equipamiento' : 'Activar equipamiento';
+                btn.title = tr(activo ? 'Desactivar equipamiento' : 'Activar equipamiento');
                 btn.onclick = function () { ElyraEquipamiento.toggle(id, btn); };
             })
             .catch(function () {
                 btn.disabled = false;
-                window.alert('No se pudo cambiar el estado del equipamiento. Intentá de nuevo.');
+                window.alert(tr('No se pudo cambiar el estado del equipamiento. Intentá de nuevo.'));
             });
     }
 

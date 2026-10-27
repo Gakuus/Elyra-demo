@@ -15,6 +15,10 @@
     var mod = root.ElyraTrasladoMod = root.ElyraTrasladoMod || {};
     var esc = root.ElyraFmt.escaparHtml;
 
+    function tr(texto, parametros) {
+        return root.ElyraIdioma ? root.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     mod.pacientes = function (ctx, api) {
         var aj = mod.ajustes;
         var urls = root.ElyraMapaMod.urls;
@@ -37,7 +41,7 @@
             ctx.ultimosPacientes = resultados;
 
             if (!resultados.length) {
-                caja.innerHTML = '<div class="sugerencia vacia">Ningún paciente coincide.</div>';
+                caja.innerHTML = '<div class="sugerencia vacia">' + tr('Ningún paciente coincide.') + '</div>';
                 api.ui.ubicar(caja);
                 return;
             }

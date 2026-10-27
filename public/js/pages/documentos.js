@@ -10,6 +10,10 @@
 (function () {
     'use strict';
 
+    function tr(texto, parametros) {
+        return window.ElyraIdioma ? window.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     // El QR necesita la URL COMPLETA (protocolo + dominio + ruta). Antes se
     // generaba con una ruta relativa, por lo que al escanear no abría nada.
     // El enlace viaja firmado (id + token) para que no se pueda enumerar.
@@ -32,10 +36,10 @@
 
         // Contenido: el QR chico (vista previa) + acciones.
         body.innerHTML = '<div class="mb-3"><div id="qrcode"></div></div>'
-            + '<p class="small text-muted mb-2">Escanear para ver el documento</p>'
-            + '<button class="btn btn-sm btn-primary me-1" id="copiarQr"><i class="bi bi-clipboard me-1"></i>Copiar enlace</button>'
-            + '<button class="btn btn-sm btn-outline-secondary me-1" id="imprimirQr"><i class="bi bi-printer me-1"></i>Imprimir</button>'
-            + '<a class="btn btn-sm btn-outline-secondary" href="' + url + '" target="_blank" rel="noopener">Abrir</a>';
+            + '<p class="small text-muted mb-2">' + tr('Escanear para ver el documento') + '</p>'
+            + '<button class="btn btn-sm btn-primary me-1" id="copiarQr"><i class="bi bi-clipboard me-1"></i>' + tr('Copiar enlace') + '</button>'
+            + '<button class="btn btn-sm btn-outline-secondary me-1" id="imprimirQr"><i class="bi bi-printer me-1"></i>' + tr('Imprimir') + '</button>'
+            + '<a class="btn btn-sm btn-outline-secondary" href="' + url + '" target="_blank" rel="noopener">' + tr('Abrir') + '</a>';
 
         modal.classList.add('open');
 
@@ -75,7 +79,7 @@
                 if (String(activo) === '0' && !badge) {
                     badge = document.createElement('span');
                     badge.className = 'badge bg-secondary ms-1';
-                    badge.textContent = 'Inactivo';
+                    badge.textContent = tr('Inactivo');
                     celdaTitulo.appendChild(badge);
                 } else if (String(activo) === '1' && badge) {
                     badge.remove();
@@ -83,18 +87,18 @@
 
                 // Estado (Activo/Inactivo).
                 fila.children[3].innerHTML = '<span class="' + (activo ? 'estado-activo' : 'estado-inactivo') + '">'
-                    + (activo ? 'Activo' : 'Inactivo') + '</span>';
+                    + tr(activo ? 'Activo' : 'Inactivo') + '</span>';
 
                 // El propio botón pasa a ofrecer la acción inversa.
                 btn.disabled = false;
                 if (String(activo) === '0') {
                     btn.className = 'btn btn-sm btn-outline-success';
-                    btn.title = 'Reactivar documento';
+                    btn.title = tr('Reactivar documento');
                     btn.innerHTML = '<i class="bi bi-power"></i>';
                     btn.onclick = function () { ElyraDoc.cambiarEstado(id, 1, btn); };
                 } else {
                     btn.className = 'btn btn-sm btn-outline-secondary';
-                    btn.title = 'Desactivar documento';
+                    btn.title = tr('Desactivar documento');
                     btn.innerHTML = '<i class="bi bi-power"></i>';
                     btn.onclick = function () { ElyraDoc.cambiarEstado(id, 0, btn); };
                 }
@@ -107,7 +111,7 @@
     function copiarEnlace(texto, btn) {
         window.Elyra.util.copiaAlPortapapeles(texto, function () {
             var anterior = btn.innerHTML;
-            btn.innerHTML = '<i class="bi bi-check me-1"></i>Copiado';
+            btn.innerHTML = '<i class="bi bi-check me-1"></i>' + tr('Copiado');
             setTimeout(function () { btn.innerHTML = anterior; }, 1800);
         });
     }

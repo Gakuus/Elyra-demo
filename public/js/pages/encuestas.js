@@ -8,6 +8,10 @@
 (function () {
     'use strict';
 
+    function tr(texto, parametros) {
+        return window.ElyraIdioma ? window.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     function urlPublica(id) {
         return window.Elyra.util.urlAbsoluta('/publico/encuesta?id=' + id);
     }
@@ -26,10 +30,10 @@
         var url = urlPublica(id);
 
         body.innerHTML = '<div class="mb-3"><div id="qrcodeEnc"></div></div>'
-            + '<p class="small text-muted mb-2">Escanear para responder la encuesta</p>'
-            + '<button class="btn btn-sm btn-primary me-1" id="copiarQrEnc"><i class="bi bi-clipboard me-1"></i>Copiar enlace</button>'
-            + '<button class="btn btn-sm btn-outline-secondary me-1" id="imprimirQrEnc"><i class="bi bi-printer me-1"></i>Imprimir</button>'
-            + '<a class="btn btn-sm btn-outline-secondary" href="' + url + '" target="_blank" rel="noopener">Abrir</a>';
+            + '<p class="small text-muted mb-2">' + tr('Escanear para responder la encuesta') + '</p>'
+            + '<button class="btn btn-sm btn-primary me-1" id="copiarQrEnc"><i class="bi bi-clipboard me-1"></i>' + tr('Copiar enlace') + '</button>'
+            + '<button class="btn btn-sm btn-outline-secondary me-1" id="imprimirQrEnc"><i class="bi bi-printer me-1"></i>' + tr('Imprimir') + '</button>'
+            + '<a class="btn btn-sm btn-outline-secondary" href="' + url + '" target="_blank" rel="noopener">' + tr('Abrir') + '</a>';
 
         modal.classList.add('open');
 
@@ -72,7 +76,7 @@
                 if (fila) {
                     fila.children[3].innerHTML = '<span class="'
                         + (activa ? 'estado-activo' : 'estado-inactivo') + '">'
-                        + (activa ? 'Activa' : 'Inactiva') + '</span>';
+                        + tr(activa ? 'Activa' : 'Inactiva') + '</span>';
                 }
 
                 // El botón pasa a ofrecer la acción inversa. Hay que reasignar
@@ -82,7 +86,7 @@
                     ? function () { ElyraEnc.cambiarEstado(id, 0, btn); }
                     : function () { ElyraEnc.cambiarEstado(id, 1, btn); };
                 btn.innerHTML = '<i class="bi bi-power"></i>';
-                btn.title = activa ? 'Desactivar' : 'Reactivar';
+                btn.title = tr(activa ? 'Desactivar' : 'Reactivar');
                 btn.classList.toggle('text-success', !activa);
                 btn.disabled = false;
             })

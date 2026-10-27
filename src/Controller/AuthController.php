@@ -174,8 +174,10 @@ final class AuthController
 
         render_vista(__DIR__ . '/../../views/auth/recuperar.html', [
             'hay_exito' => ['1'],
-            'exito' => 'Te enviamos un enlace a ' . $email . ' para restablecer la contraseña. '
-                . 'Revisá tu bandeja de entrada (y la carpeta de spam).',
+            'exito' => I18n::t(
+                'Te enviamos un enlace a :email para restablecer la contraseña. Revisá tu bandeja de entrada (y la carpeta de spam).',
+                ['email' => $email]
+            ),
         ]);
     }
 

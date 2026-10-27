@@ -12,6 +12,10 @@
     var mod = root.ElyraMapaMod = root.ElyraMapaMod || {};
     var cfg = mod.config;
 
+    function tr(texto, parametros) {
+        return root.ElyraIdioma ? root.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     mod.render = function (ctx, api) {
         var util = mod.util;
         var esc = util.escaparHtml;
@@ -78,8 +82,8 @@
                     '<i class="bi bi-circle-fill" style="font-size:6px;color:#f44336;"></i> ' + esc(t.destino) +
                     '</div>' +
                     (util.textoHora(t.hora_salida_efectiva)
-                        ? '<div style="font-size:0.8rem;color:#666;margin-top:4px;"><i class="bi bi-clock me-1"></i>Salida ' +
-                          esc(util.textoHora(t.hora_salida_efectiva)) + '</div>'
+                        ? '<div style="font-size:0.8rem;color:#666;margin-top:4px;"><i class="bi bi-clock me-1"></i>' +
+                          tr('Salida') + ' ' + esc(util.textoHora(t.hora_salida_efectiva)) + '</div>'
                         : ''),
                     { maxWidth: 280 }
                 );
@@ -90,7 +94,7 @@
                     icon: api.iconos.destino(),
                     zIndexOffset: 100
                 })
-                    .bindPopup('<strong>Destino:</strong> ' + esc(t.destino))
+                    .bindPopup('<strong>' + tr('Destino:') + '</strong> ' + esc(t.destino))
                     .addTo(ctx.capas.traslados);
 
                 // La posición viva de la unidad es la que parte la ruta. Si no
@@ -165,7 +169,7 @@
                 marcador.setPopupContent(
                     '<div style="font-weight:600;">' + (c.traslado_codigo
                         ? esc(c.traslado_codigo)
-                        : 'Sin traslado activo') + '</div>' +
+                        : tr('Sin traslado activo')) + '</div>' +
                     '<div class="popup-conductor">' + esc(c.conductor_nombre) + '</div>' +
                     (c.traslado_origen
                         ? '<div class="popup-route">' +
@@ -179,7 +183,7 @@
                         : '') +
                     (sinSenal
                         ? '<div style="font-size:0.8rem;color:#F57C00;margin-top:4px;"><i class="bi bi-exclamation-triangle me-1"></i>' +
-                          'Sin señal: no reporta posición</div>'
+                          tr('Sin señal: no reporta posición') + '</div>'
                         : '')
                 );
             });

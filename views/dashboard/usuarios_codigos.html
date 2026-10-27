@@ -52,7 +52,7 @@
                     <td class="fw-semibold codigo-generado">{{fila.codigo}}</td>
                     <td><span class="insignia">{{fila.rol}}</span></td>
                     <td>
-                        {{#fila.usado}}<span class="estado-inactivo">Usado por {{fila.usado_por}}</span>{{/fila.usado}}
+                        {{#fila.usado}}<span class="estado-inactivo">{{t('Usado por')}} {{fila.usado_por}}</span>{{/fila.usado}}
                         {{^fila.usado}}{{^fila.activo}}<span class="estado-inactivo">Desactivado</span>{{/fila.activo}}{{/fila.usado}}
                         {{^fila.usado}}{{#fila.activo}}<span class="estado-activo">Disponible</span>{{/fila.activo}}{{/fila.usado}}
                     </td>
@@ -65,4 +65,4 @@
     </div>
 </div>
 
-<script src="public/js/pages/usuarios.js?v=3" defer></script>
+<script src="public/js/pages/usuarios.js?v=4" defer></script>

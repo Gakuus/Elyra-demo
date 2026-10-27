@@ -26,15 +26,19 @@
     var btnAgregar = document.getElementById('addQuestion');
     var mensajeVacio = document.getElementById('noQuestions');
 
+    function tr(texto, parametros) {
+        return window.ElyraIdioma ? window.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     // Si la página no es el formulario de encuestas, no hay nada que hacer.
     if (!contenedor || !btnAgregar) return;
 
     // Tipos de pregunta soportados (deben coincidir con el ENUM 'tipo' de la
     // tabla pregunta en la base de datos).
     var tipos = [
-        { value: 'multiple_choice', label: 'Opci\u00f3n m\u00faltiple' },
-        { value: 'escala', label: 'Escala (1-5)' },
-        { value: 'texto_libre', label: 'Texto libre' }
+        { value: 'multiple_choice', label: tr('Opción múltiple') },
+        { value: 'escala', label: tr('Escala (1-5)') },
+        { value: 'texto_libre', label: tr('Texto libre') }
     ];
 
     /**
@@ -57,7 +61,7 @@
         div.innerHTML =
             '<div class="mb-2">'
             + '<input type="text" name="preguntas[' + idx + '][texto]" class="entrada-formulario"'
-            + ' placeholder="Escrib\u00ed la pregunta..." required minlength="3" maxlength="500">'
+            + ' placeholder="' + tr('Escribí la pregunta...') + '" required minlength="3" maxlength="500">'
             + '</div>'
             + '<div class="row g-2 align-items-center">'
             + '<div class="col-auto">'
@@ -66,7 +70,7 @@
             + '</select></div>'
             + '<div class="col"><div class="opciones-container" id="opciones-' + idx + '"></div></div>'
             + '<div class="col-auto">'
-            + '<button type="button" class="btn btn-sm btn-outline-danger remove-question" title="Quitar pregunta">'
+            + '<button type="button" class="btn btn-sm btn-outline-danger remove-question" title="' + tr('Quitar pregunta') + '">'
             + '<i class="bi bi-trash"></i></button>'
             + '</div></div>';
 
@@ -127,8 +131,8 @@
             item.className = 'd-inline-flex align-items-center input-group input-group-sm opcion-item';
             item.innerHTML =
                 '<input type="text" name="preguntas[' + idx + '][opciones][]"'
-                + ' class="form-control opcion-ancho" placeholder="Opci\u00f3n" required maxlength="200">'
-                + '<button type="button" class="btn btn-outline-secondary opcion-remove" title="Quitar opci\u00f3n">'
+                + ' class="form-control opcion-ancho" placeholder="' + tr('Opción') + '" required maxlength="200">'
+                + '<button type="button" class="btn btn-outline-secondary opcion-remove" title="' + tr('Quitar opción') + '">'
                 + '<i class="bi bi-x"></i></button>';
             item.querySelector('.opcion-remove').addEventListener('click', function () {
                 item.remove();
@@ -141,7 +145,7 @@
         btnOpcion.type = 'button';
         btnOpcion.className = 'btn btn-outline-primary btn-sm';
         btnOpcion.innerHTML = '<i class="bi bi-plus"></i>';
-        btnOpcion.title = 'Agregar opci\u00f3n';
+        btnOpcion.title = tr('Agregar opción');
         btnOpcion.addEventListener('click', function () { agregarOpcion(null); });
 
         lista.forEach(agregarOpcion);

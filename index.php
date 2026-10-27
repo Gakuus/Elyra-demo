@@ -125,12 +125,14 @@ require_once __DIR__ . '/config/database.php';      // Función db_connect().
 require_once __DIR__ . '/src/Auth.php';
 require_once __DIR__ . '/src/MailService.php';             // Clase Auth (login, registro).
 require_once __DIR__ . '/src/helpers.php';          // Funciones auxiliares (base_path, render...).
+require_once __DIR__ . '/src/I18n.php';             // Traducciones de la interfaz (español / inglés).
 require_once __DIR__ . '/src/AlmacenPdf.php';        // PDFs de documentos: disco o BD (PDF_DRIVER).
 require_once __DIR__ . '/src/GeoapifyService.php';    // Geoapify (mapa/rutas) con caída a OSRM.
 require_once __DIR__ . '/src/InterseccionService.php'; // "calle A y calle B" -> punto de cruce (Overpass).
 require_once __DIR__ . '/src/RutaService.php';      // Rutas reales por calles (OSRM) con caché.
 require_once __DIR__ . '/src/GeocodeService.php';    // Texto <-> coordenadas (Nominatim) con caché.
 require_once __DIR__ . '/src/Controller/AuthController.php';
+require_once __DIR__ . '/src/Controller/I18nController.php';
 require_once __DIR__ . '/src/Controller/DashboardController.php';
 require_once __DIR__ . '/src/Controller/DocumentoData.php';             // Trait de datos del módulo de documentos.
 require_once __DIR__ . '/src/Controller/DocumentoArchivoController.php';
@@ -165,6 +167,9 @@ cabeceras_seguridad();
 // Inicia (o reanuda) la sesión para que $_SESSION esté disponible en todo.
 Auth::iniciarSesion();
 
+// Idioma de la interfaz: sesión → cookie → idioma del navegador.
+I18n::iniciar();
+
 // ------------------------------------------------------------------
 // 6) Rutas
 // ------------------------------------------------------------------
@@ -183,7 +188,7 @@ $path = $staticRel;
 if ($method === 'POST' && !csrf_valido()) {
     log_seguridad('csrf_invalido');
     http_response_code(403);
-    exit('403 — Token de seguridad inválido. Recargá la página e intentá de nuevo.');
+    exit(I18n::t('403 — Token de seguridad inválido. Recargá la página e intentá de nuevo.'));
 }
 
 // switch(true) es un "switch de condiciones": evalúa cada case en orden y
@@ -196,6 +201,15 @@ switch (true) {
         || $path === '/login' || $path === '/registro' || $path === '/logout'
         || $path === '/recuperar' || $path === '/restablecer':
         AuthController::dispatch($path, $method);
+        break;
+
+    // Cambio de idioma (selector) y API JSON del idioma activo.
+    case $path === '/idioma':
+        I18nController::cambiar();
+        break;
+
+    case $path === '/api/idioma':
+        I18nController::api();
         break;
 
     // Panel de gestión.
