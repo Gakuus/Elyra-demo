@@ -62,8 +62,11 @@ final class AuthController
         if ($resultado['success']) {
             rate_limit_reset($claveUsuario);
             log_seguridad('login_ok', ['username' => $username]);
-            $destino = rol_usuario() === 'paciente' ? '/' : '/dashboard';
-            header('Location: ' . base_path() . $destino);
+            // Todos los roles entran al panel. El paciente tiene su propia
+            // portada (DashboardController::inicio) con sus traslados, sus
+            // datos y las encuestas abiertas; antes caía en la portada pública
+            // y no tenía forma directa de llegar a su vista.
+            header('Location: ' . base_path() . '/dashboard');
             exit;
         }
 
