@@ -51,10 +51,23 @@ final class AuthController
         ) {
             log_seguridad('login_bloqueado', ['username' => $username]);
             http_response_code(429);
-            render_vista(__DIR__ . '/../../views/auth/login.html', [
+            render_vista(__DIR__ . '/../../views/auth/login.html', self::datosLogin([
                 'hay_error' => ['1'],
                 'error' => 'Demasiados intentos fallidos. Esperá unos minutos e intentá de nuevo.',
-            ]);
+            ]));
+            return;
+        }
+
+        // Captcha: se valida antes de tocar las credenciales, así el formulario
+        // no sirve para probar contraseñas de forma automatizada. Si todavía no
+        // hay claves configuradas, Recaptcha deja pasar (desarrollo/demo).
+        $captcha = Recaptcha::verificar((string) ($_POST['g-recaptcha-response'] ?? ''));
+        if (!$captcha['success']) {
+            log_seguridad('login_captcha_fallido', ['username' => $username]);
+            render_vista(__DIR__ . '/../../views/auth/login.html', self::datosLogin([
+                'hay_error' => ['1'],
+                'error' => $captcha['error'],
+            ]));
             return;
         }
 
@@ -71,10 +84,10 @@ final class AuthController
         }
 
         log_seguridad('login_fallido', ['username' => $username]);
-        render_vista(__DIR__ . '/../../views/auth/login.html', [
+        render_vista(__DIR__ . '/../../views/auth/login.html', self::datosLogin([
             'hay_error' => ['1'],
             'error' => (string) ($resultado['error'] ?? 'Usuario o contraseña incorrectos.'),
-        ]);
+        ]));
     }
 
     public static function login(): void
@@ -86,7 +99,21 @@ final class AuthController
         } elseif (($_GET['restablecido'] ?? '') === '1') {
             $datos = ['hay_exito' => ['1'], 'exito' => 'Contraseña actualizada. Iniciá sesión con tu nueva contraseña.'];
         }
-        render_vista(__DIR__ . '/../../views/auth/login.html', $datos);
+        render_vista(__DIR__ . '/../../views/auth/login.html', self::datosLogin($datos));
+    }
+
+    /**
+     * Datos comunes del formulario de login, incluido el captcha.
+     *
+     * Si faltan las claves, recaptcha_configurado queda vacío y la vista no
+     * muestra ni el widget ni el script de Google.
+     */
+    private static function datosLogin(array $extra = []): array
+    {
+        return array_merge([
+            'recaptcha_configurado' => Recaptcha::configurado() ? ['1'] : [],
+            'recaptcha_sitio'       => Recaptcha::claveSitio(),
+        ], $extra);
     }
 
     /** Registro: ok → al login con aviso; si no, vuelve al formulario. */

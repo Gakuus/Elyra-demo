@@ -123,6 +123,7 @@ if ($staticRel !== '/' && !str_contains($staticRel, '.php')) {
 // Los require_once incluyen cada archivo una sola vez (evita redefiniciones).
 require_once __DIR__ . '/config/database.php';      // Función db_connect().
 require_once __DIR__ . '/src/Auth.php';
+require_once __DIR__ . '/src/Recaptcha.php';          // Captcha del login (Google reCAPTCHA v2).
 require_once __DIR__ . '/src/MailService.php';             // Clase Auth (login, registro).
 require_once __DIR__ . '/src/helpers.php';          // Funciones auxiliares (base_path, render...).
 require_once __DIR__ . '/src/I18n.php';             // Traducciones de la interfaz (español / inglés).
