@@ -12,6 +12,13 @@
     padding: 20px;
 }
 
+/* El widget de reCAPTCHA mide 304px fijos. En celulares muy angostos se
+   escala más abajo; este overflow evita que el ancho del layout genere una
+   barra horizontal, sin recortar el desafío (que Google monta aparte). */
+body.pagina-login {
+    overflow-x: hidden;
+}
+
 /* Botón para mostrar/ocultar contraseña */
 .btn-ojo {
     flex-shrink: 0;
@@ -81,6 +88,43 @@
     font-size: 19px;
 }
 
+/* ---------- Captcha de reCAPTCHA v2 ---------- */
+.captcha-login {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.captcha-login .g-recaptcha {
+    min-height: 78px;
+}
+
+.captcha-login .g-recaptcha iframe {
+    max-width: 100%;
+}
+
+.captcha-login .texto-pequeno {
+    margin-top: 2px;
+}
+
+/* El widget normal mide 304px. Se escala en pantallas donde el contenido de
+   la tarjeta queda más angosto, reservando la altura equivalente para que el
+   formulario no salte cuando Google lo dibuja. */
+@media (max-width: 380px) {
+    .captcha-login .g-recaptcha {
+        transform: scale(.9);
+        transform-origin: left top;
+        height: 70px;
+    }
+}
+
+@media (max-width: 340px) {
+    .captcha-login .g-recaptcha {
+        transform: scale(.8);
+        height: 62px;
+    }
+}
+
 /* ---------- Pantallas chicas ---------- */
 @media (max-width: 768px) {
     .pagina-ingreso {
@@ -115,7 +159,7 @@
     }
 
     .caja-ingreso {
-        margin: 0 auto;
+        margin: 0 auto 120px;
     }
 
     .cabecera-caja-ingreso {

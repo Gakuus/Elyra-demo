@@ -316,10 +316,31 @@ function log_seguridad(string $evento, array $contexto = []): void
 }
 
 /**
+ * Ruta de la petición actual, relativa a la raíz de la app (sin base_path ni
+ * query). Se usa para ajustar cabeceras según la página; por ejemplo, el CSP
+ * del login necesita hosts de Google que el resto del sitio no usa.
+ */
+function ruta_actual(): string
+{
+    $ruta = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
+    $ruta = is_string($ruta) ? $ruta : '';
+    $base = base_path();
+
+    if ($base !== '' && str_starts_with($ruta, $base)) {
+        $ruta = substr($ruta, strlen($base));
+    }
+
+    return $ruta === '' ? '/' : $ruta;
+}
+
+/**
  * Envía las cabeceras de seguridad de la respuesta. La CSP es permisiva a
  * propósito: el proyecto usa CDNs (Bootstrap, Leaflet) e inline handlers, así
  * que permite 'unsafe-inline' y esos hosts, pero igual cierra default-src,
- * object-src, frame-ancestors y form-action.
+ * object-src, frame-ancestors y form-action. Google reCAPTCHA v2 necesita
+ * cargar su script (www.google.com / www.gstatic.com) y su iframe
+ * (www.google.com / recaptcha.google.com), pero solo en el login: el resto
+ * del sitio no los autoriza.
  */
 function cabeceras_seguridad(): void
 {
@@ -341,6 +362,12 @@ function cabeceras_seguridad(): void
         header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
     }
 
+    // El widget de reCAPTCHA solo se carga en /login. En el resto del sitio
+    // no hace falta abrir el CSP a Google, así que se mantiene cerrado.
+    $esLogin = ruta_actual() === '/login';
+    $googleScript = $esLogin ? ' https://www.google.com https://www.gstatic.com' : '';
+    $googleFrame  = $esLogin ? ' https://www.google.com https://recaptcha.google.com' : '';
+
     header(
         "Content-Security-Policy: "
         . "default-src 'self'; "
@@ -348,11 +375,12 @@ function cabeceras_seguridad(): void
         . "object-src 'self'; "
         . "frame-ancestors 'self'; "
         . "form-action 'self'; "
-        . "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; "
+        . "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com" . $googleScript . "; "
         . "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
         . "font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; "
         . "img-src 'self' data: blob: https:; "
-        . "connect-src 'self' https:;"
+        . "connect-src 'self' https:; "
+        . "frame-src 'self'" . $googleFrame . ";"
     );
 }
 
