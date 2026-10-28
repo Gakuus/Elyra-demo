@@ -503,7 +503,14 @@ function render_vista(string $archivo, array $datos): void
     $datos = array_merge(I18n::datos(), $datos);
     $datos['base_path'] = base_path();
     $datos['csrf_token'] = csrf_token();
-    echo I18n::traducirHtml(reemplazar_marcadores($html, $datos));
+    $html = I18n::traducirHtml(reemplazar_marcadores($html, $datos));
+
+    // Botón y panel de accesibilidad en todas las páginas completas.
+    if (class_exists('Accesibilidad', false)) {
+        $html = Accesibilidad::inyectar($html);
+    }
+
+    echo $html;
 }
 
 /**
@@ -532,6 +539,11 @@ function pagina_404(): void
         . '<h1 class="pagina-404">' . htmlspecialchars($titulo) . '</h1>'
         . I18n::script()
         . '</body></html>';
+
+    if (class_exists('Accesibilidad', false)) {
+        $html = Accesibilidad::inyectar($html);
+    }
+
     echo $html;
 }
 

@@ -90,6 +90,15 @@
 - Preferencia persistida en sesion y cookie, con deteccion automatica del idioma del navegador.
 - Diccionario propio en `src/lang/en.php` (sin servicios externos de traduccion).
 
+### Accesibilidad
+- Widget propio (sin servicios externos) en todas las paginas: boton flotante y panel de preferencias.
+- Tamano de texto en 5 niveles (110% a 200%), alto contraste, inversion de colores y escala de grises.
+- Fuente de lectura facil, espaciado de texto, resaltado de enlaces, encabezados y foco, cursor grande, guia de lectura, pausa de animaciones y ocultamiento de imagenes.
+- Lectura en voz alta con la Web Speech API: pagina completa, seleccion o bloque al hacer clic, con idioma `es-UY` / `en-US`.
+- Preferencias persistidas en `localStorage` (`elyra_accesibilidad_v1`) y aplicadas antes del primer pintado.
+- Atajo `Alt + A` para abrir o cerrar; `Escape` cierra; el foco queda atrapado dentro del panel.
+- El panel queda excluido de los filtros de color para que siga siendo legible en cualquier modo.
+
 ---
 
 ## Stack tecnologico
@@ -118,10 +127,11 @@
 ├── public/
 │   ├── css/
 │   │   ├── base.css            → Estilos globales
+│   │   ├── accesibilidad.css   → Widget y preferencias de accesibilidad
 │   │   └── pages/              → Estilos por seccion
 │   ├── js/
 │   │   ├── elyra.js            → Funciones generales
-│   │   ├── comun/              → Utilidades compartidas (incluye idioma.js)
+│   │   ├── comun/              → Utilidades compartidas (idioma.js, accesibilidad.js)
 │   │   ├── mapa/               → Modulos del mapa en vivo
 │   │   ├── traslado/           → Modal de registro de traslado
 │   │   └── pages/              → JS por modulo
@@ -130,6 +140,7 @@
 │   └── uploads/                → Reservada para archivos públicos (sin uso hoy)
 ├── src/
 │   ├── Auth.php                → Autenticacion (login, registro, sesion)
+│   ├── Accesibilidad.php       → Widget de accesibilidad (inyeccion y HTML)
 │   ├── I18n.php                → Motor de idiomas (espanol / ingles)
 │   ├── helpers.php             → Funciones auxiliares (render, guards, CSRF, tokens)
 │   ├── lang/
@@ -416,6 +427,16 @@ El espanol es el idioma de origen: los textos se escriben directamente en espano
 - El idioma se guarda en `$_SESSION['idioma']` y en la cookie `elyra_idioma`. Sin preferencia guardada se usa `Accept-Language` y, si no hay datos, espanol.
 
 El selector usa `GET /idioma?lang=es|en&volver=<ruta>`. La API `GET/POST /api/idioma` responde JSON; el POST exige el token CSRF global.
+
+### Implementacion de accesibilidad
+
+El widget se inyecta automaticamente en `render_vista()` y `pagina_404()` (`src/helpers.php`), despues de traducir el HTML, asi que aparece en todas las paginas completas sin editar cada plantilla.
+
+- `src/Accesibilidad.php`: HTML, textos traducidos y script temprano del `<head>`.
+- `public/css/accesibilidad.css`: UI del panel y efectos sobre el documento.
+- `public/js/comun/accesibilidad.js`: estado, persistencia, teclado y lectura en voz alta.
+
+Las preferencias se guardan en `localStorage` con la clave `elyra_accesibilidad_v1`. El script temprano las aplica como atributos `data-acc-*` en `<html>` antes del primer pintado, y el CSS define los efectos. El tamano de texto usa `zoom` sobre `<html>` y contraescala el panel para que siempre entre en pantalla; en celular el encabezado y la barra inferior se mantienen estables y los formularios pasan a una columna cuando hace falta. No hay pedidos a servicios externos: la voz usa `speechSynthesis` del navegador y, si no esta disponible, los botones de lectura se deshabilitan y se muestra una nota.
 
 ---
 

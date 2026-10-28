@@ -126,6 +126,7 @@ require_once __DIR__ . '/src/Auth.php';
 require_once __DIR__ . '/src/MailService.php';             // Clase Auth (login, registro).
 require_once __DIR__ . '/src/helpers.php';          // Funciones auxiliares (base_path, render...).
 require_once __DIR__ . '/src/I18n.php';             // Traducciones de la interfaz (español / inglés).
+require_once __DIR__ . '/src/Accesibilidad.php';    // Botón y panel de accesibilidad.
 require_once __DIR__ . '/src/AlmacenPdf.php';        // PDFs de documentos: disco o BD (PDF_DRIVER).
 require_once __DIR__ . '/src/GeoapifyService.php';    // Geoapify (mapa/rutas) con caída a OSRM.
 require_once __DIR__ . '/src/InterseccionService.php'; // "calle A y calle B" -> punto de cruce (Overpass).
