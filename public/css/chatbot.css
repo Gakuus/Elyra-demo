@@ -70,8 +70,9 @@
 
 #elyra-chat .chat-burbuja {
     position: absolute;
-    right: calc(100% + 14px);
-    bottom: 10px;
+    right: 0;
+    /* Arriba de la mascota: a la izquierda está el botón de accesibilidad. */
+    bottom: calc(100% + 12px);
     padding: 7px 12px;
     border: 1px solid var(--chat-borde);
     border-radius: 12px;
@@ -87,14 +88,13 @@
 #elyra-chat .chat-burbuja::after {
     content: "";
     position: absolute;
-    top: 50%;
-    left: 100%;
+    top: 100%;
+    right: 26px;
     width: 0;
     height: 0;
-    margin-top: -6px;
     border: 6px solid transparent;
-    border-left-color: #FFF;
-    filter: drop-shadow(1px 0 0 var(--chat-borde));
+    border-top-color: #FFF;
+    filter: drop-shadow(0 1px 0 var(--chat-borde));
 }
 
 #elyra-chat .chat-burbuja[hidden] {
