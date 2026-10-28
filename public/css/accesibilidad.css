@@ -13,7 +13,9 @@
 
     position: fixed;
     right: 24px;
-    bottom: 24px;
+    /* Queda arriba del botón de la mascota (64 px + separación), que ocupa
+       la esquina inferior derecha. */
+    bottom: 100px;
     z-index: 2147483000;
     font-family: var(--fuente-familia, tahoma, verdana, arial, sans-serif);
     font-size: 15px;
@@ -447,7 +449,7 @@
 @media (max-width: 768px) {
     #elyra-accesibilidad {
         right: 14px;
-        bottom: 84px;
+        bottom: 160px;
     }
 
     #elyra-accesibilidad .acc-panel {
@@ -476,6 +478,14 @@ html[data-acc-text="2"] #elyra-accesibilidad { zoom: 0.8; }
 html[data-acc-text="3"] #elyra-accesibilidad { zoom: 0.6667; }
 html[data-acc-text="4"] #elyra-accesibilidad { zoom: 0.5714; }
 html[data-acc-text="5"] #elyra-accesibilidad { zoom: 0.5; }
+
+/* El chat también se contraescala para que el panel y la mascota mantengan
+   su tamaño y sigan entrando en pantalla con el texto agrandado. */
+html[data-acc-text="1"] #elyra-chat { zoom: 0.9091; }
+html[data-acc-text="2"] #elyra-chat { zoom: 0.8; }
+html[data-acc-text="3"] #elyra-chat { zoom: 0.6667; }
+html[data-acc-text="4"] #elyra-chat { zoom: 0.5714; }
+html[data-acc-text="5"] #elyra-chat { zoom: 0.5; }
 
 /* En celular el encabezado y la barra inferior tienen alto fijo. Si se
    escalan con el texto, sus elementos se superponen y la barra queda
@@ -617,7 +627,7 @@ html[data-acc-links] a {
 }
 
 /* Resaltar encabezados */
-html[data-acc-headings] :is(h1, h2, h3, h4, h5, h6) {
+html[data-acc-headings] :is(h1, h2, h3, h4, h5, h6):not(#elyra-chat *) {
     outline: 2px dashed #B45309 !important;
     outline-offset: 3px !important;
     background: rgba(254, 243, 199, 0.55) !important;
@@ -652,9 +662,14 @@ html[data-acc-images] video {
     display: none !important;
 }
 
+/* La mascota del chat no es decorativa: es el botón para pedir ayuda. */
+html[data-acc-images] #elyra-chat img {
+    display: inline-block !important;
+}
+
 /* Escala de grises: se aplica a los hijos del body para no apagar el
-   panel de accesibilidad. */
-html[data-acc-color="gray"] body > :not(#elyra-accesibilidad) {
+   panel de accesibilidad ni el chat. */
+html[data-acc-color="gray"] body > :not(#elyra-accesibilidad, #elyra-chat) {
     filter: grayscale(1);
 }
 
@@ -668,8 +683,15 @@ html[data-acc-color="invert"] img,
 html[data-acc-color="invert"] video,
 html[data-acc-color="invert"] canvas,
 html[data-acc-color="invert"] iframe,
-html[data-acc-color="invert"] #elyra-accesibilidad {
+html[data-acc-color="invert"] #elyra-accesibilidad,
+html[data-acc-color="invert"] #elyra-chat {
     filter: invert(1) hue-rotate(180deg);
+}
+
+/* El chat ya quedó normal con la doble inversión; sus imágenes no necesitan
+   una tercera. */
+html[data-acc-color="invert"] #elyra-chat img {
+    filter: none;
 }
 
 /* Alto contraste */
@@ -683,7 +705,7 @@ html[data-acc-color="contrast"] body {
     color: #FFF !important;
 }
 
-html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *) {
+html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *, #elyra-chat, #elyra-chat *) {
     background-color: #000 !important;
     background-image: none !important;
     color: #FFF !important;
@@ -692,29 +714,29 @@ html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibil
     text-shadow: none !important;
 }
 
-html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *):is(a) {
+html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *, #elyra-chat, #elyra-chat *):is(a) {
     color: #FFEB3B !important;
     text-decoration: underline !important;
 }
 
-html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *):is(button, input, select, textarea) {
+html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *, #elyra-chat, #elyra-chat *):is(button, input, select, textarea) {
     background-color: #000 !important;
     color: #FFF !important;
     border: 2px solid #FFEB3B !important;
 }
 
-html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *):is(input, textarea)::placeholder {
+html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *, #elyra-chat, #elyra-chat *):is(input, textarea)::placeholder {
     color: #DDD !important;
 }
 
 /* Combinaciones: en alto contraste, los resaltados no deben tapar el texto. */
-html[data-acc-color="contrast"][data-acc-links] body :not(#elyra-accesibilidad, #elyra-accesibilidad *):is(a) {
+html[data-acc-color="contrast"][data-acc-links] body :not(#elyra-accesibilidad, #elyra-accesibilidad *, #elyra-chat, #elyra-chat *):is(a) {
     background: #000 !important;
     color: #FFEB3B !important;
     outline-color: #FFEB3B !important;
 }
 
-html[data-acc-color="contrast"][data-acc-headings] body :not(#elyra-accesibilidad, #elyra-accesibilidad *):is(h1, h2, h3, h4, h5, h6) {
+html[data-acc-color="contrast"][data-acc-headings] body :not(#elyra-accesibilidad, #elyra-accesibilidad *, #elyra-chat, #elyra-chat *):is(h1, h2, h3, h4, h5, h6) {
     background: #000 !important;
     color: #FFEB3B !important;
     outline-color: #FFEB3B !important;
