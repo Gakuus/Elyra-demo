@@ -469,7 +469,7 @@ CHAT_MODEL=llama-3.3-70b-versatile
 CHAT_BASE_URL=
 ```
 
-Si `CHAT_PROVIDER` queda vacio, se deduce del prefijo de la clave (`gsk_` = Groq, `sk-or-` = OpenRouter, `AIza` = Gemini). Los modelos por defecto son `llama-3.3-70b-versatile` (Groq), `meta-llama/llama-3.3-70b-instruct:free` (OpenRouter) y `gemini-2.5-flash` (Gemini). Las cuentas gratuitas se crean en [console.groq.com](https://console.groq.com/keys), [openrouter.ai/keys](https://openrouter.ai/keys) o [aistudio.google.com](https://aistudio.google.com/apikey).
+Si `CHAT_PROVIDER` queda vacio, se deduce del prefijo de la clave (`gsk_` = Groq, `sk-or-` = OpenRouter, `AIza` = Gemini). Los modelos por defecto son `qwen/qwen3.8-27b` (Groq), `meta-llama/llama-3.3-70b-instruct:free` (OpenRouter) y `gemini-2.5-flash` (Gemini). En Groq conviene elegir un modelo vigente con `GET https://api.groq.com/openai/v1/models` y cargarlo en `CHAT_MODEL`; el catalogo gratuito cambia con el tiempo. Las cuentas gratuitas se crean en [console.groq.com](https://console.groq.com/keys), [openrouter.ai/keys](https://openrouter.ai/keys) o [aistudio.google.com](https://aistudio.google.com/apikey).
 
 Privacidad y seguridad:
 
