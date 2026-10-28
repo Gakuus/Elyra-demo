@@ -208,7 +208,7 @@ final class VehiculoController
 
         if ($id <= 0) {
             header('Content-Type: application/json');
-            echo json_encode(['ok' => false, 'error' => 'ID inválido.']);
+            echo json_encode(['ok' => false, 'error' => I18n::t('ID inválido.')]);
             exit;
         }
 

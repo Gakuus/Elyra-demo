@@ -1,0 +1,532 @@
+/* ==================================================================
+   Inicio del paciente.
+
+   Comparte la cabecera, los bloques y los colores de estado del inicio
+   operativo (inicio.css), pero no usa la clase .inicio: esa clase activa
+   public/js/pages/inicio.js, que consulta el mapa y la flota del personal.
+   ================================================================== */
+.inicio-paciente {
+    --e-pendiente: #8A94A3;
+    --e-curso: #3FA34D;
+    --e-destino: #E08A00;
+    --e-retorno: #2F80D0;
+    --e-completado: #3FA34D;
+    --e-cancelado: #D9534F;
+
+    --fuente-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+/* ---------- Resumen ---------- */
+.inicio-paciente .paciente-resumen {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.inicio-paciente .resumen-item {
+    position: relative;
+    padding: 14px 16px 12px;
+    border: 1px solid #DCE1E8;
+    border-radius: 6px;
+    background: var(--blanco);
+    overflow: hidden;
+}
+
+.inicio-paciente .resumen-item::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 4px;
+    background: var(--azul);
+}
+
+.inicio-paciente .resumen-item-activo::before {
+    background: var(--e-curso);
+}
+
+.inicio-paciente .resumen-item-completado::before {
+    background: var(--e-completado);
+}
+
+.inicio-paciente .resumen-numero {
+    display: block;
+    font-family: var(--fuente-mono);
+    font-size: 32px;
+    line-height: 1;
+    font-weight: 700;
+    color: #2A3547;
+}
+
+.inicio-paciente .resumen-fecha {
+    display: block;
+    font-family: var(--fuente-mono);
+    font-size: 19px;
+    line-height: 1.2;
+    font-weight: 700;
+    color: #2A3547;
+}
+
+.inicio-paciente .resumen-rotulo {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--texto-atenuado);
+}
+
+/* ---------- Grilla ---------- */
+.inicio-paciente .paciente-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 20px;
+    align-items: start;
+}
+
+.inicio-paciente .paciente-principal,
+.inicio-paciente .paciente-lateral {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+}
+
+/* Enlace de acción dentro del título de un bloque. */
+.inicio-paciente .bloque-enlace {
+    margin-left: auto;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--azul);
+    text-decoration: none;
+}
+
+.inicio-paciente .bloque-enlace:hover {
+    color: var(--azul-oscuro);
+    text-decoration: underline;
+}
+
+/* ---------- Traslados activos ---------- */
+.inicio-paciente .traslados-activos {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.inicio-paciente .tarjeta-paciente {
+    padding: 16px 18px;
+    border: 1px solid #E1E5EB;
+    border-left: 5px solid var(--e-pendiente);
+    border-radius: 6px;
+    background: var(--blanco);
+}
+
+.inicio-paciente .tarjeta-paciente.estado-en_curso {
+    border-left-color: var(--e-curso);
+}
+
+.inicio-paciente .tarjeta-paciente.estado-en_destino {
+    border-left-color: var(--e-destino);
+}
+
+.inicio-paciente .tarjeta-paciente.estado-en_retorno {
+    border-left-color: var(--e-retorno);
+}
+
+.inicio-paciente .tarjeta-paciente-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.inicio-paciente .tarjeta-paciente .tarjeta-grande-ruta {
+    margin-bottom: 12px;
+}
+
+.inicio-paciente .tarjeta-paciente-momento {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin: 0 0 14px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    background: #F6F8FB;
+    color: #3A4658;
+    font-size: 14px;
+}
+
+.inicio-paciente .tarjeta-paciente-momento i {
+    color: var(--azul);
+}
+
+.inicio-paciente .tarjeta-paciente-momento strong {
+    font-family: var(--fuente-mono);
+    color: var(--azul-oscuro);
+}
+
+/* ---------- Etapas ---------- */
+.inicio-paciente .pasos-traslado {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    margin: 0 0 16px;
+    padding: 0;
+    list-style: none;
+}
+
+.inicio-paciente .paso {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: #8A94A3;
+    font-size: 11px;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.inicio-paciente .paso::before {
+    content: "";
+    position: absolute;
+    top: 7px;
+    right: 50%;
+    z-index: 0;
+    width: 100%;
+    height: 2px;
+    background: #DCE1E8;
+}
+
+.inicio-paciente .paso:first-child::before {
+    display: none;
+}
+
+.inicio-paciente .paso-punto {
+    position: relative;
+    z-index: 1;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #C9D4E3;
+    border-radius: 50%;
+    background: var(--blanco);
+}
+
+.inicio-paciente .paso.hecho,
+.inicio-paciente .paso.actual {
+    color: #2A3547;
+    font-weight: 700;
+}
+
+.inicio-paciente .paso.hecho .paso-punto {
+    border-color: var(--e-curso);
+    background: var(--e-curso);
+}
+
+.inicio-paciente .paso.actual .paso-punto {
+    border-color: var(--e-curso);
+    box-shadow: 0 0 0 4px rgba(63, 163, 77, .18);
+}
+
+.inicio-paciente .paso.hecho::before,
+.inicio-paciente .paso.actual::before {
+    background: var(--e-curso);
+}
+
+.inicio-paciente .paso-texto {
+    overflow-wrap: anywhere;
+}
+
+/* Texto solo para lectores de pantalla. */
+.inicio-paciente .solo-lectores {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ---------- Detalles ---------- */
+.inicio-paciente .detalles-traslado {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 18px;
+    margin: 0 0 14px;
+    padding: 0;
+}
+
+.inicio-paciente .detalles-traslado > div {
+    min-width: 0;
+}
+
+.inicio-paciente .detalles-traslado dt {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 2px;
+    color: var(--texto-atenuado);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+}
+
+.inicio-paciente .detalles-traslado dt i {
+    color: var(--azul);
+}
+
+.inicio-paciente .detalles-traslado dd {
+    margin: 0;
+    color: #2A3547;
+    font-size: 15px;
+    overflow-wrap: anywhere;
+}
+
+.inicio-paciente .tarjeta-paciente-pie {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Los estados finales también tienen color propio en el historial. */
+.inicio-paciente .chip-estado.estado-completado {
+    background: #E4F3E6;
+    color: var(--e-completado);
+}
+
+.inicio-paciente .chip-estado.estado-cancelado {
+    background: #FBE9E9;
+    color: var(--e-cancelado);
+}
+
+/* La fecha llega en minúsculas ("martes 27 de octubre"); se capitaliza solo
+   la primera letra para no convertir "de" en "De". */
+.inicio-paciente .inicio-fecha {
+    text-transform: none;
+}
+
+.inicio-paciente .inicio-fecha::first-letter {
+    text-transform: uppercase;
+}
+
+/* ---------- Estado vacío ---------- */
+.inicio-paciente .paciente-vacio {
+    padding: 26px 18px;
+    border: 1px dashed #C9D4E3;
+    border-radius: 6px;
+    background: #F8FAFD;
+    text-align: center;
+}
+
+.inicio-paciente .paciente-vacio > i {
+    color: var(--e-curso);
+    font-size: 34px;
+}
+
+.inicio-paciente .paciente-vacio p {
+    margin: 10px 0 4px;
+    color: #2A3547;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.inicio-paciente .paciente-vacio .paciente-vacio-detalle {
+    margin: 0 0 14px;
+    color: var(--texto-atenuado);
+    font-size: 14px;
+    font-weight: 400;
+}
+
+/* ---------- Historial ---------- */
+.inicio-paciente .historial-paciente {
+    display: flex;
+    flex-direction: column;
+}
+
+.inicio-paciente .historial-fila {
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 2px;
+    border-bottom: 1px solid #F0F2F5;
+}
+
+.inicio-paciente .historial-fila:last-child {
+    border-bottom: none;
+}
+
+.inicio-paciente .historial-cuando {
+    display: flex;
+    flex-direction: column;
+    font-family: var(--fuente-mono);
+    font-size: 12px;
+    color: var(--texto-atenuado);
+}
+
+.inicio-paciente .historial-fecha {
+    color: #46536A;
+    font-weight: 700;
+}
+
+.inicio-paciente .historial-detalle {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.inicio-paciente .historial-codigo {
+    color: var(--texto-atenuado);
+    font-family: var(--fuente-mono);
+    font-size: 12px;
+}
+
+.inicio-paciente .historial-ruta {
+    color: #2A3547;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.inicio-paciente .historial-ruta i {
+    color: #A9B4C4;
+    font-size: 11px;
+}
+
+.inicio-paciente .historial-conductor {
+    color: var(--texto-atenuado);
+    font-size: 12px;
+}
+
+/* ---------- Datos personales ---------- */
+.inicio-paciente .datos-paciente {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0 0 14px;
+}
+
+.inicio-paciente .datos-paciente > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #F0F2F5;
+}
+
+.inicio-paciente .datos-paciente > div:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.inicio-paciente .datos-paciente dt {
+    margin: 0;
+    color: var(--texto-atenuado);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.inicio-paciente .datos-paciente dd {
+    margin: 0;
+    color: #2A3547;
+    font-size: 14px;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+/* ---------- Encuestas ---------- */
+.inicio-paciente .encuestas-intro {
+    margin: 0 0 10px;
+    color: var(--texto-atenuado);
+    font-size: 14px;
+}
+
+.inicio-paciente .encuestas-paciente {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.inicio-paciente .encuesta-paciente {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid #E1E5EB;
+    border-radius: 4px;
+    background: #F8FAFD;
+}
+
+.inicio-paciente .encuesta-titulo {
+    color: #2A3547;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* ---------- Ayuda ---------- */
+.inicio-paciente .bloque-ayuda p {
+    margin: 0 0 12px;
+    color: var(--texto-atenuado);
+    font-size: 14px;
+}
+
+/* Botón que ocupa el ancho de la tarjeta lateral. */
+.inicio-paciente .accion-ancha {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+    .inicio-paciente .paciente-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .inicio-paciente .paciente-resumen {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .inicio-paciente .resumen-item:last-child {
+        grid-column: 1 / -1;
+    }
+
+    .inicio-paciente .resumen-numero {
+        font-size: 28px;
+    }
+
+    .inicio-paciente .detalles-traslado {
+        grid-template-columns: 1fr;
+    }
+
+    .inicio-paciente .historial-fila {
+        grid-template-columns: 72px minmax(0, 1fr);
+    }
+
+    .inicio-paciente .historial-fila .chip-estado {
+        grid-column: 2;
+        justify-self: start;
+    }
+
+    .inicio-paciente .pasos-traslado {
+        font-size: 10px;
+    }
+
+    .inicio-paciente .tarjeta-paciente {
+        padding: 14px;
+    }
+}

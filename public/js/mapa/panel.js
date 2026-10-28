@@ -12,6 +12,10 @@
     var mod = root.ElyraMapaMod = root.ElyraMapaMod || {};
     var cfg = mod.config;
 
+    function tr(texto, parametros) {
+        return root.ElyraIdioma ? root.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     mod.panel = function (ctx, api) {
         var util = mod.util;
         var esc = util.escaparHtml;
@@ -27,7 +31,8 @@
             var min = typeof t.duracion_min === 'number' ? t.duracion_min : null;
 
             if (km === null && min === null) {
-                return '<div class="ficha-recorrido vacio"><i class="bi bi-exclamation-circle"></i> Sin ruta calculada</div>';
+                return '<div class="ficha-recorrido vacio"><i class="bi bi-exclamation-circle"></i> ' +
+                    tr('Sin ruta calculada') + '</div>';
             }
 
             var salida = util.textoHora(t.hora_salida_estimada);
@@ -59,7 +64,7 @@
         function badgeEstado(estado) {
             var color = cfg.coloresEstado[estado] || cfg.COLOR_GRIS;
             return ' <span class="badge" style="font-size:.72rem;color:#fff;background:' + color + ';">' +
-                esc(util.nombreEstado(estado)) + '</span>';
+                esc(tr(util.nombreEstado(estado))) + '</span>';
         }
 
         function actualizar(lista) {
@@ -68,9 +73,9 @@
 
             if (lista.length === 0) {
                 dom.listaTraslados.innerHTML = ctx.esPaciente
-                    ? '<div class="mapa-vacio"><i class="bi bi-geo-alt"></i>No tenés traslados registrados</div>'
-                    : '<div class="mapa-vacio"><i class="bi bi-geo-alt"></i>Sin traslados activos</div>';
-                dom.contadorActivos.textContent = '0 traslados';
+                    ? '<div class="mapa-vacio"><i class="bi bi-geo-alt"></i>' + tr('No tenés traslados registrados') + '</div>'
+                    : '<div class="mapa-vacio"><i class="bi bi-geo-alt"></i>' + tr('Sin traslados activos') + '</div>';
+                dom.contadorActivos.textContent = tr(':n traslados', { n: 0 });
                 return;
             }
 
@@ -78,9 +83,14 @@
             // es lo que el mapa está mostrando ahora.
             var activos = lista.filter(util.esActivoAhora).length;
             if (ctx.esPaciente && activos !== lista.length) {
-                dom.contadorActivos.textContent = lista.length + ' en total · ' + activos + ' en curso';
+                dom.contadorActivos.textContent = tr(':total en total · :activos en curso', {
+                    total: lista.length,
+                    activos: activos
+                });
             } else {
-                dom.contadorActivos.textContent = lista.length + ' traslado' + (lista.length !== 1 ? 's' : '');
+                dom.contadorActivos.textContent = tr(lista.length === 1 ? ':n traslado' : ':n traslados', {
+                    n: lista.length
+                });
             }
 
             var html = '';
@@ -105,7 +115,7 @@
                         botones +=
                             '<button type="button" class="btn-accion" data-traslado="' + t.id + '" data-estado="' + est + '" ' +
                             'style="border-color:' + aColor + ';color:' + aColor + ';">' +
-                            (cfg.etiquetasAccion[est] || est) + '</button>';
+                            tr(cfg.etiquetasAccion[est] || est) + '</button>';
                     });
                     html += '<div class="acciones">' + botones + '</div>';
                 }
@@ -142,9 +152,9 @@
 
             var motivo = '';
             if (estado === 'cancelado') {
-                motivo = (window.prompt('Motivo de la cancelación:') || '').trim();
+                motivo = (window.prompt(tr('Motivo de la cancelación:')) || '').trim();
                 if (!motivo) {
-                    ctx.dom.estadoBar.innerHTML = '<span>Para cancelar indicá el motivo.</span>';
+                    ctx.dom.estadoBar.innerHTML = '<span>' + tr('Para cancelar indicá el motivo.') + '</span>';
                     return;
                 }
             }
@@ -157,20 +167,20 @@
             fetch(mod.urls.estado, { method: 'POST', headers: window.Elyra.csrfHeaders(), body: data })
                 .then(function (r) {
                     return r.json().catch(function () {
-                        return { ok: false, error: 'Respuesta inválida del servidor.' };
+                        return { ok: false, error: tr('Respuesta inválida del servidor.') };
                     });
                 })
                 .then(function (json) {
                     if (json && json.ok) {
-                        ctx.dom.estadoBar.innerHTML = '<span>Estado actualizado. Refrescando...</span>';
+                        ctx.dom.estadoBar.innerHTML = '<span>' + tr('Estado actualizado. Refrescando...') + '</span>';
                         api.datos.actualizar();
                     } else {
                         ctx.dom.estadoBar.innerHTML = '<span>' +
-                            esc(json && json.error ? json.error : 'Error al actualizar el estado') + '</span>';
+                            esc(json && json.error ? json.error : tr('Error al actualizar el estado')) + '</span>';
                     }
                 })
                 .catch(function () {
-                    ctx.dom.estadoBar.innerHTML = '<span>Sin conexión</span>';
+                    ctx.dom.estadoBar.innerHTML = '<span>' + tr('Sin conexión') + '</span>';
                 });
         }
 
@@ -197,7 +207,7 @@
             // el mapa, así que no hay marcador al que ir. Se avisa en vez de
             // dejar el click sin respuesta, que parecía una tarjeta muerta.
             if (!encontrado) {
-                ctx.dom.estadoBar.innerHTML = '<span>Ese traslado ya terminó: no se muestra en el mapa</span>';
+                ctx.dom.estadoBar.innerHTML = '<span>' + tr('Ese traslado ya terminó: no se muestra en el mapa') + '</span>';
             }
         }
 

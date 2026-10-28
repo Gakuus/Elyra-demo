@@ -11,17 +11,21 @@
 
     var mod = root.ElyraMapaMod = root.ElyraMapaMod || {};
 
+    function tr(texto, parametros) {
+        return root.ElyraIdioma ? root.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     mod.datos = function (ctx, api) {
         var timer = null;
         var pausado = false;
 
         function pintarError() {
-            if (ctx.dom.estadoBar) ctx.dom.estadoBar.innerHTML = '<span>Sin conexión</span>';
+            if (ctx.dom.estadoBar) ctx.dom.estadoBar.innerHTML = '<span>' + tr('Sin conexión') + '</span>';
         }
 
         function pintarActualizando() {
             if (ctx.dom.estadoBar) {
-                ctx.dom.estadoBar.innerHTML = '<div class="punto-pulso"></div><span>Actualizando...</span>';
+                ctx.dom.estadoBar.innerHTML = '<div class="punto-pulso"></div><span>' + tr('Actualizando...') + '</span>';
             }
         }
 

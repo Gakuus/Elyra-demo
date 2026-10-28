@@ -17,6 +17,10 @@
     var cfg = mod.config;
     var aj = mod.ajustes;
 
+    function tr(texto, parametros) {
+        return root.ElyraIdioma ? root.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     mod.seguimiento = function (ctx, api) {
         var esc = mod.util.escaparHtml;
 
@@ -131,23 +135,23 @@
             fetch(mod.urls.ubicacion, { method: 'POST', headers: window.Elyra.csrfHeaders(), body: data })
                 .then(function (r) {
                     return r.json().catch(function () {
-                        return { ok: false, error: 'Respuesta inválida del servidor.' };
+                        return { ok: false, error: tr('Respuesta inválida del servidor.') };
                     });
                 })
                 .then(function (json) {
                     if (json && json.ok) {
                         s.ultimoEnvioOkMs = Date.now();
                         s.ultimoError = '';
-                        mostrar('ok', 'Reportando', 'Última posición enviada al despacho a las <strong>' +
+                        mostrar('ok', tr('Reportando'), tr('Última posición enviada al despacho a las') + ' <strong>' +
                             new Date(s.ultimoEnvioOkMs).toLocaleTimeString() + '</strong>.');
                     } else {
-                        s.ultimoError = (json && json.error) ? json.error : 'No se pudo enviar la ubicación.';
-                        mostrar('error', 'Sin enviar', esc(s.ultimoError));
+                        s.ultimoError = (json && json.error) ? json.error : tr('No se pudo enviar la ubicación.');
+                        mostrar('error', tr('Sin enviar'), esc(s.ultimoError));
                     }
                 })
                 .catch(function () {
-                    s.ultimoError = 'Sin conexión con el servidor.';
-                    mostrar('error', 'Sin enviar', esc(s.ultimoError));
+                    s.ultimoError = tr('Sin conexión con el servidor.');
+                    mostrar('error', tr('Sin enviar'), esc(s.ultimoError));
                 })
                 .then(function () {
                     s.enviando = false;
@@ -171,8 +175,8 @@
             // dibuja localmente pero no se manda al server, para no pisear la
             // última posición buena que había.
             if (typeof c.accuracy === 'number' && c.accuracy > aj.precisionMaxima) {
-                mostrar('esperando', 'Señal débil', 'Precisión de <strong>' + Math.round(c.accuracy) +
-                    ' m</strong>: esperando mejor señal para reportar.');
+                mostrar('esperando', tr('Señal débil'), tr('Precisión de') + ' <strong>' + Math.round(c.accuracy) +
+                    ' m</strong>' + tr(': esperando mejor señal para reportar.'));
                 return;
             }
 
@@ -185,14 +189,14 @@
         }
 
         var MENSAJES_ERROR = {
-            1: ['Permiso denegado', 'El navegador no permite usar la ubicación. Habilitalo desde el candado de la barra de direcciones.'],
-            2: ['GPS sin señal', 'No se pudo determinar la posición. Salí a un lugar más despejado o prendé el GPS.'],
-            3: ['GPS sin responder', 'El GPS tardó demasiado en responder. Probá de nuevo en unos segundos.']
+            1: [tr('Permiso denegado'), tr('El navegador no permite usar la ubicación. Habilitalo desde el candado de la barra de direcciones.')],
+            2: [tr('GPS sin señal'), tr('No se pudo determinar la posición. Salí a un lugar más despejado o prendé el GPS.')],
+            3: [tr('GPS sin responder'), tr('El GPS tardó demasiado en responder. Probá de nuevo en unos segundos.')]
         };
 
         function alFallarPosicion(err) {
             var m = MENSAJES_ERROR[err && err.code] ||
-                ['Ubicación no disponible', 'No se pudo obtener la posición del dispositivo.'];
+                [tr('Ubicación no disponible'), tr('No se pudo obtener la posición del dispositivo.')];
             mostrar('error', m[0], esc(m[1]));
         }
 
@@ -213,19 +217,19 @@
             // está bloqueada siempre, así que conviene decirlo claro en vez de
             // dejar un GPS que nunca arranca.
             if (typeof navigator.geolocation === 'undefined') {
-                mostrar('error', 'No disponible',
-                    'Este navegador no soporta geolocalización. Probá con Chrome, Edge o Safari.');
+                mostrar('error', tr('No disponible'),
+                    tr('Este navegador no soporta geolocalización. Probá con Chrome, Edge o Safari.'));
                 return;
             }
 
             if (!window.isSecureContext) {
-                mostrar('error', 'Necesita HTTPS',
-                    'El navegador solo permite la ubicación en sitios <strong>https</strong>. Abrí el mapa por ' +
-                    'la dirección segura para activar el GPS.');
+                mostrar('error', tr('Necesita HTTPS'),
+                    tr('El navegador solo permite la ubicación en sitios') + ' <strong>https</strong>. ' +
+                    tr('Abrí el mapa por la dirección segura para activar el GPS.'));
                 return;
             }
 
-            mostrar('esperando', 'Buscando GPS…', 'Aceptá el permiso de ubicación del navegador.');
+            mostrar('esperando', tr('Buscando GPS…'), tr('Aceptá el permiso de ubicación del navegador.'));
 
             s.idWatch = navigator.geolocation.watchPosition(
                 alRecibirPosicion,

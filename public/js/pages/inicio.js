@@ -17,6 +17,12 @@
     var base = window.BASE_PATH || '';
     var urlMapa = base + '/api/mapa';
 
+    // Textos que arma este archivo en el navegador. ElyraIdioma lo inyecta
+    // I18n::script() en todas las páginas; si no está, se deja el español.
+    function tr(texto, parametros) {
+        return window.ElyraIdioma ? window.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     var COLORES = {
         pendiente: '#8A94A3', en_curso: '#3FA34D',
         en_destino: '#E08A00', en_retorno: '#2F80D0'
@@ -38,12 +44,12 @@
         var t = aTiempo(ts);
         if (t === null) return '';
         var s = Math.max(0, Math.floor((Date.now() - t) / 1000));
-        if (s < 60) return 'recién';
+        if (s < 60) return tr('recién');
         var m = Math.floor(s / 60);
-        if (m < 60) return 'hace ' + m + ' min';
+        if (m < 60) return tr('hace :n min', { n: m });
         var h = Math.floor(m / 60);
-        if (h < 24) return 'hace ' + h + ' h';
-        return 'hace ' + Math.floor(h / 24) + ' d';
+        if (h < 24) return tr('hace :n h', { n: h });
+        return tr('hace :n d', { n: Math.floor(h / 24) });
     }
 
     // Igual que DashboardController::marcaDeEtapa(): de cuándo data la etapa
@@ -109,7 +115,7 @@
         });
         (datos.traslados || []).forEach(function (t) {
             if (t.destino_lat && t.destino_lng) {
-                punto(t.destino_lat, t.destino_lng, '#E91E63', 'Destino ' + t.codigo);
+                punto(t.destino_lat, t.destino_lng, '#E91E63', tr('Destino') + ' ' + t.codigo);
             }
         });
 
@@ -129,7 +135,7 @@
             '<div class="mini-ruta">' + esc(t.origen) +
                 ' <i class="bi bi-arrow-right"></i> ' + esc(t.destino) + '</div>' +
             '<div class="mini-pie">' +
-                '<span><i class="bi bi-person"></i> ' + esc(t.conductor_nombre || 'Sin asignar') + '</span>' +
+                '<span><i class="bi bi-person"></i> ' + esc(t.conductor_nombre || tr('Sin asignar')) + '</span>' +
                 '<span class="mini-vehiculo">' + esc(t.vehiculo_patente || '') + '</span>' +
             '</div>' +
         '</article>';
@@ -146,7 +152,7 @@
             if (col) {
                 col.innerHTML = grupos[estado].length
                     ? grupos[estado].map(tarjetaMini).join('')
-                    : '<p class="columna-vacia">Sin traslados</p>';
+                    : '<p class="columna-vacia">' + esc(tr('Sin traslados')) + '</p>';
             }
             var contador = document.querySelector('[data-contador="' + estado + '"]');
             if (contador) contador.textContent = grupos[estado].length;
@@ -167,15 +173,15 @@
         }
 
         if (!lista.length) {
-            cont.innerHTML = '<p class="columna-vacia">Ningún conductor está reportando posición.</p>';
+            cont.innerHTML = '<p class="columna-vacia">' + esc(tr('Ningún conductor está reportando posición.')) + '</p>';
             return;
         }
 
         cont.innerHTML = lista.map(function (c) {
             var codigo = c.traslado_codigo || '';
             var detalle = c.sin_senal
-                ? 'Sin señal · ' + haceCuanto(c.updated_at)
-                : (codigo !== '' ? 'Llevando ' + codigo : 'Disponible · ' + haceCuanto(c.updated_at));
+                ? tr('Sin señal') + ' · ' + haceCuanto(c.updated_at)
+                : (codigo !== '' ? tr('Llevando') + ' ' + codigo : tr('Disponible') + ' · ' + haceCuanto(c.updated_at));
 
             return '<button type="button" class="flota-fila ' +
                     (c.sin_senal ? 'flota-sin-senal' : 'flota-en-linea') + '"' +

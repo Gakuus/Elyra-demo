@@ -9,6 +9,10 @@
 (function () {
     'use strict';
 
+    function tr(texto, parametros) {
+        return window.ElyraIdioma ? window.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     /**
      * toggle: activa o desactiva un vehículo (POST /vehiculos/toggle).
      * Pide confirmación primero y, si el servidor responde ok, actualiza el
@@ -19,8 +23,8 @@
         var fila = document.querySelector('tr[data-vehiculo-id="' + id + '"]');
         var estaActivo = !!(fila && fila.querySelector('.estado-activo'));
         var mensaje = estaActivo
-            ? '¿Seguro que querés desactivar este vehículo?'
-            : '¿Seguro que querés activar este vehículo?';
+            ? tr('¿Seguro que querés desactivar este vehículo?')
+            : tr('¿Seguro que querés activar este vehículo?');
         if (!window.confirm(mensaje)) return;
 
         btn.disabled = true;
@@ -42,18 +46,18 @@
 
                 // Estado (Activo/Inactivo): se pinta el texto nuevo.
                 fila.children[4].innerHTML = activo
-                    ? '<span class="estado-activo">Activo</span>'
-                    : '<span class="estado-inactivo">Inactivo</span>';
+                    ? '<span class="estado-activo">' + tr('Activo') + '</span>'
+                    : '<span class="estado-inactivo">' + tr('Inactivo') + '</span>';
 
                 // El botón pasa a ofrecer la acción inversa.
                 btn.disabled = false;
                 btn.className = 'btn btn-sm ' + (activo ? 'btn-outline-warning' : 'btn-outline-success');
-                btn.title = activo ? 'Desactivar vehículo' : 'Activar vehículo';
+                btn.title = tr(activo ? 'Desactivar vehículo' : 'Activar vehículo');
                 btn.onclick = function () { ElyraVehiculos.toggle(id, btn); };
             })
             .catch(function () {
                 btn.disabled = false;
-                window.alert('No se pudo cambiar el estado del vehículo. Intentá de nuevo.');
+                window.alert(tr('No se pudo cambiar el estado del vehículo. Intentá de nuevo.'));
             });
     }
 

@@ -15,6 +15,10 @@
     var mod = root.ElyraTrasladoMod = root.ElyraTrasladoMod || {};
     var fmt = root.ElyraFmt;
 
+    function tr(texto, parametros) {
+        return root.ElyraIdioma ? root.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     mod.direcciones = function (ctx, api) {
         var esc = fmt.escaparHtml;
         var aj = mod.ajustes;
@@ -82,9 +86,9 @@
 
             if (!resultados.length) {
                 caja.innerHTML = '<div class="sugerencia vacia">' +
-                    'Sin resultados para <b>' + esc(consulta || '') + '</b>.<br>' +
-                    '<small>Probá con el nombre de la calle, el número, o ' +
-                    '<i class="bi bi-crosshair"></i> usar tu ubicación.</small></div>';
+                    tr('Sin resultados para') + ' <b>' + esc(consulta || '') + '</b>.<br>' +
+                    '<small>' + tr('Probá con el nombre de la calle, el número, o') + ' ' +
+                    '<i class="bi bi-crosshair"></i> ' + tr('usar tu ubicación.') + '</small></div>';
                 api.ui.ubicar(caja);
                 return;
             }
@@ -195,7 +199,7 @@
                         if (miToken !== estado.token) return;
 
                         if (json && json.ok === false) {
-                            pintar([], cual, consulta, json.error || 'No se pudo buscar.');
+                            pintar([], cual, consulta, json.error || tr('No se pudo buscar.'));
                             return;
                         }
 
@@ -211,14 +215,14 @@
 
                         var mensaje;
                         if (e && e.elyra === 'sesion') {
-                            mensaje = '<i class="bi bi-box-arrow-right"></i> Tu sesión expiró. ' +
-                                'Volvé a entrar para buscar direcciones.';
+                            mensaje = '<i class="bi bi-box-arrow-right"></i> ' + tr('Tu sesión expiró.') + ' ' +
+                                tr('Volvé a entrar para buscar direcciones.');
                         } else if (e && e.elyra === 'permiso') {
-                            mensaje = 'No tenés permiso para buscar direcciones.';
+                            mensaje = tr('No tenés permiso para buscar direcciones.');
                         } else if (e && e.elyra === 'servidor') {
-                            mensaje = 'El servidor falló (' + e.codigo + '). Probá de nuevo.';
+                            mensaje = tr('El servidor falló (:codigo). Probá de nuevo.', { codigo: e.codigo });
                         } else {
-                            mensaje = 'No se pudo buscar. Revisá la conexión.';
+                            mensaje = tr('No se pudo buscar. Revisá la conexión.');
                         }
 
                         pintar([], cual, consulta, mensaje);

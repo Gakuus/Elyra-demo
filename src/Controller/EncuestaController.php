@@ -59,7 +59,7 @@ final class EncuestaController
         // Aviso tras crear o guardar cambios (?creada=1 / ?editada=1).
         $aviso = isset($_GET['creada']) || isset($_GET['editada'])
             ? '<div class="alert alert-success py-2 alert-chico"><i class="bi bi-check-lg me-1"></i>'
-                . (isset($_GET['creada']) ? 'Encuesta creada correctamente.' : 'Cambios guardados.')
+                . (isset($_GET['creada']) ? I18n::t('Encuesta creada correctamente.') : I18n::t('Cambios guardados.'))
                 . '</div>'
             : '';
 

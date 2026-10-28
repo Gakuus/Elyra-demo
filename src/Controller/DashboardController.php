@@ -53,12 +53,12 @@ final class DashboardController
         // Guard: si no hay sesión, redirige a /login y detiene la ejecución.
         requerir_login();
 
-        // El paciente no tiene panel de gestión: su pantalla de inicio es el
-        // mapa, donde ve los traslados en los que participa. La portada pública
-        // sigue siendo alcanzable por URL (/publico/doc, /publico/encuesta).
-        if (rol_usuario() === 'paciente') {
-            header('Location: ' . base_path() . '/mapa');
-            exit;
+        // El paciente tiene su propia portada: no ve el tablero operativo del
+        // personal, sino sus traslados, sus datos y las encuestas abiertas.
+        // Los módulos de gestión siguen cerrados para su rol.
+        if (es_rol('paciente')) {
+            render_dashboard('inicio_paciente', 'Inicio', 'inicio', self::datosInicioPaciente());
+            return;
         }
 
         // render_dashboard envuelve la vista en el layout común (menu, header...).
@@ -166,10 +166,10 @@ final class DashboardController
             $sinSenal = (bool) $c['sin_senal'];
             $codigo = (string) ($c['traslado_codigo'] ?? '');
             $detalle = $sinSenal
-                ? 'Sin señal · ' . self::haceCuanto((string) $c['updated_at'])
+                ? I18n::t('Sin señal') . ' · ' . self::haceCuanto((string) $c['updated_at'])
                 : ($codigo !== ''
-                    ? 'Llevando ' . $codigo
-                    : 'Disponible · ' . self::haceCuanto((string) $c['updated_at']));
+                    ? I18n::t('Llevando') . ' ' . $codigo
+                    : I18n::t('Disponible') . ' · ' . self::haceCuanto((string) $c['updated_at']));
 
             $flota[] = [
                 'nombre'    => (string) $c['nombre'],
@@ -206,7 +206,7 @@ final class DashboardController
         }
 
         return [
-            'saludo'           => $saludo,
+            'saludo'           => I18n::t($saludo),
             'fecha_larga'      => self::fechaLarga($ahora),
             'es_gestion'       => $esGestion ? ['1'] : [],
             'es_operacion'     => $esOperacion ? ['1'] : [],
@@ -232,6 +232,298 @@ final class DashboardController
             'actividad'        => $actividad,
             'usuario_id'       => $usuarioId,
         ];
+    }
+
+    /**
+     * Portada del paciente: lo que necesita ver al entrar, sin tablero
+     * operativo. Todo sale de su propia sesión: traslados vinculados por
+     * paciente_traslado, datos de su cuenta y encuestas abiertas.
+     *
+     * No consulta la flota ni los traslados de otras personas. La misma regla
+     * de visibilidad que usa /api/mapa se repite acá con un INNER JOIN, para
+     * que la página tampoco pueda mostrar un traslado ajeno.
+     */
+    private static function datosInicioPaciente(): array
+    {
+        $pdo = db_connect();
+        $usuarioId = (int) ($_SESSION['usuario_id'] ?? 0);
+        $ahora = new DateTimeImmutable('now');
+
+        $saludo = ((int) $ahora->format('G')) < 12
+            ? 'Buenos días'
+            : (((int) $ahora->format('G')) < 20 ? 'Buenas tardes' : 'Buenas noches');
+
+        // --- Perfil -------------------------------------------------------
+        $stmtPerfil = $pdo->prepare(
+            'SELECT u.nombre, u.apellido, u.email, u.documento_identidad, u.created_at,
+                    p.username, p.telefono
+             FROM usuario u
+             INNER JOIN paciente p ON p.id = u.id
+             WHERE u.id = :id'
+        );
+        $stmtPerfil->execute(['id' => $usuarioId]);
+        $perfil = $stmtPerfil->fetch() ?: [];
+
+        $nombreCompleto = trim(
+            (string) ($perfil['nombre'] ?? '') . ' ' . (string) ($perfil['apellido'] ?? '')
+        );
+        $partesNombre = preg_split('/\s+/', $nombreCompleto) ?: [];
+        $nombre = $partesNombre !== [] ? (string) $partesNombre[0] : '';
+
+        $dato = static function ($valor) : string {
+            $texto = trim((string) ($valor ?? ''));
+            return $texto !== '' ? $texto : '—';
+        };
+
+        // --- Traslados del paciente --------------------------------------
+        // Una sola consulta: los activos se muestran como tarjetas y los
+        // terminados/cancelados van al historial. El INNER JOIN es el filtro
+        // de seguridad, igual que en obtenerDatosMapa().
+        $stmt = $pdo->prepare(
+            "SELECT t.id, t.codigo, t.origen, t.destino, t.estado, t.created_at, t.updated_at,
+                    t.hora_salida_estimada, t.hora_salida_efectiva,
+                    t.hora_llegada_destino, t.hora_inicio_retorno, t.hora_llegada_hospital,
+                    t.distancia_km, t.duracion_min,
+                    CONCAT(cu.nombre, ' ', cu.apellido) AS conductor,
+                    v.patente AS vehiculo
+             FROM traslado t
+             INNER JOIN paciente_traslado pt
+                     ON pt.traslado_id = t.id AND pt.paciente_id = :paciente
+             LEFT JOIN funcionario c ON c.id = t.conductor_id
+             LEFT JOIN usuario cu ON cu.id = c.id
+             LEFT JOIN vehiculo v ON v.id = t.vehiculo_id
+             ORDER BY t.created_at DESC"
+        );
+        $stmt->execute(['paciente' => $usuarioId]);
+        $filas = $stmt->fetchAll();
+
+        $activos = [];
+        $historial = [];
+        $completados = 0;
+        $ultimoCompletado = null;
+
+        foreach ($filas as $fila) {
+            $estado = (string) $fila['estado'];
+
+            if ($estado === 'completado') {
+                $completados++;
+                $marca = (string) ($fila['hora_llegada_hospital'] ?: $fila['created_at']);
+                if ($ultimoCompletado === null || strtotime($marca) > strtotime($ultimoCompletado)) {
+                    $ultimoCompletado = $marca;
+                }
+            }
+
+            if (in_array($estado, ['completado', 'cancelado'], true)) {
+                // El historial de la portada es un resumen; el completo está
+                // en el panel de historial del mapa.
+                if (count($historial) < 6) {
+                    $historial[] = self::filaHistorialPaciente($fila);
+                }
+                continue;
+            }
+
+            $activos[] = self::filaActivaPaciente($fila);
+        }
+
+        // El traslado más avanzado primero: lo que está en camino importa más
+        // que uno que todavía espera salida.
+        $ordenEstado = ['en_curso' => 0, 'en_destino' => 1, 'en_retorno' => 2, 'pendiente' => 3];
+        usort($activos, static function (array $a, array $b) use ($ordenEstado): int {
+            return ($ordenEstado[$a['estado']] ?? 9) <=> ($ordenEstado[$b['estado']] ?? 9)
+                ?: strcmp((string) $b['creado'], (string) $a['creado']);
+        });
+
+        // --- Encuestas abiertas ------------------------------------------
+        // Son públicas y anónimas: acá solo se ofrecen como acceso directo.
+        $encuestas = [];
+        foreach ($pdo->query(
+            'SELECT id, titulo FROM encuesta WHERE activa = 1 ORDER BY created_at DESC LIMIT 3'
+        ) as $encuesta) {
+            $encuestas[] = [
+                'id'     => (int) $encuesta['id'],
+                'titulo' => (string) $encuesta['titulo'],
+                'enlace' => base_path() . '/publico/encuesta?id=' . (int) $encuesta['id'],
+            ];
+        }
+
+        return [
+            'saludo'           => I18n::t($saludo),
+            'fecha_larga'      => self::fechaLarga($ahora),
+            'nombre'           => $nombre !== '' ? $nombre : I18n::t('Paciente'),
+            'nombre_completo'  => $nombreCompleto !== '' ? $nombreCompleto : I18n::t('Paciente'),
+            'cedula'           => $dato($perfil['documento_identidad'] ?? null),
+            'username'         => $dato($perfil['username'] ?? null),
+            'email'            => $dato($perfil['email'] ?? null),
+            'telefono'         => $dato($perfil['telefono'] ?? null),
+            'miembro_desde'    => !empty($perfil['created_at'])
+                ? date('d/m/Y', (int) strtotime((string) $perfil['created_at']))
+                : '—',
+            'total_traslados'  => count($filas),
+            'total_completados'=> $completados,
+            'total_activos'    => count($activos),
+            'ultimo_traslado'  => $ultimoCompletado !== null
+                ? date('d/m/Y', (int) strtotime($ultimoCompletado))
+                : '—',
+            'hay_activos'      => $activos !== [] ? ['1'] : [],
+            'activos'          => $activos,
+            'hay_historial'    => $historial !== [] ? ['1'] : [],
+            'historial'        => $historial,
+            'hay_encuestas'    => $encuestas !== [] ? ['1'] : [],
+            'encuestas'        => $encuestas,
+            'usuario_id'       => $usuarioId,
+        ];
+    }
+
+    /** Tarjeta del traslado activo tal como la muestra la portada del paciente. */
+    private static function filaActivaPaciente(array $t): array
+    {
+        $estado = (string) $t['estado'];
+        $conductor = trim((string) ($t['conductor'] ?? ''));
+        $vehiculo = trim((string) ($t['vehiculo'] ?? ''));
+        $recorrido = self::recorridoPaciente($t);
+        $momento = self::momentoPaciente($t);
+
+        return [
+            'codigo'           => (string) $t['codigo'],
+            'origen'           => (string) $t['origen'],
+            'destino'          => (string) $t['destino'],
+            'estado'           => $estado,
+            'estado_etiqueta'  => self::etiquetaEstado($estado),
+            'conductor'        => $conductor !== '' ? $conductor : I18n::t('Sin asignar'),
+            'vehiculo'         => $vehiculo,
+            'hay_vehiculo'     => $vehiculo !== '' ? ['1'] : [],
+            'salida_estimada'  => self::fechaHoraPaciente($t['hora_salida_estimada'] ?? null) ?: I18n::t('A confirmar'),
+            'recorrido'        => $recorrido,
+            'hay_recorrido'    => $recorrido !== '' ? ['1'] : [],
+            'momento_etiqueta' => $momento['etiqueta'],
+            'momento_valor'    => $momento['valor'],
+            'pasos'            => self::pasosPaciente($estado),
+            'creado'           => (string) $t['created_at'],
+        ];
+    }
+
+    /** Fila resumida del historial (los últimos traslados terminados). */
+    private static function filaHistorialPaciente(array $t): array
+    {
+        $estado = (string) $t['estado'];
+        $conductor = trim((string) ($t['conductor'] ?? ''));
+
+        // Para un completado interesa cuándo llegó al hospital; para un
+        // cancelado, cuándo se cerró el registro.
+        $marca = $estado === 'cancelado'
+            ? (string) ($t['updated_at'] ?: $t['created_at'])
+            : (string) ($t['hora_llegada_hospital'] ?: $t['updated_at'] ?: $t['created_at']);
+        $ts = strtotime($marca);
+
+        return [
+            'codigo'          => (string) $t['codigo'],
+            'origen'          => (string) $t['origen'],
+            'destino'         => (string) $t['destino'],
+            'estado'          => $estado,
+            'estado_etiqueta' => self::etiquetaEstado($estado),
+            'conductor'       => $conductor !== '' ? $conductor : I18n::t('Sin asignar'),
+            'fecha'           => $ts !== false ? date('d/m/Y', $ts) : '—',
+            'hora'            => $ts !== false ? date('H:i', $ts) : '',
+        ];
+    }
+
+    /** Etiqueta y valor del momento relevante según la etapa actual. */
+    private static function momentoPaciente(array $t): array
+    {
+        switch ((string) $t['estado']) {
+            case 'en_curso':
+                return [
+                    'etiqueta' => I18n::t('En camino desde'),
+                    'valor'    => self::fechaHoraPaciente($t['hora_salida_efectiva'] ?: $t['created_at']),
+                ];
+            case 'en_destino':
+                return [
+                    'etiqueta' => I18n::t('Llegó al destino'),
+                    'valor'    => self::fechaHoraPaciente($t['hora_llegada_destino'] ?: $t['created_at']),
+                ];
+            case 'en_retorno':
+                return [
+                    'etiqueta' => I18n::t('Regresando desde'),
+                    'valor'    => self::fechaHoraPaciente($t['hora_inicio_retorno'] ?: $t['created_at']),
+                ];
+            default:
+                return [
+                    'etiqueta' => I18n::t('Salida estimada'),
+                    'valor'    => self::fechaHoraPaciente($t['hora_salida_estimada'] ?? null)
+                        ?: I18n::t('A confirmar'),
+                ];
+        }
+    }
+
+    /** "12,4 km · 35 min" para la tarjeta del paciente. */
+    private static function recorridoPaciente(array $t): string
+    {
+        $partes = [];
+
+        if ($t['distancia_km'] !== null) {
+            $distancia = (float) $t['distancia_km'];
+            $partes[] = I18n::esIngles()
+                ? number_format($distancia, 1, '.', ',') . ' km'
+                : number_format($distancia, 1, ',', '.') . ' km';
+        }
+
+        if ($t['duracion_min'] !== null) {
+            $minutos = max(0, (int) round((float) $t['duracion_min']));
+            if ($minutos < 60) {
+                $partes[] = $minutos . ' min';
+            } else {
+                $horas = intdiv($minutos, 60);
+                $resto = $minutos % 60;
+                $partes[] = $resto > 0
+                    ? $horas . ' h ' . $resto . ' min'
+                    : $horas . ' h';
+            }
+        }
+
+        return implode(' · ', $partes);
+    }
+
+    /** Las cinco etapas del recorrido, con la actual marcada. */
+    private static function pasosPaciente(string $estado): array
+    {
+        $etapas = [
+            ['Pendiente',  'pendiente'],
+            ['En curso',   'en_curso'],
+            ['En destino', 'en_destino'],
+            ['En retorno', 'en_retorno'],
+            ['Completado', 'completado'],
+        ];
+
+        $indice = 0;
+        foreach ($etapas as $i => $etapa) {
+            if ($etapa[1] === $estado) {
+                $indice = $i;
+                break;
+            }
+        }
+
+        $pasos = [];
+        foreach ($etapas as $i => $etapa) {
+            $pasos[] = [
+                'etiqueta' => I18n::t($etapa[0]),
+                'clave'    => $etapa[1],
+                'clase'    => $i < $indice ? 'hecho' : ($i === $indice ? 'actual' : 'pendiente'),
+                'actual'   => $i === $indice ? ['1'] : [],
+            ];
+        }
+
+        return $pasos;
+    }
+
+    /** Fecha y hora para la portada del paciente ("27/10/2026 14:30"). */
+    private static function fechaHoraPaciente(?string $fecha): string
+    {
+        if ($fecha === null || $fecha === '') {
+            return '';
+        }
+
+        $ts = strtotime($fecha);
+        return $ts !== false ? date('d/m/Y H:i', $ts) : '';
     }
 
     /**
@@ -277,30 +569,32 @@ final class DashboardController
 
         $segundos = max(0, time() - $t);
         if ($segundos < 60) {
-            return 'recién';
+            return I18n::t('recién');
         }
         $minutos = intdiv($segundos, 60);
         if ($minutos < 60) {
-            return 'hace ' . $minutos . ' min';
+            return I18n::esIngles() ? $minutos . ' min ago' : 'hace ' . $minutos . ' min';
         }
         $horas = intdiv($minutos, 60);
         if ($horas < 24) {
-            return 'hace ' . $horas . ' h';
+            return I18n::esIngles() ? $horas . ' h ago' : 'hace ' . $horas . ' h';
         }
-        return 'hace ' . intdiv($horas, 24) . ' d';
+        return I18n::esIngles()
+            ? intdiv($horas, 24) . ' d ago'
+            : 'hace ' . intdiv($horas, 24) . ' d';
     }
 
     /** Etiqueta legible de un estado de traslado. */
     private static function etiquetaEstado(string $estado): string
     {
-        return [
+        return I18n::t([
             'pendiente'  => 'Pendiente',
             'en_curso'   => 'En curso',
             'en_destino' => 'En destino',
             'en_retorno' => 'En retorno',
             'completado' => 'Completado',
             'cancelado'  => 'Cancelado',
-        ][$estado] ?? '';
+        ][$estado] ?? '');
     }
 
     /** Iniciales (hasta dos) del nombre, para el avatar de la flota. */
@@ -323,8 +617,15 @@ final class DashboardController
         $meses = [1 => 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
             'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
-        return $dias[(int) $d->format('w')] . ' ' . (int) $d->format('j')
-            . ' de ' . $meses[(int) $d->format('n')] . ' de ' . $d->format('Y');
+        $dia = I18n::t($dias[(int) $d->format('w')]);
+        $mes = I18n::t($meses[(int) $d->format('n')]);
+
+        if (I18n::esIngles()) {
+            return $dia . ', ' . $mes . ' ' . (int) $d->format('j') . ', ' . $d->format('Y');
+        }
+
+        return $dia . ' ' . (int) $d->format('j')
+            . ' de ' . $mes . ' de ' . $d->format('Y');
     }
 
     /**
@@ -574,6 +875,7 @@ final class DashboardController
             if (!$ok) {
                 http_response_code($codigoHttp);
             }
+            $mensaje = I18n::t($mensaje);
             echo json_encode(['ok' => $ok, 'error' => $ok ? null : $mensaje, 'mensaje' => $ok ? $mensaje : null] + $extra, JSON_UNESCAPED_UNICODE);
             exit;
         };
@@ -627,7 +929,9 @@ final class DashboardController
 
         if ($exactitud !== null && $exactitud !== false) {
             if ($exactitud > self::PRECISION_MAXIMA_M) {
-                $responder(false, 'Señal GPS demasiado imprecisa (' . round($exactitud) . ' m).', [
+                $responder(false, I18n::t('Señal GPS demasiado imprecisa (:metros m).', [
+                    'metros' => round($exactitud),
+                ]), [
                     'exactitud' => round($exactitud),
                 ], 422);
             }
@@ -915,7 +1219,7 @@ final class DashboardController
         if (!$coordenadasOk($origenLat, $origenLng) || !$coordenadasOk($destinoLat, $destinoLng)) {
             header('Content-Type: application/json');
             http_response_code(400);
-            echo json_encode(['error' => 'Coordenadas inválidas'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['error' => I18n::t('Coordenadas inválidas')], JSON_UNESCAPED_UNICODE);
             exit;
         }
 
@@ -1014,7 +1318,7 @@ final class DashboardController
         if ($lat !== false && $lng !== false && $lat !== null && $lng !== null) {
             if (!GeocodeService::coordenadaValida((float) $lat, (float) $lng)) {
                 http_response_code(400);
-                echo json_encode(['ok' => false, 'error' => 'Coordenadas fuera de rango'], JSON_UNESCAPED_UNICODE);
+                echo json_encode(['ok' => false, 'error' => I18n::t('Coordenadas fuera de rango')], JSON_UNESCAPED_UNICODE);
                 exit;
             }
 
@@ -1173,6 +1477,7 @@ final class DashboardController
             if (!$ok) {
                 http_response_code($codigoHttp);
             }
+            $mensaje = I18n::t($mensaje);
             echo json_encode(['ok' => $ok, 'error' => $ok ? null : $mensaje, 'mensaje' => $ok ? $mensaje : null] + $extra, JSON_UNESCAPED_UNICODE);
             exit;
         };
@@ -1420,7 +1725,7 @@ final class DashboardController
             $responder(false, 'No se pudo guardar el traslado. Intentalo de nuevo.', [], 500);
         }
 
-        $responder(true, 'Traslado ' . $codigo . ' registrado.', [
+        $responder(true, I18n::t('Traslado :codigo registrado.', ['codigo' => $codigo]), [
             'traslado_id' => $trasladoId,
             'codigo'      => $codigo,
             'distancia_km' => $distanciaKm,
@@ -1544,6 +1849,7 @@ final class DashboardController
             if (!$ok) {
                 http_response_code($codigoHttp);
             }
+            $mensaje = I18n::t($mensaje);
             echo json_encode(['ok' => $ok, 'error' => $ok ? null : $mensaje, 'mensaje' => $ok ? $mensaje : null] + $extra, JSON_UNESCAPED_UNICODE);
             exit;
         };
@@ -1583,7 +1889,10 @@ final class DashboardController
 
         $actual = (string) $traslado['estado'];
         if (!in_array($nuevoEstado, self::TRANSICIONES[$actual] ?? [], true)) {
-            $responder(false, 'No se puede pasar de ' . $actual . ' a ' . $nuevoEstado . '.', [], 400);
+            $responder(false, I18n::t('No se puede pasar de :actual a :nuevo.', [
+                'actual' => I18n::t(self::etiquetaEstado($actual)),
+                'nuevo'  => I18n::t(self::etiquetaEstado($nuevoEstado)),
+            ]), [], 400);
         }
 
         if ($nuevoEstado === 'cancelado' && $motivo === '') {
@@ -1648,7 +1957,7 @@ final class DashboardController
             $responder(false, 'No se pudo actualizar el estado del traslado.', [], 500);
         }
 
-        $responder(true, 'Traslado ' . (string) $traslado['codigo'] . ' actualizado.',
+        $responder(true, I18n::t('Traslado :codigo actualizado.', ['codigo' => (string) $traslado['codigo']]),
             ['estado' => $nuevoEstado, 'traslado_id' => $trasladoId]);
     }
 }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="{{idioma}}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -24,11 +24,12 @@
     <link rel="apple-touch-icon" href="public/img/icono-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Elyra">
-    <link href="public/css/base.css?v=5" rel="stylesheet">
+    <link href="public/css/base.css?v=6" rel="stylesheet">
     <link href="public/css/pages/dashboard/layout.css?v=15" rel="stylesheet">
     <link href="public/css/pages/dashboard/modal.css?v=6" rel="stylesheet">
     <link href="public/css/pages/dashboard/componentes.css?v=10" rel="stylesheet">
     <link href="public/css/pages/dashboard/inicio.css?v=7" rel="stylesheet">
+    <link href="public/css/pages/dashboard/inicio_paciente.css?v=1" rel="stylesheet">
     <link href="public/css/pages/dashboard/mapa.css?v=8" rel="stylesheet">
     <link href="public/css/pages/dashboard/mapa_traslado.css?v=10" rel="stylesheet">
     <link href="public/css/pages/dashboard/usuarios.css?v=7" rel="stylesheet">
@@ -49,6 +50,7 @@
         </a>
     </div>
     <div class="usuario-encabezado">
+        {{{selector_idioma}}}
         <div class="dropdown menu-usuario">
             <button type="button" class="btn-usuario dropdown-toggle" data-bs-toggle="dropdown"
                     aria-expanded="false">
@@ -80,13 +82,11 @@
         <button type="button" class="cerrar-barra" id="btnCerrarMenu" aria-label="Cerrar menú">
             <i class="bi bi-x-lg"></i>
         </button>
-        {{^es_paciente}}
         <div class="seccion-barra">
             <div class="titulo-seccion">Panel</div>
             <a href="dashboard" class="enlace-barra{{activo_inicio}}">
                 <img src="public/img/silk/house.png" width="16" height="16" alt=""> Inicio</a>
         </div>
-        {{/es_paciente}}
 
         <div class="seccion-barra">
             <div class="titulo-seccion">Traslados</div>
@@ -101,6 +101,8 @@
                 <img src="public/img/silk/package_box.png" width="16" height="16" alt=""> Insumos</a>
             <a href="equipamiento" class="enlace-barra{{activo_equipamiento}}">
                 <img src="public/img/silk/wrench.png" width="16" height="16" alt=""> Equipamiento</a>
+            <a href="organos" class="enlace-barra{{activo_organos}}">
+                <img src="public/img/silk/heart.png" width="16" height="16" alt=""> Órganos</a>
             {{/es_gestion}}
         </div>
 
@@ -135,11 +137,9 @@
 <!-- Barra de accesos inferior (solo celular): reemplaza al menú hamburguesa.
      Los ítems se muestran según el rol, igual que la barra lateral. -->
 <nav class="nav-inferior" aria-label="Accesos rápidos">
-    {{^es_paciente}}
     <a href="dashboard" class="nav-inferior-item{{activo_inicio}}">
         <i class="bi bi-house-door"></i><span>Inicio</span>
     </a>
-    {{/es_paciente}}
     <a href="mapa" class="nav-inferior-item{{activo_mapa}}">
         <i class="bi bi-map"></i><span>Mapa</span>
     </a>
@@ -154,6 +154,9 @@
     </a>
     <a href="equipamiento" class="nav-inferior-item{{activo_equipamiento}}">
         <i class="bi bi-heart-pulse"></i><span>Equipos</span>
+    </a>
+    <a href="organos" class="nav-inferior-item{{activo_organos}}">
+        <i class="bi bi-heart"></i><span>Órganos</span>
     </a>
     <a href="documentos" class="nav-inferior-item{{activo_documentos}}">
         <i class="bi bi-file-earmark-text"></i><span>Documentos</span>
@@ -183,13 +186,14 @@
      visible solo durante la impresión vía CSS @media print). -->
 <div id="qrPrintArea"></div>
 
+{{{idioma_script}}}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
 <script>window.BASE_PATH = '{{base_path}}';</script>
-<script src="public/js/elyra.js?v=6" defer></script>
-<script src="public/js/pages/inicio.js?v=1" defer></script>
-<script src="public/js/pages/documentos.js?v=3" defer></script>
-<script src="public/js/pages/vehiculos.js?v=2" defer></script>
-<script src="public/js/pages/insumos.js?v=1" defer></script>
+<script src="public/js/elyra.js?v=7" defer></script>
+<script src="public/js/pages/inicio.js?v=2" defer></script>
+<script src="public/js/pages/documentos.js?v=4" defer></script>
+<script src="public/js/pages/vehiculos.js?v=3" defer></script>
+<script src="public/js/pages/insumos.js?v=2" defer></script>
 
 <!-- Mapa en vivo. Va partido en módulos: public/js/mapa/ arma el mapa y
      dibuja los traslados, public/js/traslado/ monta el modal de registro que
@@ -197,25 +201,25 @@
      módulos y el estado) y app.js al final (es el que junta todo). -->
 <script src="public/js/comun/formato.js?v=1" defer></script>
 <script src="public/js/mapa/nucleo.js?v=1" defer></script>
-<script src="public/js/mapa/util.js?v=1" defer></script>
+<script src="public/js/mapa/util.js?v=2" defer></script>
 <script src="public/js/mapa/iconos.js?v=1" defer></script>
 <script src="public/js/mapa/animacion.js?v=1" defer></script>
 <script src="public/js/mapa/ruta.js?v=1" defer></script>
-<script src="public/js/mapa/render.js?v=1" defer></script>
-<script src="public/js/mapa/seguimiento.js?v=1" defer></script>
-<script src="public/js/mapa/simulacion.js?v=1" defer></script>
-<script src="public/js/mapa/panel.js?v=1" defer></script>
-<script src="public/js/mapa/historial.js?v=2" defer></script>
-<script src="public/js/mapa/datos.js?v=1" defer></script>
-<script src="public/js/mapa/app.js?v=3" defer></script>
+<script src="public/js/mapa/render.js?v=2" defer></script>
+<script src="public/js/mapa/seguimiento.js?v=2" defer></script>
+<script src="public/js/mapa/simulacion.js?v=2" defer></script>
+<script src="public/js/mapa/panel.js?v=2" defer></script>
+<script src="public/js/mapa/historial.js?v=3" defer></script>
+<script src="public/js/mapa/datos.js?v=2" defer></script>
+<script src="public/js/mapa/app.js?v=4" defer></script>
 
 <script src="public/js/traslado/nucleo.js?v=1" defer></script>
-<script src="public/js/traslado/ui.js?v=1" defer></script>
-<script src="public/js/traslado/extremos.js?v=1" defer></script>
-<script src="public/js/traslado/direcciones.js?v=1" defer></script>
-<script src="public/js/traslado/pacientes.js?v=1" defer></script>
+<script src="public/js/traslado/ui.js?v=2" defer></script>
+<script src="public/js/traslado/extremos.js?v=2" defer></script>
+<script src="public/js/traslado/direcciones.js?v=2" defer></script>
+<script src="public/js/traslado/pacientes.js?v=2" defer></script>
 <script src="public/js/traslado/ruta.js?v=1" defer></script>
-<script src="public/js/traslado/modal.js?v=2" defer></script>
-<script src="public/js/traslado/app.js?v=1" defer></script>
+<script src="public/js/traslado/modal.js?v=3" defer></script>
+<script src="public/js/traslado/app.js?v=2" defer></script>
 </body>
 </html>

@@ -60,6 +60,10 @@
 - ABM de equipamiento con control de stock.
 - Activar/desactivar equipamiento (solo admin).
 
+### Gestion de organos
+- ABM de organos para traslado con control de stock.
+- Activar/desactivar organos (solo admin).
+
 ### Gestion de usuarios
 - Creacion de usuarios, busqueda por cedula o nombre y ficha con edicion de datos.
 - Gestion de codigos de funcionario para el registro.
@@ -71,12 +75,37 @@
 
 ### Panel de administracion
 - Dashboard con acceso diferenciado por rol.
-- Menu lateral con secciones: Inicio, Mapa, Vehiculos, Insumos, Equipamiento, Documentos, Encuestas, Usuarios.
+- Menu lateral con secciones: Inicio, Mapa, Vehiculos, Insumos, Equipamiento, Organos, Documentos, Encuestas, Usuarios.
 
 ### Pagina publica
 - Home publico con informacion del hospital.
 - Vista de documentos escaneando QR.
 - Formulario de registro para pacientes.
+
+### Idiomas (espanol / ingles)
+- Interfaz completa en espanol o ingles, incluido el panel, los modulos y las vistas publicas.
+- Selector ES | EN en el encabezado y en las paginas de login, registro y acceso publico.
+- Preferencia persistida en sesion y cookie, con deteccion automatica del idioma del navegador.
+- Diccionario propio en `src/lang/en.php` (sin servicios externos de traduccion).
+
+### Accesibilidad
+- Widget propio (sin servicios externos) en todas las paginas: boton flotante y panel de preferencias.
+- Tamano de texto en 5 niveles (110% a 200%), alto contraste, inversion de colores y escala de grises.
+- Fuente de lectura facil, espaciado de texto, resaltado de enlaces, encabezados y foco, cursor grande, guia de lectura, pausa de animaciones y ocultamiento de imagenes.
+- Lectura en voz alta con la Web Speech API: pagina completa, seleccion o bloque al hacer clic, con idioma `es-UY` / `en-US`.
+- Preferencias persistidas en `localStorage` (`elyra_accesibilidad_v1`) y aplicadas antes del primer pintado.
+- Atajo `Alt + A` para abrir o cerrar; `Escape` cierra; el foco queda atrapado dentro del panel.
+- El panel de accesibilidad queda excluido de los filtros de color para que siga siendo legible en cualquier modo; el chat sí recibe todos los efectos (tamaño, contraste, grises, inversión, fuente, espaciado y ocultamiento de avatares).
+
+### Chatbot de Elyra (IA gratuita)
+- La mascota Elyra (dragon amarillo con sombrero de mago) responde en todas las paginas: panel, login, registro, encuesta publica y 404.
+- Proveedor gratuito configurable: Groq, OpenRouter, Gemini u otro compatible con OpenAI. La clave se usa solo en el servidor.
+- Respuestas en el idioma activo (ES/EN) y con datos reales segun el rol: agregados para admin/superadmin, traslados propios para conductor/copiloto y paciente. Los visitantes solo reciben informacion general.
+- Nunca expone nombres de pacientes, documentos, correos ni credenciales. Si el proveedor falla, muestra un error claro en lugar de inventar una respuesta.
+- Sin clave el widget aparece igual, avisa que falta configurarlo y deshabilita la entrada.
+- Conversacion por pestana en `sessionStorage`, atajo `Alt + M`, `Escape` para cerrar, foco atrapado y sugerencias iniciales.
+- Respeta las preferencias de accesibilidad: tamano de texto, contraste, inversion, escala de grises, fuente legible, espaciado, resaltado de encabezados y ocultamiento de imagenes. La mascota del boton se mantiene visible para poder abrir el chat; los avatares internos se ocultan.
+- Limites: 600 caracteres por mensaje, 8 mensajes de contexto, 400 tokens de salida, 25 s de espera y 40 consultas cada 5 minutos por IP.
 
 ---
 
@@ -106,10 +135,12 @@
 ├── public/
 │   ├── css/
 │   │   ├── base.css            → Estilos globales
+│   │   ├── accesibilidad.css   → Widget y preferencias de accesibilidad
+│   │   ├── chatbot.css         → Mascota y panel de chat
 │   │   └── pages/              → Estilos por seccion
 │   ├── js/
 │   │   ├── elyra.js            → Funciones generales
-│   │   ├── comun/              → Utilidades compartidas
+│   │   ├── comun/              → Utilidades compartidas (idioma.js, accesibilidad.js, chatbot.js)
 │   │   ├── mapa/               → Modulos del mapa en vivo
 │   │   ├── traslado/           → Modal de registro de traslado
 │   │   └── pages/              → JS por modulo
@@ -118,7 +149,12 @@
 │   └── uploads/                → Reservada para archivos públicos (sin uso hoy)
 ├── src/
 │   ├── Auth.php                → Autenticacion (login, registro, sesion)
+│   ├── Accesibilidad.php       → Widget de accesibilidad (inyeccion y HTML)
+│   ├── Chatbot.php             → Mascota Elyra: widget, proveedor de IA y contexto por rol
+│   ├── I18n.php                → Motor de idiomas (espanol / ingles)
 │   ├── helpers.php             → Funciones auxiliares (render, guards, CSRF, tokens)
+│   ├── lang/
+│   │   └── en.php              → Diccionario espanol → ingles
 │   ├── MailService.php         → Envio de correo (PHPMailer sobre SMTP)
 │   ├── GeocodeService.php      → Texto <-> coordenadas (Nominatim)
 │   ├── GeoapifyService.php     → Geocodificacion/ruteo (Geoapify)
@@ -126,6 +162,7 @@
 │   ├── InterseccionService.php → Intersecciones de calles (Overpass)
 │   └── Controller/
 │       ├── AuthController.php
+│       ├── ChatController.php          → Endpoint JSON del chatbot (/api/chat)
 │       ├── DashboardController.php     → Panel, mapa, traslados y APIs
 │       ├── DocumentoController.php
 │       ├── DocumentoArchivoController.php
@@ -137,8 +174,11 @@
 │       ├── EncuestaResultadosController.php
 │       ├── EquipamientoController.php
 │       ├── EquipamientoData.php        → Trait de datos (equipamiento)
+│       ├── I18nController.php          → Selector y API de idioma
 │       ├── InsumoController.php
 │       ├── InsumoData.php              → Trait de datos (insumos)
+│       ├── OrganoController.php
+│       ├── OrganoData.php              → Trait de datos (organos)
 │       ├── PerfilController.php        → Perfil propio (/perfil)
 │       ├── UsuarioController.php
 │       ├── UsuarioData.php             → Trait de datos (usuarios)
@@ -212,7 +252,7 @@ mysql -u root -p elyra < database/esquema.sql
 | `admin` | Gestion completa: documentos, encuestas, vehiculos, insumos, equipamiento, usuarios y codigos. |
 | `conductor` | Traslados propios, reporte de ubicacion GPS y gestion de vehiculos. |
 | `copiloto` | Traslados propios y participacion en el mapa. |
-| `paciente` | Solo el mapa (sus traslados); acceso publico via QR a documentos y encuestas. |
+| `paciente` | Portada propia con sus traslados, sus datos y las encuestas abiertas; puede seguirlos en el mapa. Acceso publico via QR a documentos y encuestas. |
 
 ---
 
@@ -387,6 +427,78 @@ php -S 127.0.0.1:8000
 # La app recarga automaticamente los cambios en PHP.
 ```
 
+### Idiomas
+
+El espanol es el idioma de origen: los textos se escriben directamente en espanol y, cuando el idioma activo es ingles, se traducen con el diccionario `src/lang/en.php`.
+
+- En PHP: `I18n::t('texto')`. Acepta parametros: `I18n::t('Traslado :codigo', ['codigo' => $codigo])`.
+- En plantillas: `{{t('texto')}}` (escapado) o `{{{t('texto')}}}` (HTML crudo).
+- En JavaScript: `window.ElyraIdioma.t('texto')`. El script tambien traduce automaticamente el DOM que se inserta despues y los `alert` / `confirm` / `prompt`.
+- Para agregar un texto nuevo, sumalo como clave en `src/lang/en.php`; si falta, se muestra el espanol.
+- El idioma se guarda en `$_SESSION['idioma']` y en la cookie `elyra_idioma`. Sin preferencia guardada se usa `Accept-Language` y, si no hay datos, espanol.
+
+El selector usa `GET /idioma?lang=es|en&volver=<ruta>`. La API `GET/POST /api/idioma` responde JSON; el POST exige el token CSRF global.
+
+### Implementacion de accesibilidad
+
+El widget se inyecta automaticamente en `render_vista()` y `pagina_404()` (`src/helpers.php`), despues de traducir el HTML, asi que aparece en todas las paginas completas sin editar cada plantilla.
+
+- `src/Accesibilidad.php`: HTML, textos traducidos y script temprano del `<head>`.
+- `public/css/accesibilidad.css`: UI del panel y efectos sobre el documento.
+- `public/js/comun/accesibilidad.js`: estado, persistencia, teclado y lectura en voz alta.
+
+Las preferencias se guardan en `localStorage` con la clave `elyra_accesibilidad_v1`. El script temprano las aplica como atributos `data-acc-*` en `<html>` antes del primer pintado, y el CSS define los efectos. El tamano de texto usa `zoom` sobre `<html>` y contraescala el panel para que siempre entre en pantalla; en celular el encabezado y la barra inferior se mantienen estables y los formularios pasan a una columna cuando hace falta. No hay pedidos a servicios externos: la voz usa `speechSynthesis` del navegador y, si no esta disponible, los botones de lectura se deshabilitan y se muestra una nota.
+
+### Implementacion del chatbot
+
+El widget se inyecta en `render_vista()` y `pagina_404()` (`src/helpers.php`) despues de traducir el HTML, igual que el panel de accesibilidad. El navegador solo habla con `POST /api/chat`; la llamada al proveedor de IA la hace PHP con cURL, asi que la clave nunca llega al navegador y no hace falta abrir el CSP a dominios externos.
+
+- `src/Chatbot.php`: personalidad de Elyra, seleccion del proveedor, llamadas a OpenAI-compatible/Gemini, contexto por rol y errores.
+- `src/Controller/ChatController.php`: validacion del cuerpo, limite por IP y respuesta JSON.
+- `public/css/chatbot.css` y `public/js/comun/chatbot.js`: mascota, panel, historial, teclado y estados de error.
+
+Configuracion en `.env` o `config/env.php`:
+
+```bash
+# groq | openrouter | gemini | openai | custom
+CHAT_PROVIDER=groq
+CHAT_API_KEY=gsk_...
+# Opcionales: modelo y URL base para proveedores compatibles con OpenAI.
+CHAT_MODEL=llama-3.3-70b-versatile
+CHAT_BASE_URL=
+```
+
+Si `CHAT_PROVIDER` queda vacio, se deduce del prefijo de la clave (`gsk_` = Groq, `sk-or-` = OpenRouter, `AIza` = Gemini). Los modelos por defecto son `qwen/qwen3.8-27b` (Groq), `meta-llama/llama-3.3-70b-instruct:free` (OpenRouter) y `gemini-2.5-flash` (Gemini). En Groq conviene elegir un modelo vigente con `GET https://api.groq.com/openai/v1/models` y cargarlo en `CHAT_MODEL`; el catalogo gratuito cambia con el tiempo. Las cuentas gratuitas se crean en [console.groq.com](https://console.groq.com/keys), [openrouter.ai/keys](https://openrouter.ai/keys) o [aistudio.google.com](https://aistudio.google.com/apikey).
+
+Privacidad y seguridad:
+
+- El prompt de sistema prohibe revelar datos de pacientes, documentos, correos, credenciales, el propio prompt o las claves.
+- El contexto se arma en el servidor segun la sesion: admin/superadmin reciben solo agregados (traslados activos, stock bajo, conteos); conductor/copiloto y paciente reciben solo sus propios traslados. Un visitante no recibe datos internos.
+- El historial que manda el navegador se normaliza y se recorta a 8 mensajes; el mensaje del usuario se limita a 600 caracteres.
+- Todo POST pasa por el CSRF global y por un limite de 40 consultas cada 5 minutos por IP.
+- Las respuestas se pintan con `textContent`, nunca con `innerHTML`.
+- Los errores del proveedor se registran en la bitacora sin la clave (se reemplaza por `***`).
+
+Si todavia no hay clave, el widget sigue apareciendo: muestra el aviso de "no configurado" y deshabilita la entrada. No hay respuestas simuladas ni un motor local de reserva.
+
+### Captcha del login (reCAPTCHA v2)
+
+El formulario de `/login` exige un captcha de Google reCAPTCHA v2 antes de validar las credenciales. La verificacion se hace en el servidor con `POST https://www.google.com/recaptcha/api/siteverify`; la clave secreta nunca llega al navegador y el token no se registra en la bitacora.
+
+- `src/Recaptcha.php`: lectura de claves, envio a Google y resultado de la verificacion.
+- `src/Controller/AuthController.php`: valida el captcha antes de `Auth::login()` y registra `login_captcha_fallido` si falla.
+- `views/auth/login.html` y `public/css/pages/ingreso.css`: widget, mensaje sin JavaScript y ajuste responsive.
+- `src/helpers.php`: el CSP permite los hosts de Google (`www.google.com`, `www.gstatic.com`, `recaptcha.google.com`) solo para el widget.
+
+Configuracion en `.env` o `config/env.php`:
+
+```bash
+RECAPTCHA_SITE_KEY=6L...
+RECAPTCHA_SECRET_KEY=6L...
+```
+
+Las claves se crean en [google.com/recaptcha/admin](https://www.google.com/recaptcha/admin) eligiendo reCAPTCHA v2 ("No soy un robot") y agregando el dominio de la app. Si falta cualquiera de las dos, el captcha no se muestra y el login funciona como antes: eso permite desarrollar sin claves, pero en produccion conviene configurarlo. Si Google no responde o el token es invalido, el login se rechaza con un mensaje generico y se mantiene el rate limiting por IP y por usuario.
+
 ---
 
 ## API de rutas
@@ -408,12 +520,16 @@ php -S 127.0.0.1:8000
 | GET | `/publico/archivo` | DocumentoPublicoController | Descargar archivo via QR (token HMAC) |
 | GET | `/publico/encuesta` | EncuestaPublicaController | Mostrar encuesta |
 | POST | `/publico/encuesta` | EncuestaPublicaController | Responder encuesta |
+| GET | `/idioma` | I18nController | Cambiar idioma y volver a la pagina anterior (`?lang=es\|en`) |
+| GET | `/api/idioma` | I18nController | Consultar el idioma activo (JSON) |
+| POST | `/api/idioma` | I18nController | Cambiar el idioma activo (JSON, requiere CSRF) |
+| POST | `/api/chat` | ChatController | Consultar al chatbot de Elyra (JSON, requiere CSRF) |
 
 ### Autenticadas (requieren sesion)
 
 | Metodo | Ruta | Controlador | Descripcion |
 |---|---|---|---|
-| GET | `/dashboard` | DashboardController | Panel principal (paciente redirige a `/mapa`) |
+| GET | `/dashboard` | DashboardController | Panel principal (cada rol ve su portada; el paciente ve sus traslados, datos y encuestas) |
 | POST | `/logout` | AuthController | Cerrar sesion |
 | GET | `/perfil` | PerfilController | Perfil propio (datos y cambio de contrasena) |
 | POST | `/perfil/datos` | PerfilController | Actualizar datos de contacto |
@@ -460,6 +576,12 @@ php -S 127.0.0.1:8000
 | GET | `/equipamiento/editar` | EquipamientoController | Formulario de edicion (`?id=`) |
 | POST | `/equipamiento/editar` | EquipamientoController | Procesar edicion |
 | POST | `/equipamiento/toggle` | EquipamientoController | Activar/desactivar |
+| GET | `/organos` | OrganoController | Listado de organos |
+| GET | `/organos/agregar` | OrganoController | Formulario de alta |
+| POST | `/organos/agregar` | OrganoController | Procesar alta |
+| GET | `/organos/editar` | OrganoController | Formulario de edicion (`?id=`) |
+| POST | `/organos/editar` | OrganoController | Procesar edicion |
+| POST | `/organos/toggle` | OrganoController | Activar/desactivar |
 | GET | `/usuarios` | UsuarioController | Listado de usuarios |
 | GET | `/usuarios/buscar` | UsuarioController | Busqueda AJAX (`?q=`) |
 | GET | `/usuarios/ver` | UsuarioController | Ficha de usuario (`?id=`) |

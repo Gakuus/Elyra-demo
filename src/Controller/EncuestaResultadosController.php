@@ -54,7 +54,7 @@ final class EncuestaResultadosController
             ];
         }
 
-        render_dashboard('encuestas_resultados', 'Resultados — ' . $encuesta['titulo'], 'encuestas', [
+        render_dashboard('encuestas_resultados', I18n::t('Resultados') . ' — ' . $encuesta['titulo'], 'encuestas', [
             'encuesta_titulo' => htmlspecialchars($encuesta['titulo']),
             'encuesta_descripcion' => htmlspecialchars($encuesta['descripcion'] ?? ''),
             'cant_preguntas' => (string) count($preguntas),

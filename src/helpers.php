@@ -105,7 +105,7 @@ function denegar(): void
     log_seguridad('acceso_denegado');
     header('Content-Type: application/json');
     http_response_code(403);
-    echo json_encode(['ok' => false, 'error' => 'Permiso denegado.']);
+    echo json_encode(['ok' => false, 'error' => I18n::t('Permiso denegado.')]);
     exit;
 }
 
@@ -316,10 +316,31 @@ function log_seguridad(string $evento, array $contexto = []): void
 }
 
 /**
+ * Ruta de la petición actual, relativa a la raíz de la app (sin base_path ni
+ * query). Se usa para ajustar cabeceras según la página; por ejemplo, el CSP
+ * del login necesita hosts de Google que el resto del sitio no usa.
+ */
+function ruta_actual(): string
+{
+    $ruta = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
+    $ruta = is_string($ruta) ? $ruta : '';
+    $base = base_path();
+
+    if ($base !== '' && str_starts_with($ruta, $base)) {
+        $ruta = substr($ruta, strlen($base));
+    }
+
+    return $ruta === '' ? '/' : $ruta;
+}
+
+/**
  * Envía las cabeceras de seguridad de la respuesta. La CSP es permisiva a
  * propósito: el proyecto usa CDNs (Bootstrap, Leaflet) e inline handlers, así
  * que permite 'unsafe-inline' y esos hosts, pero igual cierra default-src,
- * object-src, frame-ancestors y form-action.
+ * object-src, frame-ancestors y form-action. Google reCAPTCHA v2 necesita
+ * cargar su script (www.google.com / www.gstatic.com) y su iframe
+ * (www.google.com / recaptcha.google.com), pero solo en el login: el resto
+ * del sitio no los autoriza.
  */
 function cabeceras_seguridad(): void
 {
@@ -341,6 +362,12 @@ function cabeceras_seguridad(): void
         header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
     }
 
+    // El widget de reCAPTCHA solo se carga en /login. En el resto del sitio
+    // no hace falta abrir el CSP a Google, así que se mantiene cerrado.
+    $esLogin = ruta_actual() === '/login';
+    $googleScript = $esLogin ? ' https://www.google.com https://www.gstatic.com' : '';
+    $googleFrame  = $esLogin ? ' https://www.google.com https://recaptcha.google.com' : '';
+
     header(
         "Content-Security-Policy: "
         . "default-src 'self'; "
@@ -348,11 +375,12 @@ function cabeceras_seguridad(): void
         . "object-src 'self'; "
         . "frame-ancestors 'self'; "
         . "form-action 'self'; "
-        . "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; "
+        . "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com" . $googleScript . "; "
         . "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
         . "font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; "
         . "img-src 'self' data: blob: https:; "
-        . "connect-src 'self' https:;"
+        . "connect-src 'self' https:; "
+        . "frame-src 'self'" . $googleFrame . ";"
     );
 }
 
@@ -366,6 +394,21 @@ function cabeceras_seguridad(): void
  */
 function reemplazar_marcadores(string $html, array $datos): string
 {
+    // Traducciones inline: {{t('texto')}} escapa y {{{t('texto')}}} deja el
+    // HTML crudo (para mensajes que incluyen <strong>, enlaces, etc.).
+    if (class_exists('I18n', false)) {
+        $html = preg_replace_callback(
+            '/\{\{\{t\((["\'])(.*?)\1\)\}\}\}/s',
+            static fn(array $m): string => I18n::t($m[2]),
+            $html
+        );
+        $html = preg_replace_callback(
+            '/\{\{t\((["\'])(.*?)\1\)\}\}/s',
+            static fn(array $m): string => htmlspecialchars(I18n::t($m[2]), ENT_QUOTES, 'UTF-8'),
+            $html
+        );
+    }
+
     foreach ($datos as $clave => $valor) {
         $rx = preg_quote($clave, '/');
 
@@ -483,8 +526,24 @@ function render_vista(string $archivo, array $datos): void
         return;
     }
     // base_path y csrf_token se inyectan siempre: todas las vistas los usan.
-    $datos = ['base_path' => base_path(), 'csrf_token' => csrf_token()] + $datos;
-    echo reemplazar_marcadores($html, $datos);
+    // Los datos de idioma van primero para que el controlador pueda pisarlos
+    // (por ejemplo, el selector del encabezado del dashboard).
+    $datos = array_merge(I18n::datos(), $datos);
+    $datos['base_path'] = base_path();
+    $datos['csrf_token'] = csrf_token();
+    $html = I18n::traducirHtml(reemplazar_marcadores($html, $datos));
+
+    // Botón y panel de accesibilidad en todas las páginas completas.
+    if (class_exists('Accesibilidad', false)) {
+        $html = Accesibilidad::inyectar($html);
+    }
+
+    // Chatbot de la mascota Elyra, también en todas las páginas completas.
+    if (class_exists('Chatbot', false)) {
+        $html = Chatbot::inyectar($html);
+    }
+
+    echo $html;
 }
 
 /**
@@ -494,21 +553,34 @@ function render_vista(string $archivo, array $datos): void
 function render_contenido(string $vista, array $datos): string
 {
     $html = file_get_contents(__DIR__ . '/../views/dashboard/fragmentos/' . $vista . '.html');
-    return $html !== false ? reemplazar_marcadores($html, $datos) : '';
+    return $html !== false ? I18n::traducirHtml(reemplazar_marcadores($html, $datos)) : '';
 }
 
 /** Página de error 404 del sistema. */
 function pagina_404(): void
 {
     http_response_code(404);
-    $html = '<!DOCTYPE html><html lang="es"><head>'
+    $idioma = I18n::idioma();
+    $titulo = I18n::t('404 — Página no encontrada');
+    $html = '<!DOCTYPE html><html lang="' . htmlspecialchars($idioma) . '"><head>'
         . '<meta charset="UTF-8">'
         . '<base href="' . htmlspecialchars(base_path() . '/') . '">'
-        . '<title>404 — Página no encontrada</title>'
-        . '<link href="css/base.css?v=' . time() . '" rel="stylesheet">'
+        . '<title>' . htmlspecialchars($titulo) . '</title>'
+        . '<link href="public/css/base.css" rel="stylesheet">'
         . '</head><body>'
-        . '<h1 class="pagina-404">404 — Página no encontrada</h1>'
+        . I18n::selector('flotante')
+        . '<h1 class="pagina-404">' . htmlspecialchars($titulo) . '</h1>'
+        . I18n::script()
         . '</body></html>';
+
+    if (class_exists('Accesibilidad', false)) {
+        $html = Accesibilidad::inyectar($html);
+    }
+
+    if (class_exists('Chatbot', false)) {
+        $html = Chatbot::inyectar($html);
+    }
+
     echo $html;
 }
 
@@ -533,14 +605,15 @@ function render_dashboard(string $vista, string $titulo, string $seccion, array 
     // datos, el cleanup de reemplazar_marcadores() borra el {{csrf_token}} de
     // los formularios de la vista y los deja con value="" — o sea, todos los
     // <form method="post"> del dashboard rebotaban con 403.
-    $contenido = reemplazar_marcadores($contenido, [
-        'usuario'    => $usuario,
-        'csrf_token' => csrf_token(),
-    ] + $datos);
+    $contenido = reemplazar_marcadores($contenido, array_merge(
+        I18n::datos(),
+        $datos,
+        ['usuario' => $usuario, 'csrf_token' => csrf_token()]
+    ));
 
     // Enlace activo del menú según la sección en la que el usuario está parado.
     // Cada sección recibe sus claves activo_* (y el resto en '').
-    $secciones = ['inicio', 'mapa', 'encuestas', 'documentos', 'vehiculos', 'usuarios', 'insumos', 'equipamiento'];
+    $secciones = ['inicio', 'mapa', 'encuestas', 'documentos', 'vehiculos', 'usuarios', 'insumos', 'equipamiento', 'organos'];
     $activo = [];
     foreach ($secciones as $s) {
         $activo['activo_' . $s] = $s === $seccion ? ' active' : '';
@@ -548,18 +621,24 @@ function render_dashboard(string $vista, string $titulo, string $seccion, array 
 
     // Visibilidad del menú según el rol: los bloques {{#es_gestion}} y
     // {{#es_vehiculo}} del layout solo se muestran cuando corresponda.
-    // es_paciente apaga "Inicio": el paciente no tiene panel, su /dashboard lo
-    // manda al mapa, así que el enlace solo lo haría rebotar.
+    // "Inicio" está disponible para todos: el paciente tiene su propia portada
+    // (inicio_paciente) y el personal, el tablero operativo.
     $menu = [
         'es_gestion'  => es_gestion() ? ['1'] : [],
         'es_vehiculo' => es_rol('admin', 'superadmin', 'conductor') ? ['1'] : [],
         'es_paciente' => es_rol('paciente') ? ['1'] : [],
     ];
 
-    render_vista($base . 'layout.html', array_merge([
-        'titulo'    => $titulo,
-        'usuario'   => $usuario,
-        'contenido' => $contenido,
-        'base_path' => base_path(),
-    ], $activo, $menu));
+    render_vista($base . 'layout.html', array_merge(
+        I18n::datos(),
+        [
+            'titulo'          => I18n::t($titulo),
+            'usuario'         => $usuario,
+            'contenido'       => $contenido,
+            'base_path'       => base_path(),
+            'selector_idioma' => I18n::selector('dashboard'),
+        ],
+        $activo,
+        $menu
+    ));
 }

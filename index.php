@@ -123,14 +123,20 @@ if ($staticRel !== '/' && !str_contains($staticRel, '.php')) {
 // Los require_once incluyen cada archivo una sola vez (evita redefiniciones).
 require_once __DIR__ . '/config/database.php';      // Función db_connect().
 require_once __DIR__ . '/src/Auth.php';
+require_once __DIR__ . '/src/Recaptcha.php';          // Captcha del login (Google reCAPTCHA v2).
 require_once __DIR__ . '/src/MailService.php';             // Clase Auth (login, registro).
 require_once __DIR__ . '/src/helpers.php';          // Funciones auxiliares (base_path, render...).
+require_once __DIR__ . '/src/I18n.php';             // Traducciones de la interfaz (español / inglés).
+require_once __DIR__ . '/src/Accesibilidad.php';    // Botón y panel de accesibilidad.
+require_once __DIR__ . '/src/Chatbot.php';          // Mascota Elyra: widget y proveedor de IA.
 require_once __DIR__ . '/src/AlmacenPdf.php';        // PDFs de documentos: disco o BD (PDF_DRIVER).
 require_once __DIR__ . '/src/GeoapifyService.php';    // Geoapify (mapa/rutas) con caída a OSRM.
 require_once __DIR__ . '/src/InterseccionService.php'; // "calle A y calle B" -> punto de cruce (Overpass).
 require_once __DIR__ . '/src/RutaService.php';      // Rutas reales por calles (OSRM) con caché.
 require_once __DIR__ . '/src/GeocodeService.php';    // Texto <-> coordenadas (Nominatim) con caché.
 require_once __DIR__ . '/src/Controller/AuthController.php';
+require_once __DIR__ . '/src/Controller/I18nController.php';
+require_once __DIR__ . '/src/Controller/ChatController.php';   // Endpoint JSON del chatbot.
 require_once __DIR__ . '/src/Controller/DashboardController.php';
 require_once __DIR__ . '/src/Controller/DocumentoData.php';             // Trait de datos del módulo de documentos.
 require_once __DIR__ . '/src/Controller/DocumentoArchivoController.php';
@@ -145,6 +151,8 @@ require_once __DIR__ . '/src/Controller/InsumoData.php';                 // Trai
 require_once __DIR__ . '/src/Controller/InsumoController.php';
 require_once __DIR__ . '/src/Controller/EquipamientoData.php';           // Trait de datos del módulo de equipamiento.
 require_once __DIR__ . '/src/Controller/EquipamientoController.php';
+require_once __DIR__ . '/src/Controller/OrganoData.php';                 // Trait de datos del módulo de órganos.
+require_once __DIR__ . '/src/Controller/OrganoController.php';
 require_once __DIR__ . '/src/Controller/UsuarioData.php';                 // Trait de datos del módulo de usuarios.
 require_once __DIR__ . '/src/Controller/UsuarioController.php';
 require_once __DIR__ . '/src/Controller/UsuarioEdicionController.php';
@@ -165,6 +173,9 @@ cabeceras_seguridad();
 // Inicia (o reanuda) la sesión para que $_SESSION esté disponible en todo.
 Auth::iniciarSesion();
 
+// Idioma de la interfaz: sesión → cookie → idioma del navegador.
+I18n::iniciar();
+
 // ------------------------------------------------------------------
 // 6) Rutas
 // ------------------------------------------------------------------
@@ -183,7 +194,7 @@ $path = $staticRel;
 if ($method === 'POST' && !csrf_valido()) {
     log_seguridad('csrf_invalido');
     http_response_code(403);
-    exit('403 — Token de seguridad inválido. Recargá la página e intentá de nuevo.');
+    exit(I18n::t('403 — Token de seguridad inválido. Recargá la página e intentá de nuevo.'));
 }
 
 // switch(true) es un "switch de condiciones": evalúa cada case en orden y
@@ -196,6 +207,21 @@ switch (true) {
         || $path === '/login' || $path === '/registro' || $path === '/logout'
         || $path === '/recuperar' || $path === '/restablecer':
         AuthController::dispatch($path, $method);
+        break;
+
+    // Cambio de idioma (selector) y API JSON del idioma activo.
+    case $path === '/idioma':
+        I18nController::cambiar();
+        break;
+
+    case $path === '/api/idioma':
+        I18nController::api();
+        break;
+
+    // Chatbot de la mascota Elyra. El POST ya pasó por el CSRF global; el
+    // controlador valida el cuerpo, limita consultas por IP y responde JSON.
+    case $path === '/api/chat':
+        ChatController::api();
         break;
 
     // Panel de gestión.
@@ -287,6 +313,12 @@ switch (true) {
     // activar/desactivar. Solo accesible para admin/superadmin (guards internos).
     case str_starts_with($path, '/equipamiento'):
         EquipamientoController::dispatch($path, $method);
+        break;
+
+    // Módulo de órganos: listado, alta, edición y activar/desactivar.
+    // Solo accesible para admin/superadmin (guards internos).
+    case str_starts_with($path, '/organos'):
+        OrganoController::dispatch($path, $method);
         break;
 
     // Módulo de documentos: delega en el dispatch interno del controlador,

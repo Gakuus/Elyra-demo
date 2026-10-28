@@ -19,6 +19,10 @@
     var mod = root.ElyraTrasladoMod = root.ElyraTrasladoMod || {};
     var fmt = root.ElyraFmt;
 
+    function tr(texto, parametros) {
+        return root.ElyraIdioma ? root.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     mod.extremos = function (ctx, api) {
         var esc = fmt.escaparHtml;
         var urls = root.ElyraMapaMod.urls;
@@ -142,12 +146,12 @@
                         if (res && !ctx.editando[cual]) {
                             fijar(cual, res.lat, res.lng, res.label);
                         } else if (!estado.label) {
-                            fijar(cual, estado.lat, estado.lng, 'Punto en el mapa');
+                            fijar(cual, estado.lat, estado.lng, tr('Punto en el mapa'));
                         }
                     })
                     .catch(function () {
                         if (!estado.label) {
-                            fijar(cual, estado.lat, estado.lng, 'Punto en el mapa');
+                            fijar(cual, estado.lat, estado.lng, tr('Punto en el mapa'));
                         }
                     });
             }, mod.ajustes.esperaReversa);

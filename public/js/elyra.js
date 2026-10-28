@@ -7,6 +7,10 @@
 (function () {
     'use strict';
 
+    function tr(texto, parametros) {
+        return window.ElyraIdioma ? window.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     /**
      * setInputFilter: restringe lo que se puede escribir en un campo.
      * Escucha varios eventos (teclear, mouse, pegar/drop, foco) y, si el
@@ -283,7 +287,7 @@
         document.querySelectorAll('[data-numeric]').forEach(function (el) {
             window.Elyra.setInputFilter(el, function (value) {
                 return /^\d*$/.test(value);
-            }, 'Solo se permiten números');
+            }, tr('Solo se permiten números'));
         });
     });
 })();

@@ -11,6 +11,11 @@
 
     var mod = root.ElyraMapaMod = root.ElyraMapaMod || {};
     var cfg = mod.config;
+    var locale = (root.ElyraIdioma && root.ElyraIdioma.actual === 'en') ? 'en-GB' : 'es-UY';
+
+    function tr(texto, parametros) {
+        return root.ElyraIdioma ? root.ElyraIdioma.t(texto, parametros) : texto;
+    }
 
     mod.historial = function (ctx, api) {
         var util = mod.util;
@@ -29,8 +34,8 @@
             if (isNaN(d.getTime())) return '';
 
             return '<div class="fecha-historial"><i class="bi bi-calendar3"></i> ' +
-                d.toLocaleDateString('es-UY', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
-                ' · ' + d.toLocaleTimeString('es-UY', { hour: '2-digit', minute: '2-digit' }) +
+                d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+                ' · ' + d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) +
                 '</div>';
         }
 
@@ -69,11 +74,11 @@
 
             dom.historialEnCurso.innerHTML = enCurso.length
                 ? enCurso.map(tarjeta).join('')
-                : vacio('bi-truck', 'No tenés traslados en curso ahora');
+                : vacio('bi-truck', tr('No tenés traslados en curso ahora'));
 
             dom.historialAnteriores.innerHTML = anteriores.length
                 ? anteriores.map(tarjeta).join('')
-                : vacio('bi-clock-history', 'Todavía no tenés traslados anteriores');
+                : vacio('bi-clock-history', tr('Todavía no tenés traslados anteriores'));
 
             dom.cuentaEnCurso.textContent = enCurso.length;
             dom.cuentaAnteriores.textContent = anteriores.length;

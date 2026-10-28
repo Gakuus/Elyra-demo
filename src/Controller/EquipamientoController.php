@@ -43,8 +43,8 @@ final class EquipamientoController
         }
 
         // Aviso tras agregar/editar (?agregado=1 / ?editado=1).
-        $aviso = isset($_GET['agregado']) ? 'Equipamiento agregado correctamente.'
-            : (isset($_GET['editado']) ? 'Cambios guardados.' : '');
+        $aviso = isset($_GET['agregado']) ? I18n::t('Equipamiento agregado correctamente.')
+            : (isset($_GET['editado']) ? I18n::t('Cambios guardados.') : '');
 
         render_dashboard('equipamiento', 'Equipamiento', 'equipamiento', [
             'hay_aviso' => $aviso !== '' ? ['1'] : [],
@@ -188,7 +188,7 @@ final class EquipamientoController
         $id = (int) ($_POST['id'] ?? 0);
 
         if ($id <= 0) {
-            self::respondeJson(['ok' => false, 'error' => 'ID inválido.']);
+            self::respondeJson(['ok' => false, 'error' => I18n::t('ID inválido.')]);
         }
 
         $pdo = db_connect();

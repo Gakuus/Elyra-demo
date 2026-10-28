@@ -1,0 +1,440 @@
+/* ============================================================
+   Chatbot de Elyra: botón con la mascota y panel de conversación.
+   Se carga en todas las páginas completas (ver src/Chatbot.php).
+   ============================================================ */
+
+#elyra-chat {
+    --chat-azul: #2A4780;
+    --chat-azul-claro: #3B5998;
+    --chat-amarillo: #FFC93C;
+    --chat-fondo: #FFFFFF;
+    --chat-gris: #F7F9FC;
+    --chat-borde: #D7DEE9;
+    --chat-texto: #1F2937;
+    --chat-suave: #667085;
+
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 2147482900;
+    font-family: var(--fuente-familia, tahoma, verdana, arial, sans-serif);
+    /* Los textos internos usan em: asi acompanan el tamano elegido en
+       accesibilidad sin cambiar el tamano del panel. */
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--chat-texto);
+    text-align: left;
+}
+
+#elyra-chat *,
+#elyra-chat *::before,
+#elyra-chat *::after {
+    box-sizing: border-box;
+}
+
+#elyra-chat [hidden] {
+    display: none !important;
+}
+
+/* ---------- Botón flotante con la mascota ---------- */
+#elyra-chat .chat-boton {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    border: 3px solid #FFF;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FFFFFF 0%, #E4ECFB 100%);
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.35);
+    cursor: pointer;
+    animation: chatFlotar 4s ease-in-out infinite;
+}
+
+#elyra-chat .chat-boton img {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
+}
+
+#elyra-chat .chat-boton:hover,
+#elyra-chat .chat-boton:focus-visible {
+    background: linear-gradient(135deg, #FFFFFF 0%, #D5E1F8 100%);
+    outline: 3px solid var(--chat-amarillo);
+    outline-offset: 3px;
+}
+
+#elyra-chat .chat-burbuja {
+    position: absolute;
+    right: 0;
+    /* Arriba de la mascota: a la izquierda está el botón de accesibilidad. */
+    bottom: calc(100% + 12px);
+    padding: 7px 12px;
+    border: 1px solid var(--chat-borde);
+    border-radius: 12px;
+    background: #FFF;
+    color: var(--chat-azul);
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+    pointer-events: none;
+}
+
+#elyra-chat .chat-burbuja::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    right: 26px;
+    width: 0;
+    height: 0;
+    border: 6px solid transparent;
+    border-top-color: #FFF;
+    filter: drop-shadow(0 1px 0 var(--chat-borde));
+}
+
+#elyra-chat .chat-burbuja[hidden] {
+    display: none !important;
+}
+
+@keyframes chatFlotar {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+@keyframes chatAparecer {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes chatPunto {
+    0%, 60%, 100% { opacity: 0.35; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #elyra-chat .chat-boton,
+    #elyra-chat .chat-panel {
+        animation: none;
+    }
+}
+
+/* ---------- Panel ---------- */
+#elyra-chat .chat-panel {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 14px);
+    display: flex;
+    flex-direction: column;
+    width: 380px;
+    max-width: calc(100vw - 32px);
+    height: min(560px, calc(100vh - 140px));
+    overflow: hidden;
+    background: var(--chat-fondo);
+    border: 1px solid var(--chat-borde);
+    border-radius: 18px;
+    box-shadow: 0 20px 55px rgba(15, 23, 42, 0.35);
+    animation: chatAparecer 0.18s ease-out;
+}
+
+#elyra-chat .chat-cabecera {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: linear-gradient(135deg, var(--chat-azul), var(--chat-azul-claro));
+    color: #FFF;
+}
+
+#elyra-chat .chat-avatar {
+    flex: none;
+    width: 42px;
+    height: 42px;
+    padding: 2px;
+    border-radius: 50%;
+    background: #FFF;
+    object-fit: contain;
+}
+
+#elyra-chat .chat-identidad {
+    flex: 1;
+    min-width: 0;
+}
+
+#elyra-chat .chat-titulo {
+    margin: 0;
+    font-size: 1.1333em;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #FFF;
+}
+
+#elyra-chat .chat-subtitulo {
+    margin: 2px 0 0;
+    font-size: 0.8em;
+    line-height: 1.3;
+    color: #D7E2F5;
+}
+
+#elyra-chat .chat-icono {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    color: #FFF;
+    cursor: pointer;
+}
+
+#elyra-chat .chat-icono:hover,
+#elyra-chat .chat-icono:focus-visible {
+    background: rgba(255, 255, 255, 0.3);
+    outline: 2px solid var(--chat-amarillo);
+    outline-offset: 2px;
+}
+
+#elyra-chat .chat-icono svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* ---------- Mensajes ---------- */
+#elyra-chat .chat-mensajes {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--chat-gris);
+}
+
+#elyra-chat .chat-mensaje {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    max-width: 100%;
+}
+
+#elyra-chat .chat-mensaje-bot {
+    align-self: flex-start;
+}
+
+#elyra-chat .chat-mensaje-user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+#elyra-chat .chat-mini {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    padding: 1px;
+    border: 1px solid var(--chat-borde);
+    border-radius: 50%;
+    background: #FFF;
+    object-fit: contain;
+}
+
+#elyra-chat .chat-texto {
+    max-width: 78%;
+    padding: 9px 12px;
+    border-radius: 14px;
+    font-size: 0.9333em;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+#elyra-chat .chat-mensaje-bot .chat-texto {
+    border: 1px solid var(--chat-borde);
+    border-bottom-left-radius: 4px;
+    background: #FFF;
+    color: var(--chat-texto);
+}
+
+#elyra-chat .chat-mensaje-user .chat-texto {
+    border-bottom-right-radius: 4px;
+    background: var(--chat-azul-claro);
+    color: #FFF;
+}
+
+#elyra-chat .chat-mensaje-error .chat-texto {
+    border-color: #E7B4B0;
+    background: #FFF3F2;
+    color: #8A2C25;
+}
+
+/* Indicador de "escribiendo…" */
+#elyra-chat .chat-puntos {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 14px;
+}
+
+#elyra-chat .chat-puntos span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #8A97AA;
+    animation: chatPunto 1.2s ease-in-out infinite;
+}
+
+#elyra-chat .chat-puntos span:nth-child(2) { animation-delay: 0.15s; }
+#elyra-chat .chat-puntos span:nth-child(3) { animation-delay: 0.3s; }
+
+/* ---------- Sugerencias ---------- */
+#elyra-chat .chat-sugerencias {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 32%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0 14px 10px;
+    background: var(--chat-gris);
+}
+
+#elyra-chat .chat-sugerencias[hidden] {
+    display: none !important;
+}
+
+#elyra-chat .chat-sugerencia {
+    padding: 6px 10px;
+    border: 1px solid #C9D4E5;
+    border-radius: 999px;
+    background: #FFF;
+    color: var(--chat-azul);
+    font: inherit;
+    font-size: 0.8em;
+    line-height: 1.3;
+    text-align: left;
+    cursor: pointer;
+}
+
+#elyra-chat .chat-sugerencia:hover,
+#elyra-chat .chat-sugerencia:focus-visible {
+    border-color: var(--chat-azul-claro);
+    background: #EAF0FB;
+    outline: 2px solid var(--chat-amarillo);
+    outline-offset: 1px;
+}
+
+/* ---------- Formulario ---------- */
+#elyra-chat .chat-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--chat-borde);
+    background: #FFF;
+}
+
+#elyra-chat .chat-entrada {
+    flex: 1;
+    min-height: 2.7em;
+    max-height: 6.5em;
+    padding: 9px 12px;
+    border: 1px solid #C9D4E5;
+    border-radius: 12px;
+    background: #FFF;
+    color: var(--chat-texto);
+    font: inherit;
+    font-size: 0.9333em;
+    line-height: 1.4;
+    resize: none;
+}
+
+#elyra-chat .chat-entrada:focus {
+    border-color: var(--chat-azul-claro);
+    outline: 2px solid rgba(59, 89, 152, 0.25);
+    outline-offset: 0;
+}
+
+#elyra-chat .chat-entrada:disabled {
+    background: #F0F2F6;
+    color: #8A94A6;
+}
+
+#elyra-chat .chat-enviar {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--chat-azul-claro);
+    color: #FFF;
+    cursor: pointer;
+}
+
+#elyra-chat .chat-enviar svg {
+    width: 20px;
+    height: 20px;
+    margin-right: 2px;
+}
+
+#elyra-chat .chat-enviar:hover,
+#elyra-chat .chat-enviar:focus-visible {
+    background: var(--chat-azul);
+    outline: 2px solid var(--chat-amarillo);
+    outline-offset: 2px;
+}
+
+#elyra-chat .chat-enviar:disabled {
+    background: #A9B4C6;
+    cursor: not-allowed;
+}
+
+#elyra-chat .chat-aviso {
+    margin: 0;
+    padding: 0 14px 10px;
+    background: #FFF;
+    color: var(--chat-suave);
+    font-size: 0.7333em;
+    line-height: 1.35;
+}
+
+#elyra-chat .chat-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ---------- Pantallas chicas ---------- */
+@media (max-width: 768px) {
+    #elyra-chat {
+        right: 14px;
+        bottom: 84px;
+    }
+
+    #elyra-chat .chat-panel {
+        width: calc(100vw - 28px);
+        max-width: 380px;
+        height: min(540px, calc(100dvh - 190px));
+    }
+
+    #elyra-chat .chat-burbuja {
+        display: none;
+    }
+}

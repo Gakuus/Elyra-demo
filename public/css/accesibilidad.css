@@ -1,0 +1,773 @@
+/* ============================================================
+   Accesibilidad: botón flotante y panel de preferencias.
+   Se carga en todas las páginas completas (ver src/Accesibilidad.php).
+   ============================================================ */
+
+#elyra-accesibilidad {
+    --acc-azul: #2A4780;
+    --acc-azul-claro: #3B5998;
+    --acc-foco: #FFBF47;
+    --acc-borde: #CBD5E1;
+    --acc-texto: #1F2937;
+    --acc-fondo: #FFFFFF;
+
+    position: fixed;
+    right: 104px;
+    /* Comparte la esquina inferior derecha con la mascota del chat: queda a
+       su izquierda, alineado, para que el panel del chat no lo tape. */
+    bottom: 28px;
+    z-index: 2147483000;
+    font-family: var(--fuente-familia, tahoma, verdana, arial, sans-serif);
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--acc-texto);
+    text-align: left;
+}
+
+#elyra-accesibilidad *,
+#elyra-accesibilidad *::before,
+#elyra-accesibilidad *::after {
+    box-sizing: border-box;
+}
+
+#elyra-accesibilidad [hidden] {
+    display: none !important;
+}
+
+/* ---------- Botón flotante ---------- */
+#elyra-accesibilidad .acc-boton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border: 2px solid #FFF;
+    border-radius: 50%;
+    background: var(--acc-azul);
+    color: #FFF;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.35);
+    cursor: pointer;
+}
+
+#elyra-accesibilidad .acc-boton:hover,
+#elyra-accesibilidad .acc-boton:focus-visible {
+    background: var(--acc-azul-claro);
+    outline: 3px solid var(--acc-foco);
+    outline-offset: 3px;
+}
+
+#elyra-accesibilidad .acc-boton svg {
+    width: 30px;
+    height: 30px;
+}
+
+/* ---------- Panel ---------- */
+#elyra-accesibilidad .acc-panel {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 14px);
+    width: 360px;
+    max-width: calc(100vw - 32px);
+    max-height: min(72vh, 640px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--acc-fondo);
+    border: 1px solid var(--acc-borde);
+    border-radius: 16px;
+    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.35);
+    animation: accAparecer 0.15s ease-out;
+}
+
+@keyframes accAparecer {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #elyra-accesibilidad .acc-panel {
+        animation: none;
+    }
+}
+
+#elyra-accesibilidad .acc-cabecera {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--acc-azul);
+    color: #FFF;
+}
+
+#elyra-accesibilidad .acc-titulo {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+#elyra-accesibilidad .acc-cerrar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 9px;
+    background: transparent;
+    color: #FFF;
+    cursor: pointer;
+}
+
+#elyra-accesibilidad .acc-cerrar:hover,
+#elyra-accesibilidad .acc-cerrar:focus-visible {
+    background: rgba(255, 255, 255, 0.18);
+    outline: 2px solid var(--acc-foco);
+    outline-offset: 2px;
+}
+
+#elyra-accesibilidad .acc-cerrar svg {
+    width: 18px;
+    height: 18px;
+}
+
+#elyra-accesibilidad .acc-cuerpo {
+    padding: 6px 16px 2px;
+}
+
+#elyra-accesibilidad .acc-seccion {
+    padding: 12px 0;
+    border-bottom: 1px solid #E2E8F0;
+}
+
+#elyra-accesibilidad .acc-seccion:last-child {
+    border-bottom: 0;
+}
+
+#elyra-accesibilidad .acc-subtitulo {
+    margin: 0 0 10px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #475569;
+}
+
+/* ---------- Tamaño del texto ---------- */
+#elyra-accesibilidad .acc-tamano {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#elyra-accesibilidad .acc-btn-tamano {
+    flex: none;
+    width: 46px;
+    height: 42px;
+    padding: 0;
+    border: 1px solid var(--acc-borde);
+    border-radius: 10px;
+    background: #F8FAFC;
+    color: var(--acc-texto);
+    font: inherit;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+#elyra-accesibilidad .acc-btn-tamano:hover,
+#elyra-accesibilidad .acc-btn-tamano:focus-visible {
+    background: #E8EEFB;
+    border-color: var(--acc-azul);
+    outline: 2px solid var(--acc-foco);
+    outline-offset: 2px;
+}
+
+#elyra-accesibilidad .acc-nivel {
+    flex: 1;
+    text-align: center;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--acc-azul);
+}
+
+/* ---------- Colores ---------- */
+#elyra-accesibilidad .acc-colores {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+#elyra-accesibilidad .acc-color {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 10px;
+    border: 1px solid var(--acc-borde);
+    border-radius: 10px;
+    background: #F8FAFC;
+    color: var(--acc-texto);
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+}
+
+#elyra-accesibilidad .acc-color:hover,
+#elyra-accesibilidad .acc-color:focus-visible {
+    background: #EEF2F7;
+    outline: 2px solid var(--acc-foco);
+    outline-offset: 2px;
+}
+
+#elyra-accesibilidad .acc-color[aria-pressed="true"] {
+    border-color: var(--acc-azul);
+    background: #E8EEFB;
+    box-shadow: inset 0 0 0 1px var(--acc-azul);
+}
+
+#elyra-accesibilidad .acc-muestra {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    border: 1px solid #94A3B8;
+    border-radius: 5px;
+}
+
+#elyra-accesibilidad .acc-muestra-normal {
+    background: #FFF;
+}
+
+#elyra-accesibilidad .acc-muestra-contraste {
+    background: #000;
+    box-shadow: inset 0 0 0 2px #FFEB3B;
+}
+
+#elyra-accesibilidad .acc-muestra-invertir {
+    background: linear-gradient(135deg, #000 50%, #FFF 50%);
+}
+
+#elyra-accesibilidad .acc-muestra-grises {
+    background: linear-gradient(135deg, #000, #888, #FFF);
+}
+
+/* ---------- Opciones con interruptor ---------- */
+#elyra-accesibilidad .acc-opcion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 12px;
+    margin: 0 0 8px;
+    border: 1px solid var(--acc-borde);
+    border-radius: 10px;
+    background: #F8FAFC;
+    color: var(--acc-texto);
+    font: inherit;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+}
+
+#elyra-accesibilidad .acc-opcion:last-child {
+    margin-bottom: 0;
+}
+
+#elyra-accesibilidad .acc-opcion:hover,
+#elyra-accesibilidad .acc-opcion:focus-visible {
+    background: #EEF2F7;
+    outline: 2px solid var(--acc-foco);
+    outline-offset: 2px;
+}
+
+#elyra-accesibilidad .acc-opcion[aria-pressed="true"] {
+    border-color: var(--acc-azul);
+    background: #E8EEFB;
+}
+
+#elyra-accesibilidad .acc-switch {
+    position: relative;
+    flex: none;
+    width: 40px;
+    height: 22px;
+    border-radius: 999px;
+    background: #94A3B8;
+    transition: background-color 0.15s ease;
+}
+
+#elyra-accesibilidad .acc-switch::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #FFF;
+    transition: transform 0.15s ease;
+}
+
+#elyra-accesibilidad .acc-opcion[aria-pressed="true"] .acc-switch {
+    background: var(--acc-azul);
+}
+
+#elyra-accesibilidad .acc-opcion[aria-pressed="true"] .acc-switch::after {
+    transform: translateX(18px);
+}
+
+/* ---------- Lectura en voz alta ---------- */
+#elyra-accesibilidad .acc-acciones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+#elyra-accesibilidad .acc-accion {
+    padding: 10px 12px;
+    border: 1px solid var(--acc-borde);
+    border-radius: 10px;
+    background: #F8FAFC;
+    color: var(--acc-texto);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+#elyra-accesibilidad .acc-accion:hover,
+#elyra-accesibilidad .acc-accion:focus-visible {
+    background: #EEF2F7;
+    outline: 2px solid var(--acc-foco);
+    outline-offset: 2px;
+}
+
+#elyra-accesibilidad .acc-accion-principal {
+    border-color: var(--acc-azul);
+    background: var(--acc-azul);
+    color: #FFF;
+}
+
+#elyra-accesibilidad .acc-accion-principal:hover,
+#elyra-accesibilidad .acc-accion-principal:focus-visible {
+    background: var(--acc-azul-claro);
+}
+
+#elyra-accesibilidad .acc-accion:last-child {
+    grid-column: 1 / -1;
+}
+
+#elyra-accesibilidad .acc-accion:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+#elyra-accesibilidad .acc-nota {
+    margin: 8px 0 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #FEF3C7;
+    color: #92400E;
+    font-size: 13px;
+}
+
+/* ---------- Pie y estado ---------- */
+#elyra-accesibilidad .acc-estado {
+    margin: 0;
+    padding: 0 16px;
+    font-size: 13px;
+    color: #1E40AF;
+}
+
+#elyra-accesibilidad .acc-estado:not(:empty) {
+    padding: 8px 16px 12px;
+}
+
+#elyra-accesibilidad .acc-pie {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-top: 1px solid #E2E8F0;
+    background: #F8FAFC;
+}
+
+#elyra-accesibilidad .acc-reset {
+    padding: 9px 14px;
+    border: 1px solid var(--acc-azul);
+    border-radius: 9px;
+    background: #FFF;
+    color: var(--acc-azul);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+#elyra-accesibilidad .acc-reset:hover,
+#elyra-accesibilidad .acc-reset:focus-visible {
+    background: #E8EEFB;
+    outline: 2px solid var(--acc-foco);
+    outline-offset: 2px;
+}
+
+#elyra-accesibilidad .acc-atajo {
+    font-size: 12px;
+    color: #64748B;
+}
+
+/* ---------- Guía de lectura ---------- */
+#elyra-accesibilidad .acc-guia {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 42px;
+    border-top: 1px solid rgba(0, 0, 0, 0.35);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.35);
+    background: rgba(255, 213, 79, 0.30);
+    pointer-events: none;
+    z-index: 2147482000;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+    #elyra-accesibilidad {
+        right: 92px;
+        bottom: 88px;
+    }
+
+    #elyra-accesibilidad .acc-panel {
+        /* El botón ya no está pegado al borde derecho: se corre el panel
+           para que siga entrando completo en la pantalla. */
+        right: -78px;
+        width: calc(100vw - 28px);
+        max-width: 380px;
+    }
+}
+
+/* ============================================================
+   Preferencias aplicadas al documento
+   ============================================================ */
+
+/* Tamaño del texto. Se usa zoom (equivalente al zoom del navegador)
+   porque las vistas mezclan px y rem; escalar solo la raíz no alcanza. */
+html[data-acc-text="1"] { zoom: 1.10; }
+html[data-acc-text="2"] { zoom: 1.25; }
+html[data-acc-text="3"] { zoom: 1.50; }
+html[data-acc-text="4"] { zoom: 1.75; }
+html[data-acc-text="5"] { zoom: 2.00; }
+
+/* El panel no acompaña el zoom del contenido: si creciera con la página,
+   a partir de 125% su cabecera quedaría fuera de la pantalla y no se
+   podría usar. Se contraescala para que siempre entre en el viewport. */
+html[data-acc-text="1"] #elyra-accesibilidad { zoom: 0.9091; }
+html[data-acc-text="2"] #elyra-accesibilidad { zoom: 0.8; }
+html[data-acc-text="3"] #elyra-accesibilidad { zoom: 0.6667; }
+html[data-acc-text="4"] #elyra-accesibilidad { zoom: 0.5714; }
+html[data-acc-text="5"] #elyra-accesibilidad { zoom: 0.5; }
+
+/* El chat también se contraescala para que el panel y la mascota mantengan
+   su tamaño y sigan entrando en pantalla. El texto interno sí crece: usa em
+   y la raíz del chat sube de tamaño con cada nivel. */
+html[data-acc-text="1"] #elyra-chat { zoom: 0.9091; font-size: 16.5px; }
+html[data-acc-text="2"] #elyra-chat { zoom: 0.8; font-size: 18.75px; }
+html[data-acc-text="3"] #elyra-chat { zoom: 0.6667; font-size: 22.5px; }
+html[data-acc-text="4"] #elyra-chat { zoom: 0.5714; font-size: 26.25px; }
+html[data-acc-text="5"] #elyra-chat { zoom: 0.5; font-size: 30px; }
+
+/* Con texto grande el panel crece para que los mensajes conserven espacio,
+   sin salirse del viewport. */
+html[data-acc-text="4"] #elyra-chat .chat-panel,
+html[data-acc-text="5"] #elyra-chat .chat-panel {
+    height: min(680px, calc(100dvh - 170px));
+}
+
+@media (max-width: 768px) {
+    html[data-acc-text="4"] #elyra-chat .chat-panel,
+    html[data-acc-text="5"] #elyra-chat .chat-panel {
+        height: min(620px, calc(100dvh - 190px));
+    }
+}
+
+/* En celular el encabezado y la barra inferior tienen alto fijo. Si se
+   escalan con el texto, sus elementos se superponen y la barra queda
+   cortada. Se mantienen estables; el zoom del navegador sí los agranda. */
+@media (max-width: 768px) {
+    html[data-acc-text="1"] :is(.encabezado-sistema, .nav-inferior, .selector-idioma-flotante) { zoom: 0.9091; }
+    html[data-acc-text="2"] :is(.encabezado-sistema, .nav-inferior, .selector-idioma-flotante) { zoom: 0.8; }
+    html[data-acc-text="3"] :is(.encabezado-sistema, .nav-inferior, .selector-idioma-flotante) { zoom: 0.6667; }
+    html[data-acc-text="4"] :is(.encabezado-sistema, .nav-inferior, .selector-idioma-flotante) { zoom: 0.5714; }
+    html[data-acc-text="5"] :is(.encabezado-sistema, .nav-inferior, .selector-idioma-flotante) { zoom: 0.5; }
+}
+
+/* Leaflet mide su contenedor antes del zoom; en pantallas angostas eso
+   deja unos píxeles de scroll horizontal. clip no crea un contenedor de
+   scroll, así que no afecta a los elementos fijos ni a position: sticky. */
+html[data-acc-text] body {
+    overflow-x: clip;
+    overflow-wrap: break-word;
+}
+
+/* Con texto grande, los campos de dos columnas y los botones necesitan
+   reacomodarse. Sin esto, Chrome calcula mal el ancho de los hijos flex
+   (width: 100%) y el contenido se sale de la pantalla. */
+html[data-acc-text] .flexible > .ancho-completo {
+    width: auto;
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+html[data-acc-text] .btn {
+    white-space: normal;
+}
+
+/* Los campos sin ancho explícito (por ejemplo un textarea con su ancho
+   intrínseco) no deben superar su contenedor cuando el texto crece. */
+html[data-acc-text] :is(input, select, textarea) {
+    max-width: 100%;
+}
+
+/* Los avisos del inicio tienen etiqueta y dato en la misma línea; con
+   texto grande el dato pasa a la línea siguiente en vez de desbordar. */
+html[data-acc-text] .aviso {
+    flex-wrap: wrap;
+}
+
+/* En pantallas angostas, a partir de 175% los pares de campos ya no
+   entran en dos columnas: pasan a una sola. */
+@media (max-width: 768px) {
+    html[data-acc-text="4"] .flexible:has(> .ancho-completo + .ancho-completo),
+    html[data-acc-text="5"] .flexible:has(> .ancho-completo + .ancho-completo) {
+        flex-wrap: wrap;
+    }
+
+    html[data-acc-text="4"] .flexible > .ancho-completo,
+    html[data-acc-text="5"] .flexible > .ancho-completo {
+        flex-basis: 100%;
+    }
+
+    /* Buscadores y barras de acciones de formularios: una sola columna. */
+    html[data-acc-text="4"] form.d-flex,
+    html[data-acc-text="5"] form.d-flex,
+    html[data-acc-text="4"] form .d-flex,
+    html[data-acc-text="5"] form .d-flex {
+        flex-wrap: wrap;
+    }
+
+    html[data-acc-text="4"] form.d-flex > .form-control,
+    html[data-acc-text="4"] form.d-flex > .form-select,
+    html[data-acc-text="4"] form.d-flex > .btn,
+    html[data-acc-text="5"] form.d-flex > .form-control,
+    html[data-acc-text="5"] form.d-flex > .form-select,
+    html[data-acc-text="5"] form.d-flex > .btn,
+    html[data-acc-text="4"] form .d-flex > .form-control,
+    html[data-acc-text="4"] form .d-flex > .form-select,
+    html[data-acc-text="4"] form .d-flex > .btn,
+    html[data-acc-text="5"] form .d-flex > .form-control,
+    html[data-acc-text="5"] form .d-flex > .form-select,
+    html[data-acc-text="5"] form .d-flex > .btn {
+        flex: 1 1 100%;
+    }
+
+    /* Editor de encuestas: las opciones de cada pregunta pasan debajo. */
+    html[data-acc-text="4"] .question-item .row > .col,
+    html[data-acc-text="5"] .question-item .row > .col {
+        flex: 1 1 100%;
+        max-width: 100%;
+    }
+
+    /* Filtros segmentados (Activos / Inactivos / Todos). */
+    html[data-acc-text="4"] .btn-group,
+    html[data-acc-text="5"] .btn-group {
+        flex-wrap: wrap;
+    }
+
+    html[data-acc-text="4"] .btn-group > .btn,
+    html[data-acc-text="5"] .btn-group > .btn {
+        flex: 1 1 100%;
+    }
+
+    /* Tablas convertidas en tarjetas: etiqueta arriba, valor abajo. */
+    html[data-acc-text="4"] .tabla-panel td,
+    html[data-acc-text="5"] .tabla-panel td {
+        flex-wrap: wrap;
+    }
+
+    html[data-acc-text="4"] .tabla-panel td::before,
+    html[data-acc-text="5"] .tabla-panel td::before {
+        flex-basis: 100%;
+    }
+}
+
+/* Fuente de lectura fácil */
+html[data-acc-font] body,
+html[data-acc-font] #elyra-chat,
+html[data-acc-font] button,
+html[data-acc-font] input,
+html[data-acc-font] select,
+html[data-acc-font] textarea {
+    font-family: Verdana, Tahoma, "Trebuchet MS", Arial, sans-serif !important;
+}
+
+/* Espaciado de texto */
+html[data-acc-spacing] body {
+    line-height: 1.8 !important;
+    letter-spacing: 0.045em !important;
+    word-spacing: 0.12em !important;
+}
+
+html[data-acc-spacing] :is(p, li, td, th, label, a, span, h1, h2, h3, h4, h5, h6) {
+    line-height: 1.8 !important;
+}
+
+/* El texto del chat también respeta el espaciado elegido. */
+html[data-acc-spacing] #elyra-chat :is(.chat-texto, .chat-aviso, .chat-sugerencia) {
+    line-height: 1.8 !important;
+}
+
+/* Resaltar enlaces */
+html[data-acc-links] a {
+    outline: 2px solid #B45309 !important;
+    outline-offset: 2px !important;
+    background: #FEF3C7 !important;
+    color: #000 !important;
+    text-decoration: underline !important;
+}
+
+/* Resaltar encabezados */
+html[data-acc-headings] :is(h1, h2, h3, h4, h5, h6) {
+    outline: 2px dashed #B45309 !important;
+    outline-offset: 3px !important;
+    background: rgba(254, 243, 199, 0.55) !important;
+}
+
+/* Resaltar foco */
+html[data-acc-focus] :focus {
+    outline: 3px solid #FFBF47 !important;
+    outline-offset: 3px !important;
+}
+
+/* Cursor grande */
+html[data-acc-cursor],
+html[data-acc-cursor] * {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath d='M5 2 L5 30 L13 22 L19 34 L24 31 L18 20 L30 20 Z' fill='%23000' stroke='%23fff' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 5 2, auto !important;
+}
+
+/* Pausar animaciones */
+html[data-acc-motion] *,
+html[data-acc-motion] *::before,
+html[data-acc-motion] *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+}
+
+/* Ocultar imágenes y videos */
+html[data-acc-images] img,
+html[data-acc-images] picture,
+html[data-acc-images] video {
+    display: none !important;
+}
+
+/* La mascota del botón se mantiene visible porque es la única forma de
+   abrir el chat; los avatares internos sí se ocultan. */
+html[data-acc-images] #elyra-chat #chatBoton img {
+    display: inline-block !important;
+}
+
+/* Escala de grises: se aplica a los hijos del body para no apagar el
+   panel de accesibilidad. El chat sí se apaga junto con la página. */
+html[data-acc-color="gray"] body > :not(#elyra-accesibilidad) {
+    filter: grayscale(1);
+}
+
+/* Invertir colores: se invierte el documento y se vuelven a invertir
+   imágenes, videos y el panel de accesibilidad para que se vean normales.
+   El chat se invierte junto con la página; sus imágenes quedan normales por
+   la regla general de img. */
+html[data-acc-color="invert"] {
+    filter: invert(1) hue-rotate(180deg);
+}
+
+html[data-acc-color="invert"] img,
+html[data-acc-color="invert"] video,
+html[data-acc-color="invert"] canvas,
+html[data-acc-color="invert"] iframe,
+html[data-acc-color="invert"] #elyra-accesibilidad {
+    filter: invert(1) hue-rotate(180deg);
+}
+
+/* Alto contraste */
+html[data-acc-color="contrast"] {
+    background: #000 !important;
+    color-scheme: dark;
+}
+
+html[data-acc-color="contrast"] body {
+    background: #000 !important;
+    color: #FFF !important;
+}
+
+html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *) {
+    background-color: #000 !important;
+    background-image: none !important;
+    color: #FFF !important;
+    border-color: #FFF !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *):is(a) {
+    color: #FFEB3B !important;
+    text-decoration: underline !important;
+}
+
+html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *):is(button, input, select, textarea) {
+    background-color: #000 !important;
+    color: #FFF !important;
+    border: 2px solid #FFEB3B !important;
+}
+
+html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *):is(input, textarea)::placeholder {
+    color: #DDD !important;
+}
+
+/* Combinaciones: en alto contraste, los resaltados no deben tapar el texto. */
+html[data-acc-color="contrast"][data-acc-links] body :not(#elyra-accesibilidad, #elyra-accesibilidad *):is(a) {
+    background: #000 !important;
+    color: #FFEB3B !important;
+    outline-color: #FFEB3B !important;
+}
+
+html[data-acc-color="contrast"][data-acc-headings] body :not(#elyra-accesibilidad, #elyra-accesibilidad *):is(h1, h2, h3, h4, h5, h6) {
+    background: #000 !important;
+    color: #FFEB3B !important;
+    outline-color: #FFEB3B !important;
+}
+
+/* En alto contraste, los mensajes propios se distinguen por el borde
+   amarillo y los puntos de "escribiendo" no se pierden en el fondo negro. */
+html[data-acc-color="contrast"] #elyra-chat .chat-mensaje-user .chat-texto {
+    border-color: #FFEB3B !important;
+}
+
+html[data-acc-color="contrast"] #elyra-chat .chat-puntos span {
+    background: #FFEB3B !important;
+}

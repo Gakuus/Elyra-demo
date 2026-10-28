@@ -9,6 +9,10 @@
     var mod = root.ElyraMapaMod = root.ElyraMapaMod || {};
     var fmt = root.ElyraFmt;
 
+    function tr(texto, parametros) {
+        return root.ElyraIdioma ? root.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     /**
      * Rumbo, en grados, de un punto a otro. 0 es el norte y crece hacia el
      * este, que es como lo espera `rotate()` en CSS.
@@ -78,7 +82,7 @@
     };
 
     function nombreEstado(estado) {
-        return NOMBRES_ESTADO[estado] || estado;
+        return tr(NOMBRES_ESTADO[estado] || estado);
     }
 
     /** "2026-10-06 14:35:00" -> "14:35" */

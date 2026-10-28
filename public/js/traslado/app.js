@@ -14,6 +14,10 @@
 
     var mod = root.ElyraTrasladoMod = root.ElyraTrasladoMod || {};
 
+    function tr(texto, parametros) {
+        return root.ElyraIdioma ? root.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     /** Espera a que este elemento exista. Los scripts se cargan con defer. */
     function alCargar(fn) {
         if (document.readyState === 'loading') {
@@ -45,8 +49,8 @@
 
             var barra = document.getElementById('estadoMapa');
             if (barra) {
-                barra.innerHTML = '<span>No se pudo cargar el mapa. Recargá la página: ' +
-                    'sin mapa no se pueden elegir direcciones.</span>';
+                barra.innerHTML = '<span>' + tr('No se pudo cargar el mapa. Recargá la página:') + ' ' +
+                    tr('sin mapa no se pueden elegir direcciones.') + '</span>';
                 barra.classList.add('aviso-error');
             }
             return;

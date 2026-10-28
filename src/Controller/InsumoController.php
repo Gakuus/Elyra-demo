@@ -43,8 +43,8 @@ final class InsumoController
         }
 
         // Aviso tras agregar/editar (?agregado=1 / ?editado=1).
-        $aviso = isset($_GET['agregado']) ? 'Insumo agregado correctamente.'
-            : (isset($_GET['editado']) ? 'Cambios guardados.' : '');
+        $aviso = isset($_GET['agregado']) ? I18n::t('Insumo agregado correctamente.')
+            : (isset($_GET['editado']) ? I18n::t('Cambios guardados.') : '');
 
         render_dashboard('insumos', 'Insumos', 'insumos', [
             'hay_aviso' => $aviso !== '' ? ['1'] : [],
@@ -188,7 +188,7 @@ final class InsumoController
         $id = (int) ($_POST['id'] ?? 0);
 
         if ($id <= 0) {
-            self::respondeJson(['ok' => false, 'error' => 'ID inválido.']);
+            self::respondeJson(['ok' => false, 'error' => I18n::t('ID inválido.')]);
         }
 
         $pdo = db_connect();

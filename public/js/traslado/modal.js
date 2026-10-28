@@ -12,6 +12,10 @@
     var mod = root.ElyraTrasladoMod = root.ElyraTrasladoMod || {};
     var fmt = root.ElyraFmt;
 
+    function tr(texto, parametros) {
+        return root.ElyraIdioma ? root.ElyraIdioma.t(texto, parametros) : texto;
+    }
+
     mod.modal = function (ctx, api) {
 
         function abierto() {
@@ -115,11 +119,11 @@
         /** "Usar mi ubicación": GPS del navegador y geocodificación inversa. */
         function usarMiUbicacion() {
             if (!navigator.geolocation) {
-                api.ui.avisar('Este navegador no tiene GPS. Marcá el origen en el mapa o elegilo del catálogo.', 'error');
+                api.ui.avisar(tr('Este navegador no tiene GPS. Marcá el origen en el mapa o elegilo del catálogo.'), 'error');
                 return;
             }
 
-            api.ui.avisar('Buscando tu ubicación...', 'info');
+            api.ui.avisar(tr('Buscando tu ubicación...'), 'info');
 
             navigator.geolocation.getCurrentPosition(
                 function (pos) {
@@ -127,14 +131,14 @@
                     var lng = pos.coords.longitude;
 
                     ctx.editando.origen = false;
-                    api.extremos.fijar('origen', lat, lng, 'Mi ubicación');
+                    api.extremos.fijar('origen', lat, lng, tr('Mi ubicación'));
                     api.ruta.fijarVista(lat, lng);
-                    api.ui.avisar('Ubicación tomada. Ajustá el pin si hace falta.', 'info');
+                    api.ui.avisar(tr('Ubicación tomada. Ajustá el pin si hace falta.'), 'info');
                 },
                 function (err) {
                     api.ui.avisar(err.code === 1
-                        ? 'Denegaste el permiso de ubicación. Marcá el origen en el mapa o elegilo del catálogo.'
-                        : 'No se pudo obtener el GPS. Marcá el origen en el mapa o elegilo del catálogo.', 'error');
+                        ? tr('Denegaste el permiso de ubicación. Marcá el origen en el mapa o elegilo del catálogo.')
+                        : tr('No se pudo obtener el GPS. Marcá el origen en el mapa o elegilo del catálogo.'), 'error');
                 },
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
             );
@@ -145,31 +149,31 @@
             var $ = api.ui.$;
 
             if (!api.extremos.tieneCoordenadas(ctx.origen)) {
-                return 'Elegí el origen: usá tu ubicación, escribí una dirección o arrastrá el pin verde.';
+                return tr('Elegí el origen: usá tu ubicación, escribí una dirección o arrastrá el pin verde.');
             }
             if (!api.extremos.tieneCoordenadas(ctx.destino)) {
-                return 'Elegí el destino: escribí una dirección o arrastrá el pin rojo.';
+                return tr('Elegí el destino: escribí una dirección o arrastrá el pin rojo.');
             }
             if (ctx.origen.label.trim() === '' || ctx.destino.label.trim() === '') {
-                return 'Falta el nombre del origen o del destino.';
+                return tr('Falta el nombre del origen o del destino.');
             }
             if (ctx.origen.label.trim() === ctx.destino.label.trim()) {
-                return 'El origen y el destino son el mismo lugar.';
+                return tr('El origen y el destino son el mismo lugar.');
             }
-            if (!$('selConductor').value) return 'Seleccioná un conductor.';
-            if (!$('selVehiculo').value) return 'Seleccioná un vehículo.';
+            if (!$('selConductor').value) return tr('Seleccioná un conductor.');
+            if (!$('selVehiculo').value) return tr('Seleccioná un vehículo.');
 
             var tipo = ctx.dom.selTipo.value;
             if (tipo === 'paciente') {
                 if (!ctx.dom.hiddenPacienteId.value) {
-                    return 'Elegí el paciente de la lista de sugerencias.';
+                    return tr('Elegí el paciente de la lista de sugerencias.');
                 }
             } else if (!$('selElemento').value) {
-                return 'Seleccioná el ' + (mod.etiquetasTipo[tipo] || 'elemento').toLowerCase() + ' a trasladar.';
+                return tr('Seleccioná el') + ' ' + tr(mod.etiquetasTipo[tipo] || 'Elemento').toLowerCase() + ' ' + tr('a trasladar.');
             }
 
             if (!$('inputFecha').value || !$('inputHora').value) {
-                return 'Completá la fecha y la hora de salida.';
+                return tr('Completá la fecha y la hora de salida.');
             }
 
             return null;
@@ -194,7 +198,7 @@
 
             dom.btnGuardar.disabled = true;
             var htmlOriginal = dom.btnGuardar.innerHTML;
-            dom.btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+            dom.btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> ' + tr('Guardando...');
 
             var restaurarBoton = function () {
                 dom.btnGuardar.disabled = false;
@@ -208,7 +212,7 @@
             })
                 .then(function (resp) {
                     return resp.json().catch(function () {
-                        return { ok: false, error: 'Respuesta inválida del servidor.' };
+                        return { ok: false, error: tr('Respuesta inválida del servidor.') };
                     }).then(function (json) {
                         if (!resp.ok) json.ok = false;
                         return json;
@@ -218,13 +222,13 @@
                     restaurarBoton();
 
                     if (!json || !json.ok) {
-                        api.ui.avisar(json && json.error ? json.error : 'No se pudo guardar el traslado.', 'error');
+                        api.ui.avisar(json && json.error ? json.error : tr('No se pudo guardar el traslado.'), 'error');
                         return;
                     }
 
                     reiniciar();
                     cerrar();
-                    api.ui.avisarEnMapa('Traslado ' + (json.codigo || '') + ' registrado.', true);
+                    api.ui.avisarEnMapa(tr('Traslado :codigo registrado.', { codigo: json.codigo || '' }), true);
 
                     // Conductor y copiloto registran su propio traslado: se
                     // refresca la lista y se arranca la simulación de la
@@ -236,7 +240,7 @@
                 })
                 .catch(function () {
                     restaurarBoton();
-                    api.ui.avisar('Error de conexión: no se pudo guardar el traslado.', 'error');
+                    api.ui.avisar(tr('Error de conexión: no se pudo guardar el traslado.'), 'error');
                 });
         }
 
@@ -268,7 +272,7 @@
                 return;
             }
 
-            api.ui.avisar('"' + nombre + '" no está en el catálogo; buscándolo por dirección...', 'info');
+            api.ui.avisar('"' + nombre + '" ' + tr('no está en el catálogo; buscándolo por dirección...'), 'info');
             ctx.editando[cual] = false;
 
             fetch(root.ElyraMapaMod.urls.geocodificar + '?q=' + encodeURIComponent(nombre))
@@ -279,11 +283,11 @@
                     if (res) {
                         api.extremos.fijar(cual, res.lat, res.lng, res.label);
                     } else {
-                        api.ui.avisar('No se encontró "' + nombre + '". Elegí el punto en el mapa.', 'error');
+                        api.ui.avisar(tr('No se encontró') + ' "' + nombre + '". ' + tr('Elegí el punto en el mapa.'), 'error');
                     }
                 })
                 .catch(function () {
-                    api.ui.avisar('No se pudo resolver "' + nombre + '".', 'error');
+                    api.ui.avisar(tr('No se pudo resolver') + ' "' + nombre + '".', 'error');
                 });
         }
 
@@ -311,7 +315,7 @@
 
             campoPaciente.hidden = true;
             campoCatalogo.hidden = false;
-            $('labelCatalogo').innerHTML = (mod.etiquetasTipo[tipo] || 'Elemento') + ' <em>*</em>';
+            $('labelCatalogo').innerHTML = tr(mod.etiquetasTipo[tipo] || 'Elemento') + ' <em>*</em>';
 
             for (var i = 0; i < selElemento.options.length; i++) {
                 var opt = selElemento.options[i];
