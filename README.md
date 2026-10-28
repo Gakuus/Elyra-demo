@@ -254,7 +254,7 @@ mysql -u root -p elyra < database/esquema.sql
 | `admin` | Gestion completa: documentos, encuestas, vehiculos, insumos, equipamiento, usuarios y codigos. |
 | `conductor` | Traslados propios, reporte de ubicacion GPS y gestion de vehiculos. |
 | `copiloto` | Traslados propios y participacion en el mapa. |
-| `paciente` | Solo el mapa (sus traslados); acceso publico via QR a documentos y encuestas. |
+| `paciente` | Portada propia con sus traslados, sus datos y las encuestas abiertas; puede seguirlos en el mapa. Acceso publico via QR a documentos y encuestas. |
 
 ---
 
@@ -513,7 +513,7 @@ Si todavia no hay clave, el widget sigue apareciendo: muestra el aviso de "no co
 
 | Metodo | Ruta | Controlador | Descripcion |
 |---|---|---|---|
-| GET | `/dashboard` | DashboardController | Panel principal (paciente redirige a `/mapa`) |
+| GET | `/dashboard` | DashboardController | Panel principal (cada rol ve su portada; el paciente ve sus traslados, datos y encuestas) |
 | POST | `/logout` | AuthController | Cerrar sesion |
 | GET | `/perfil` | PerfilController | Perfil propio (datos y cambio de contrasena) |
 | POST | `/perfil/datos` | PerfilController | Actualizar datos de contacto |
