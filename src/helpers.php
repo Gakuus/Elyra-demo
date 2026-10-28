@@ -593,8 +593,8 @@ function render_dashboard(string $vista, string $titulo, string $seccion, array 
 
     // Visibilidad del menú según el rol: los bloques {{#es_gestion}} y
     // {{#es_vehiculo}} del layout solo se muestran cuando corresponda.
-    // es_paciente apaga "Inicio": el paciente no tiene panel, su /dashboard lo
-    // manda al mapa, así que el enlace solo lo haría rebotar.
+    // "Inicio" está disponible para todos: el paciente tiene su propia portada
+    // (inicio_paciente) y el personal, el tablero operativo.
     $menu = [
         'es_gestion'  => es_gestion() ? ['1'] : [],
         'es_vehiculo' => es_rol('admin', 'superadmin', 'conductor') ? ['1'] : [],

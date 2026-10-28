@@ -168,6 +168,36 @@ return [
     'recién' => 'just now',
 
     // ------------------------------------------------------------------
+    // Portada del paciente
+    // ------------------------------------------------------------------
+    'Resumen de mis traslados' => 'My transfer summary',
+    'Completados' => 'Completed',
+    'Último completado' => 'Last completed',
+    'Mis traslados activos' => 'My active transfers',
+    'Ver en el mapa' => 'View on the map',
+    'Salida estimada' => 'Estimated departure',
+    'Distancia y duración' => 'Distance and duration',
+    'A confirmar' => 'To be confirmed',
+    'En camino desde' => 'On the way since',
+    'Llegó al destino' => 'Arrived at destination',
+    'Regresando desde' => 'Returning since',
+    'Etapas del traslado' => 'Transfer stages',
+    'etapa actual' => 'current stage',
+    'Seguir en el mapa' => 'Follow on the map',
+    'No tenés traslados activos en este momento.' => "You don't have active transfers right now.",
+    'Cuando se registre un traslado para vos, lo vas a ver acá.' => 'When a transfer is registered for you, you will see it here.',
+    'Ver historial completo' => 'View full history',
+    'Todavía no tenés traslados registrados.' => "You don't have any transfers yet.",
+    'Mis datos' => 'My details',
+    'Miembro desde' => 'Member since',
+    'Editar mis datos' => 'Edit my details',
+    'Tu opinión nos ayuda a mejorar la atención.' => 'Your opinion helps us improve care.',
+    'Responder' => 'Answer',
+    '¿Necesitás ayuda?' => 'Need help?',
+    'Escribile a Elyra desde la mascota o revisá el mapa para seguir tu traslado.' => 'Message Elyra from the mascot or check the map to follow your transfer.',
+    'Ver mis traslados en el mapa' => 'View my transfers on the map',
+
+    // ------------------------------------------------------------------
     // Mapa y traslados
     // ------------------------------------------------------------------
     'Historial' => 'History',

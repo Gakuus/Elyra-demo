@@ -29,6 +29,7 @@
     <link href="public/css/pages/dashboard/modal.css?v=6" rel="stylesheet">
     <link href="public/css/pages/dashboard/componentes.css?v=10" rel="stylesheet">
     <link href="public/css/pages/dashboard/inicio.css?v=7" rel="stylesheet">
+    <link href="public/css/pages/dashboard/inicio_paciente.css?v=1" rel="stylesheet">
     <link href="public/css/pages/dashboard/mapa.css?v=8" rel="stylesheet">
     <link href="public/css/pages/dashboard/mapa_traslado.css?v=10" rel="stylesheet">
     <link href="public/css/pages/dashboard/usuarios.css?v=7" rel="stylesheet">
@@ -81,13 +82,11 @@
         <button type="button" class="cerrar-barra" id="btnCerrarMenu" aria-label="Cerrar menú">
             <i class="bi bi-x-lg"></i>
         </button>
-        {{^es_paciente}}
         <div class="seccion-barra">
             <div class="titulo-seccion">Panel</div>
             <a href="dashboard" class="enlace-barra{{activo_inicio}}">
                 <img src="public/img/silk/house.png" width="16" height="16" alt=""> Inicio</a>
         </div>
-        {{/es_paciente}}
 
         <div class="seccion-barra">
             <div class="titulo-seccion">Traslados</div>
@@ -138,11 +137,9 @@
 <!-- Barra de accesos inferior (solo celular): reemplaza al menú hamburguesa.
      Los ítems se muestran según el rol, igual que la barra lateral. -->
 <nav class="nav-inferior" aria-label="Accesos rápidos">
-    {{^es_paciente}}
     <a href="dashboard" class="nav-inferior-item{{activo_inicio}}">
         <i class="bi bi-house-door"></i><span>Inicio</span>
     </a>
-    {{/es_paciente}}
     <a href="mapa" class="nav-inferior-item{{activo_mapa}}">
         <i class="bi bi-map"></i><span>Mapa</span>
     </a>

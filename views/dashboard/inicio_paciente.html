@@ -1,0 +1,236 @@
+<!--
+    Inicio del paciente: su portada dentro de Elyra.
+
+    No es el tablero operativo del personal. Muestra solo lo que le pertenece
+    al usuario de la sesión: sus traslados (activos e historial), sus datos y
+    las encuestas abiertas. Se renderiza completo en el servidor; no depende
+    de JavaScript y no carga la flota ni los traslados de otras personas.
+-->
+<div class="inicio-paciente">
+
+    <!-- ---------- Cabecera ---------- -->
+    <header class="inicio-cabecera">
+        <div class="inicio-saludo-bloque">
+            <h1 class="inicio-saludo">{{saludo}}, {{nombre}}</h1>
+            <p class="inicio-fecha">{{fecha_larga}}</p>
+        </div>
+
+        <a href="perfil" class="accion accion-chica">
+            <i class="bi bi-person-gear" aria-hidden="true"></i> {{t('Mi perfil')}}
+        </a>
+    </header>
+
+    <!-- ---------- Resumen ---------- -->
+    <section class="paciente-resumen" aria-label="{{t('Resumen de mis traslados')}}">
+        <div class="resumen-item">
+            <span class="resumen-numero">{{total_traslados}}</span>
+            <span class="resumen-rotulo">{{t('Traslados')}}</span>
+        </div>
+        <div class="resumen-item resumen-item-activo">
+            <span class="resumen-numero">{{total_activos}}</span>
+            <span class="resumen-rotulo">{{t('Activos')}}</span>
+        </div>
+        <div class="resumen-item resumen-item-completado">
+            <span class="resumen-numero">{{total_completados}}</span>
+            <span class="resumen-rotulo">{{t('Completados')}}</span>
+        </div>
+        <div class="resumen-item">
+            <span class="resumen-fecha">{{ultimo_traslado}}</span>
+            <span class="resumen-rotulo">{{t('Último completado')}}</span>
+        </div>
+    </section>
+
+    <div class="paciente-grid">
+
+        <!-- ---------- Columna principal ---------- -->
+        <main class="paciente-principal">
+
+            <!-- Traslados activos: lo primero que el paciente necesita ver. -->
+            <section class="bloque" aria-labelledby="titulo-traslados-activos">
+                <div class="bloque-titulo" id="titulo-traslados-activos">
+                    <i class="bi bi-ambulance" aria-hidden="true"></i> {{t('Mis traslados activos')}}
+                    <a href="mapa" class="bloque-enlace">
+                        {{t('Ver en el mapa')}} <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                    </a>
+                </div>
+
+                {{#hay_activos}}
+                <div class="traslados-activos">
+                    {{#activos}}
+                    <article class="tarjeta-paciente estado-{{fila.estado}}">
+                        <div class="tarjeta-paciente-cabecera">
+                            <span class="tarjeta-codigo">{{fila.codigo}}</span>
+                            <span class="chip-estado estado-{{fila.estado}}">{{fila.estado_etiqueta}}</span>
+                        </div>
+
+                        <div class="tarjeta-grande-ruta">
+                            <div class="ruta-linea">
+                                <span class="ruta-punto" aria-hidden="true"></span>
+                                <span class="ruta-texto">{{fila.origen}}</span>
+                            </div>
+                            <div class="ruta-linea">
+                                <span class="ruta-punto ruta-punto-destino" aria-hidden="true"></span>
+                                <span class="ruta-texto">{{fila.destino}}</span>
+                            </div>
+                        </div>
+
+                        <p class="tarjeta-paciente-momento">
+                            <i class="bi bi-clock" aria-hidden="true"></i>
+                            <span>{{fila.momento_etiqueta}}</span>
+                            <strong>{{fila.momento_valor}}</strong>
+                        </p>
+
+                        <ol class="pasos-traslado" aria-label="{{t('Etapas del traslado')}}">
+                            {{#fila.pasos}}
+                            <li class="paso {{fila.clase}}">
+                                <span class="paso-punto" aria-hidden="true"></span>
+                                <span class="paso-texto">{{fila.etiqueta}}</span>
+                                {{#fila.actual}}<span class="solo-lectores">{{t('etapa actual')}}</span>{{/fila.actual}}
+                            </li>
+                            {{/fila.pasos}}
+                        </ol>
+
+                        <dl class="detalles-traslado">
+                            <div>
+                                <dt><i class="bi bi-person" aria-hidden="true"></i> {{t('Conductor')}}</dt>
+                                <dd>{{fila.conductor}}</dd>
+                            </div>
+                            {{#fila.hay_vehiculo}}
+                            <div>
+                                <dt><i class="bi bi-truck" aria-hidden="true"></i> {{t('Vehículo')}}</dt>
+                                <dd>{{fila.vehiculo}}</dd>
+                            </div>
+                            {{/fila.hay_vehiculo}}
+                            <div>
+                                <dt><i class="bi bi-calendar-event" aria-hidden="true"></i> {{t('Salida estimada')}}</dt>
+                                <dd>{{fila.salida_estimada}}</dd>
+                            </div>
+                            {{#fila.hay_recorrido}}
+                            <div>
+                                <dt><i class="bi bi-signpost-split" aria-hidden="true"></i> {{t('Distancia y duración')}}</dt>
+                                <dd>{{fila.recorrido}}</dd>
+                            </div>
+                            {{/fila.hay_recorrido}}
+                        </dl>
+
+                        <div class="tarjeta-paciente-pie">
+                            <a href="mapa" class="accion accion-primaria accion-chica">
+                                <i class="bi bi-geo-alt" aria-hidden="true"></i> {{t('Seguir en el mapa')}}
+                            </a>
+                        </div>
+                    </article>
+                    {{/activos}}
+                </div>
+                {{/hay_activos}}
+
+                {{^hay_activos}}
+                <div class="paciente-vacio">
+                    <i class="bi bi-check2-circle" aria-hidden="true"></i>
+                    <p>{{t('No tenés traslados activos en este momento.')}}</p>
+                    <p class="paciente-vacio-detalle">{{t('Cuando se registre un traslado para vos, lo vas a ver acá.')}}</p>
+                    <a href="mapa" class="accion accion-primaria">{{t('Abrir el mapa')}}</a>
+                </div>
+                {{/hay_activos}}
+            </section>
+
+            <!-- Historial: un resumen; el completo vive en el mapa. -->
+            <section class="bloque" aria-labelledby="titulo-historial">
+                <div class="bloque-titulo" id="titulo-historial">
+                    <i class="bi bi-clock-history" aria-hidden="true"></i> {{t('Historial de traslados')}}
+                    <a href="mapa" class="bloque-enlace">
+                        {{t('Ver historial completo')}} <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                    </a>
+                </div>
+
+                {{#hay_historial}}
+                <div class="historial-paciente">
+                    {{#historial}}
+                    <article class="historial-fila">
+                        <div class="historial-cuando">
+                            <span class="historial-fecha">{{fila.fecha}}</span>
+                            <span class="historial-hora">{{fila.hora}}</span>
+                        </div>
+                        <div class="historial-detalle">
+                            <span class="historial-codigo">{{fila.codigo}}</span>
+                            <span class="historial-ruta">{{fila.origen}} <i class="bi bi-arrow-right" aria-hidden="true"></i> {{fila.destino}}</span>
+                            <span class="historial-conductor">{{fila.conductor}}</span>
+                        </div>
+                        <span class="chip-estado estado-{{fila.estado}}">{{fila.estado_etiqueta}}</span>
+                    </article>
+                    {{/historial}}
+                </div>
+                {{/hay_historial}}
+
+                {{^hay_historial}}
+                <p class="columna-vacia">{{t('Todavía no tenés traslados registrados.')}}</p>
+                {{/hay_historial}}
+            </section>
+
+        </main>
+
+        <!-- ---------- Columna lateral ---------- -->
+        <aside class="paciente-lateral">
+
+            <section class="bloque" aria-labelledby="titulo-mis-datos">
+                <div class="bloque-titulo" id="titulo-mis-datos">
+                    <i class="bi bi-person-vcard" aria-hidden="true"></i> {{t('Mis datos')}}
+                </div>
+
+                <dl class="datos-paciente">
+                    <div>
+                        <dt>{{t('Cédula')}}</dt>
+                        <dd>{{cedula}}</dd>
+                    </div>
+                    <div>
+                        <dt>{{t('Usuario')}}</dt>
+                        <dd>{{username}}</dd>
+                    </div>
+                    <div>
+                        <dt>{{t('Email')}}</dt>
+                        <dd>{{email}}</dd>
+                    </div>
+                    <div>
+                        <dt>{{t('Teléfono')}}</dt>
+                        <dd>{{telefono}}</dd>
+                    </div>
+                    <div>
+                        <dt>{{t('Miembro desde')}}</dt>
+                        <dd>{{miembro_desde}}</dd>
+                    </div>
+                </dl>
+
+                <a href="perfil" class="accion accion-chica accion-ancha">
+                    <i class="bi bi-pencil-square" aria-hidden="true"></i> {{t('Editar mis datos')}}
+                </a>
+            </section>
+
+            {{#hay_encuestas}}
+            <section class="bloque" aria-labelledby="titulo-encuestas">
+                <div class="bloque-titulo" id="titulo-encuestas">
+                    <i class="bi bi-chat-square-text" aria-hidden="true"></i> {{t('Encuestas abiertas')}}
+                </div>
+                <p class="encuestas-intro">{{t('Tu opinión nos ayuda a mejorar la atención.')}}</p>
+                <div class="encuestas-paciente">
+                    {{#encuestas}}
+                    <div class="encuesta-paciente">
+                        <span class="encuesta-titulo">{{fila.titulo}}</span>
+                        <a href="{{fila.enlace}}" class="accion accion-chica">{{t('Responder')}}</a>
+                    </div>
+                    {{/encuestas}}
+                </div>
+            </section>
+            {{/hay_encuestas}}
+
+            <section class="bloque bloque-ayuda" aria-labelledby="titulo-ayuda">
+                <div class="bloque-titulo" id="titulo-ayuda">
+                    <i class="bi bi-life-preserver" aria-hidden="true"></i> {{t('¿Necesitás ayuda?')}}
+                </div>
+                <p>{{t('Escribile a Elyra desde la mascota o revisá el mapa para seguir tu traslado.')}}</p>
+                <a href="mapa" class="accion accion-primaria accion-ancha">
+                    <i class="bi bi-map" aria-hidden="true"></i> {{t('Ver mis traslados en el mapa')}}
+                </a>
+            </section>
+
+        </aside>
+    </div>
+</div>
