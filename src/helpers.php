@@ -510,6 +510,11 @@ function render_vista(string $archivo, array $datos): void
         $html = Accesibilidad::inyectar($html);
     }
 
+    // Chatbot de la mascota Elyra, también en todas las páginas completas.
+    if (class_exists('Chatbot', false)) {
+        $html = Chatbot::inyectar($html);
+    }
+
     echo $html;
 }
 
@@ -542,6 +547,10 @@ function pagina_404(): void
 
     if (class_exists('Accesibilidad', false)) {
         $html = Accesibilidad::inyectar($html);
+    }
+
+    if (class_exists('Chatbot', false)) {
+        $html = Chatbot::inyectar($html);
     }
 
     echo $html;

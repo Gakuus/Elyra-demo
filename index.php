@@ -127,6 +127,7 @@ require_once __DIR__ . '/src/MailService.php';             // Clase Auth (login,
 require_once __DIR__ . '/src/helpers.php';          // Funciones auxiliares (base_path, render...).
 require_once __DIR__ . '/src/I18n.php';             // Traducciones de la interfaz (español / inglés).
 require_once __DIR__ . '/src/Accesibilidad.php';    // Botón y panel de accesibilidad.
+require_once __DIR__ . '/src/Chatbot.php';          // Mascota Elyra: widget y proveedor de IA.
 require_once __DIR__ . '/src/AlmacenPdf.php';        // PDFs de documentos: disco o BD (PDF_DRIVER).
 require_once __DIR__ . '/src/GeoapifyService.php';    // Geoapify (mapa/rutas) con caída a OSRM.
 require_once __DIR__ . '/src/InterseccionService.php'; // "calle A y calle B" -> punto de cruce (Overpass).
@@ -134,6 +135,7 @@ require_once __DIR__ . '/src/RutaService.php';      // Rutas reales por calles (
 require_once __DIR__ . '/src/GeocodeService.php';    // Texto <-> coordenadas (Nominatim) con caché.
 require_once __DIR__ . '/src/Controller/AuthController.php';
 require_once __DIR__ . '/src/Controller/I18nController.php';
+require_once __DIR__ . '/src/Controller/ChatController.php';   // Endpoint JSON del chatbot.
 require_once __DIR__ . '/src/Controller/DashboardController.php';
 require_once __DIR__ . '/src/Controller/DocumentoData.php';             // Trait de datos del módulo de documentos.
 require_once __DIR__ . '/src/Controller/DocumentoArchivoController.php';
@@ -213,6 +215,12 @@ switch (true) {
 
     case $path === '/api/idioma':
         I18nController::api();
+        break;
+
+    // Chatbot de la mascota Elyra. El POST ya pasó por el CSRF global; el
+    // controlador valida el cuerpo, limita consultas por IP y responde JSON.
+    case $path === '/api/chat':
+        ChatController::api();
         break;
 
     // Panel de gestión.

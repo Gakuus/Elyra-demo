@@ -50,6 +50,16 @@ return [
     'GEOAPIFY_API_KEY' => '',
     'GEOPROVIDER'      => 'geoapify',
 
+    // --- Chatbot de Elyra (IA gratuita) ---
+    // groq | openrouter | gemini | openai | custom. Si se deja vacío, se
+    // deduce del prefijo de la clave (gsk_ = Groq, sk-or- = OpenRouter,
+    // AIza = Gemini). Sin clave, el widget avisa que no está configurado.
+    // La clave se usa SOLO del lado del servidor: nunca llega al navegador.
+    'CHAT_PROVIDER' => '',
+    'CHAT_API_KEY'  => '',
+    'CHAT_MODEL'    => '',
+    'CHAT_BASE_URL' => '',
+
     // --- Correo saliente (recuperación de contraseña) ---
     // MAIL_PASSWORD es una "contraseña de aplicación" de Google, no la de la cuenta.
     'MAIL_HOST'      => 'smtp.gmail.com',
