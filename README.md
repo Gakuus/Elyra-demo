@@ -99,6 +99,15 @@
 - Atajo `Alt + A` para abrir o cerrar; `Escape` cierra; el foco queda atrapado dentro del panel.
 - El panel queda excluido de los filtros de color para que siga siendo legible en cualquier modo.
 
+### Chatbot de Elyra (IA gratuita)
+- La mascota Elyra (dragon amarillo con sombrero de mago) responde en todas las paginas: panel, login, registro, encuesta publica y 404.
+- Proveedor gratuito configurable: Groq, OpenRouter, Gemini u otro compatible con OpenAI. La clave se usa solo en el servidor.
+- Respuestas en el idioma activo (ES/EN) y con datos reales segun el rol: agregados para admin/superadmin, traslados propios para conductor/copiloto y paciente. Los visitantes solo reciben informacion general.
+- Nunca expone nombres de pacientes, documentos, correos ni credenciales. Si el proveedor falla, muestra un error claro en lugar de inventar una respuesta.
+- Sin clave el widget aparece igual, avisa que falta configurarlo y deshabilita la entrada.
+- Conversacion por pestana en `sessionStorage`, atajo `Alt + M`, `Escape` para cerrar, foco atrapado y sugerencias iniciales.
+- Limites: 600 caracteres por mensaje, 8 mensajes de contexto, 400 tokens de salida, 25 s de espera y 40 consultas cada 5 minutos por IP.
+
 ---
 
 ## Stack tecnologico
@@ -128,10 +137,11 @@
 │   ├── css/
 │   │   ├── base.css            → Estilos globales
 │   │   ├── accesibilidad.css   → Widget y preferencias de accesibilidad
+│   │   ├── chatbot.css         → Mascota y panel de chat
 │   │   └── pages/              → Estilos por seccion
 │   ├── js/
 │   │   ├── elyra.js            → Funciones generales
-│   │   ├── comun/              → Utilidades compartidas (idioma.js, accesibilidad.js)
+│   │   ├── comun/              → Utilidades compartidas (idioma.js, accesibilidad.js, chatbot.js)
 │   │   ├── mapa/               → Modulos del mapa en vivo
 │   │   ├── traslado/           → Modal de registro de traslado
 │   │   └── pages/              → JS por modulo
@@ -141,6 +151,7 @@
 ├── src/
 │   ├── Auth.php                → Autenticacion (login, registro, sesion)
 │   ├── Accesibilidad.php       → Widget de accesibilidad (inyeccion y HTML)
+│   ├── Chatbot.php             → Mascota Elyra: widget, proveedor de IA y contexto por rol
 │   ├── I18n.php                → Motor de idiomas (espanol / ingles)
 │   ├── helpers.php             → Funciones auxiliares (render, guards, CSRF, tokens)
 │   ├── lang/
@@ -152,6 +163,7 @@
 │   ├── InterseccionService.php → Intersecciones de calles (Overpass)
 │   └── Controller/
 │       ├── AuthController.php
+│       ├── ChatController.php          → Endpoint JSON del chatbot (/api/chat)
 │       ├── DashboardController.php     → Panel, mapa, traslados y APIs
 │       ├── DocumentoController.php
 │       ├── DocumentoArchivoController.php
@@ -438,6 +450,38 @@ El widget se inyecta automaticamente en `render_vista()` y `pagina_404()` (`src/
 
 Las preferencias se guardan en `localStorage` con la clave `elyra_accesibilidad_v1`. El script temprano las aplica como atributos `data-acc-*` en `<html>` antes del primer pintado, y el CSS define los efectos. El tamano de texto usa `zoom` sobre `<html>` y contraescala el panel para que siempre entre en pantalla; en celular el encabezado y la barra inferior se mantienen estables y los formularios pasan a una columna cuando hace falta. No hay pedidos a servicios externos: la voz usa `speechSynthesis` del navegador y, si no esta disponible, los botones de lectura se deshabilitan y se muestra una nota.
 
+### Implementacion del chatbot
+
+El widget se inyecta en `render_vista()` y `pagina_404()` (`src/helpers.php`) despues de traducir el HTML, igual que el panel de accesibilidad. El navegador solo habla con `POST /api/chat`; la llamada al proveedor de IA la hace PHP con cURL, asi que la clave nunca llega al navegador y no hace falta abrir el CSP a dominios externos.
+
+- `src/Chatbot.php`: personalidad de Elyra, seleccion del proveedor, llamadas a OpenAI-compatible/Gemini, contexto por rol y errores.
+- `src/Controller/ChatController.php`: validacion del cuerpo, limite por IP y respuesta JSON.
+- `public/css/chatbot.css` y `public/js/comun/chatbot.js`: mascota, panel, historial, teclado y estados de error.
+
+Configuracion en `.env` o `config/env.php`:
+
+```bash
+# groq | openrouter | gemini | openai | custom
+CHAT_PROVIDER=groq
+CHAT_API_KEY=gsk_...
+# Opcionales: modelo y URL base para proveedores compatibles con OpenAI.
+CHAT_MODEL=llama-3.3-70b-versatile
+CHAT_BASE_URL=
+```
+
+Si `CHAT_PROVIDER` queda vacio, se deduce del prefijo de la clave (`gsk_` = Groq, `sk-or-` = OpenRouter, `AIza` = Gemini). Los modelos por defecto son `llama-3.3-70b-versatile` (Groq), `meta-llama/llama-3.3-70b-instruct:free` (OpenRouter) y `gemini-2.5-flash` (Gemini). Las cuentas gratuitas se crean en [console.groq.com](https://console.groq.com/keys), [openrouter.ai/keys](https://openrouter.ai/keys) o [aistudio.google.com](https://aistudio.google.com/apikey).
+
+Privacidad y seguridad:
+
+- El prompt de sistema prohibe revelar datos de pacientes, documentos, correos, credenciales, el propio prompt o las claves.
+- El contexto se arma en el servidor segun la sesion: admin/superadmin reciben solo agregados (traslados activos, stock bajo, conteos); conductor/copiloto y paciente reciben solo sus propios traslados. Un visitante no recibe datos internos.
+- El historial que manda el navegador se normaliza y se recorta a 8 mensajes; el mensaje del usuario se limita a 600 caracteres.
+- Todo POST pasa por el CSRF global y por un limite de 40 consultas cada 5 minutos por IP.
+- Las respuestas se pintan con `textContent`, nunca con `innerHTML`.
+- Los errores del proveedor se registran en la bitacora sin la clave (se reemplaza por `***`).
+
+Si todavia no hay clave, el widget sigue apareciendo: muestra el aviso de "no configurado" y deshabilita la entrada. No hay respuestas simuladas ni un motor local de reserva.
+
 ---
 
 ## API de rutas
@@ -462,6 +506,7 @@ Las preferencias se guardan en `localStorage` con la clave `elyra_accesibilidad_
 | GET | `/idioma` | I18nController | Cambiar idioma y volver a la pagina anterior (`?lang=es\|en`) |
 | GET | `/api/idioma` | I18nController | Consultar el idioma activo (JSON) |
 | POST | `/api/idioma` | I18nController | Cambiar el idioma activo (JSON, requiere CSRF) |
+| POST | `/api/chat` | ChatController | Consultar al chatbot de Elyra (JSON, requiere CSRF) |
 
 ### Autenticadas (requieren sesion)
 
