@@ -12,10 +12,10 @@
     --acc-fondo: #FFFFFF;
 
     position: fixed;
-    right: 24px;
-    /* Queda arriba del botón de la mascota (64 px + separación), que ocupa
-       la esquina inferior derecha. */
-    bottom: 100px;
+    right: 104px;
+    /* Comparte la esquina inferior derecha con la mascota del chat: queda a
+       su izquierda, alineado, para que el panel del chat no lo tape. */
+    bottom: 28px;
     z-index: 2147483000;
     font-family: var(--fuente-familia, tahoma, verdana, arial, sans-serif);
     font-size: 15px;
@@ -448,11 +448,14 @@
 /* ---------- Responsive ---------- */
 @media (max-width: 768px) {
     #elyra-accesibilidad {
-        right: 14px;
-        bottom: 160px;
+        right: 92px;
+        bottom: 88px;
     }
 
     #elyra-accesibilidad .acc-panel {
+        /* El botón ya no está pegado al borde derecho: se corre el panel
+           para que siga entrando completo en la pantalla. */
+        right: -78px;
         width: calc(100vw - 28px);
         max-width: 380px;
     }
@@ -480,12 +483,27 @@ html[data-acc-text="4"] #elyra-accesibilidad { zoom: 0.5714; }
 html[data-acc-text="5"] #elyra-accesibilidad { zoom: 0.5; }
 
 /* El chat también se contraescala para que el panel y la mascota mantengan
-   su tamaño y sigan entrando en pantalla con el texto agrandado. */
-html[data-acc-text="1"] #elyra-chat { zoom: 0.9091; }
-html[data-acc-text="2"] #elyra-chat { zoom: 0.8; }
-html[data-acc-text="3"] #elyra-chat { zoom: 0.6667; }
-html[data-acc-text="4"] #elyra-chat { zoom: 0.5714; }
-html[data-acc-text="5"] #elyra-chat { zoom: 0.5; }
+   su tamaño y sigan entrando en pantalla. El texto interno sí crece: usa em
+   y la raíz del chat sube de tamaño con cada nivel. */
+html[data-acc-text="1"] #elyra-chat { zoom: 0.9091; font-size: 16.5px; }
+html[data-acc-text="2"] #elyra-chat { zoom: 0.8; font-size: 18.75px; }
+html[data-acc-text="3"] #elyra-chat { zoom: 0.6667; font-size: 22.5px; }
+html[data-acc-text="4"] #elyra-chat { zoom: 0.5714; font-size: 26.25px; }
+html[data-acc-text="5"] #elyra-chat { zoom: 0.5; font-size: 30px; }
+
+/* Con texto grande el panel crece para que los mensajes conserven espacio,
+   sin salirse del viewport. */
+html[data-acc-text="4"] #elyra-chat .chat-panel,
+html[data-acc-text="5"] #elyra-chat .chat-panel {
+    height: min(680px, calc(100dvh - 170px));
+}
+
+@media (max-width: 768px) {
+    html[data-acc-text="4"] #elyra-chat .chat-panel,
+    html[data-acc-text="5"] #elyra-chat .chat-panel {
+        height: min(620px, calc(100dvh - 190px));
+    }
+}
 
 /* En celular el encabezado y la barra inferior tienen alto fijo. Si se
    escalan con el texto, sus elementos se superponen y la barra queda
@@ -599,6 +617,7 @@ html[data-acc-text] .aviso {
 
 /* Fuente de lectura fácil */
 html[data-acc-font] body,
+html[data-acc-font] #elyra-chat,
 html[data-acc-font] button,
 html[data-acc-font] input,
 html[data-acc-font] select,
@@ -617,6 +636,11 @@ html[data-acc-spacing] :is(p, li, td, th, label, a, span, h1, h2, h3, h4, h5, h6
     line-height: 1.8 !important;
 }
 
+/* El texto del chat también respeta el espaciado elegido. */
+html[data-acc-spacing] #elyra-chat :is(.chat-texto, .chat-aviso, .chat-sugerencia) {
+    line-height: 1.8 !important;
+}
+
 /* Resaltar enlaces */
 html[data-acc-links] a {
     outline: 2px solid #B45309 !important;
@@ -627,7 +651,7 @@ html[data-acc-links] a {
 }
 
 /* Resaltar encabezados */
-html[data-acc-headings] :is(h1, h2, h3, h4, h5, h6):not(#elyra-chat *) {
+html[data-acc-headings] :is(h1, h2, h3, h4, h5, h6) {
     outline: 2px dashed #B45309 !important;
     outline-offset: 3px !important;
     background: rgba(254, 243, 199, 0.55) !important;
@@ -662,19 +686,22 @@ html[data-acc-images] video {
     display: none !important;
 }
 
-/* La mascota del chat no es decorativa: es el botón para pedir ayuda. */
-html[data-acc-images] #elyra-chat img {
+/* La mascota del botón se mantiene visible porque es la única forma de
+   abrir el chat; los avatares internos sí se ocultan. */
+html[data-acc-images] #elyra-chat #chatBoton img {
     display: inline-block !important;
 }
 
 /* Escala de grises: se aplica a los hijos del body para no apagar el
-   panel de accesibilidad ni el chat. */
-html[data-acc-color="gray"] body > :not(#elyra-accesibilidad, #elyra-chat) {
+   panel de accesibilidad. El chat sí se apaga junto con la página. */
+html[data-acc-color="gray"] body > :not(#elyra-accesibilidad) {
     filter: grayscale(1);
 }
 
 /* Invertir colores: se invierte el documento y se vuelven a invertir
-   imágenes, videos y el propio panel para que se vean normales. */
+   imágenes, videos y el panel de accesibilidad para que se vean normales.
+   El chat se invierte junto con la página; sus imágenes quedan normales por
+   la regla general de img. */
 html[data-acc-color="invert"] {
     filter: invert(1) hue-rotate(180deg);
 }
@@ -683,15 +710,8 @@ html[data-acc-color="invert"] img,
 html[data-acc-color="invert"] video,
 html[data-acc-color="invert"] canvas,
 html[data-acc-color="invert"] iframe,
-html[data-acc-color="invert"] #elyra-accesibilidad,
-html[data-acc-color="invert"] #elyra-chat {
+html[data-acc-color="invert"] #elyra-accesibilidad {
     filter: invert(1) hue-rotate(180deg);
-}
-
-/* El chat ya quedó normal con la doble inversión; sus imágenes no necesitan
-   una tercera. */
-html[data-acc-color="invert"] #elyra-chat img {
-    filter: none;
 }
 
 /* Alto contraste */
@@ -705,7 +725,7 @@ html[data-acc-color="contrast"] body {
     color: #FFF !important;
 }
 
-html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *, #elyra-chat, #elyra-chat *) {
+html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *) {
     background-color: #000 !important;
     background-image: none !important;
     color: #FFF !important;
@@ -714,30 +734,40 @@ html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibil
     text-shadow: none !important;
 }
 
-html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *, #elyra-chat, #elyra-chat *):is(a) {
+html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *):is(a) {
     color: #FFEB3B !important;
     text-decoration: underline !important;
 }
 
-html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *, #elyra-chat, #elyra-chat *):is(button, input, select, textarea) {
+html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *):is(button, input, select, textarea) {
     background-color: #000 !important;
     color: #FFF !important;
     border: 2px solid #FFEB3B !important;
 }
 
-html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *, #elyra-chat, #elyra-chat *):is(input, textarea)::placeholder {
+html[data-acc-color="contrast"] body :not(#elyra-accesibilidad, #elyra-accesibilidad *):is(input, textarea)::placeholder {
     color: #DDD !important;
 }
 
 /* Combinaciones: en alto contraste, los resaltados no deben tapar el texto. */
-html[data-acc-color="contrast"][data-acc-links] body :not(#elyra-accesibilidad, #elyra-accesibilidad *, #elyra-chat, #elyra-chat *):is(a) {
+html[data-acc-color="contrast"][data-acc-links] body :not(#elyra-accesibilidad, #elyra-accesibilidad *):is(a) {
     background: #000 !important;
     color: #FFEB3B !important;
     outline-color: #FFEB3B !important;
 }
 
-html[data-acc-color="contrast"][data-acc-headings] body :not(#elyra-accesibilidad, #elyra-accesibilidad *, #elyra-chat, #elyra-chat *):is(h1, h2, h3, h4, h5, h6) {
+html[data-acc-color="contrast"][data-acc-headings] body :not(#elyra-accesibilidad, #elyra-accesibilidad *):is(h1, h2, h3, h4, h5, h6) {
     background: #000 !important;
     color: #FFEB3B !important;
     outline-color: #FFEB3B !important;
+}
+
+/* En alto contraste, los mensajes propios se distinguen por el borde
+   amarillo y los puntos de "escribiendo" no se pierden en el fondo negro. */
+html[data-acc-color="contrast"] #elyra-chat .chat-mensaje-user .chat-texto {
+    border-color: #FFEB3B !important;
+}
+
+html[data-acc-color="contrast"] #elyra-chat .chat-puntos span {
+    background: #FFEB3B !important;
 }

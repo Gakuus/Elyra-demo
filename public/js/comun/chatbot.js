@@ -319,8 +319,12 @@
     }
 
     function ajustarAltura() {
+        var max = parseFloat(window.getComputedStyle(entrada).maxHeight);
+        if (!isFinite(max) || max <= 0) {
+            max = 96;
+        }
         entrada.style.height = 'auto';
-        entrada.style.height = Math.min(entrada.scrollHeight, 96) + 'px';
+        entrada.style.height = Math.min(entrada.scrollHeight, max) + 'px';
     }
 
     function limpiar() {
@@ -417,6 +421,20 @@
             }
         }
     });
+
+    // Si cambia el tamaño de texto de accesibilidad, el campo y el scroll se
+    // reajustan sin recargar la página.
+    if (window.MutationObserver) {
+        new MutationObserver(function () {
+            window.requestAnimationFrame(function () {
+                ajustarAltura();
+                alFinal();
+            });
+        }).observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['data-acc-text']
+        });
+    }
 
     // ---------- Arranque ----------
     cargar();

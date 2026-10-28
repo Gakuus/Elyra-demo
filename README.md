@@ -97,7 +97,7 @@
 - Lectura en voz alta con la Web Speech API: pagina completa, seleccion o bloque al hacer clic, con idioma `es-UY` / `en-US`.
 - Preferencias persistidas en `localStorage` (`elyra_accesibilidad_v1`) y aplicadas antes del primer pintado.
 - Atajo `Alt + A` para abrir o cerrar; `Escape` cierra; el foco queda atrapado dentro del panel.
-- El panel queda excluido de los filtros de color para que siga siendo legible en cualquier modo.
+- El panel de accesibilidad queda excluido de los filtros de color para que siga siendo legible en cualquier modo; el chat sí recibe todos los efectos (tamaño, contraste, grises, inversión, fuente, espaciado y ocultamiento de avatares).
 
 ### Chatbot de Elyra (IA gratuita)
 - La mascota Elyra (dragon amarillo con sombrero de mago) responde en todas las paginas: panel, login, registro, encuesta publica y 404.
@@ -106,6 +106,7 @@
 - Nunca expone nombres de pacientes, documentos, correos ni credenciales. Si el proveedor falla, muestra un error claro en lugar de inventar una respuesta.
 - Sin clave el widget aparece igual, avisa que falta configurarlo y deshabilita la entrada.
 - Conversacion por pestana en `sessionStorage`, atajo `Alt + M`, `Escape` para cerrar, foco atrapado y sugerencias iniciales.
+- Respeta las preferencias de accesibilidad: tamano de texto, contraste, inversion, escala de grises, fuente legible, espaciado, resaltado de encabezados y ocultamiento de imagenes. La mascota del boton se mantiene visible para poder abrir el chat; los avatares internos se ocultan.
 - Limites: 600 caracteres por mensaje, 8 mensajes de contexto, 400 tokens de salida, 25 s de espera y 40 consultas cada 5 minutos por IP.
 
 ---
