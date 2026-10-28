@@ -50,6 +50,12 @@ return [
     'GEOAPIFY_API_KEY' => '',
     'GEOPROVIDER'      => 'geoapify',
 
+    // --- Captcha del login (Google reCAPTCHA v2) ---
+    // Sin ambas claves el captcha no se muestra. La clave de sitio es pública;
+    // la secreta se usa solo en el servidor y nunca se imprime ni se registra.
+    'RECAPTCHA_SITE_KEY'   => '',
+    'RECAPTCHA_SECRET_KEY' => '',
+
     // --- Chatbot de Elyra (IA gratuita) ---
     // groq | openrouter | gemini | openai | custom. Si se deja vacío, se
     // deduce del prefijo de la clave (gsk_ = Groq, sk-or- = OpenRouter,

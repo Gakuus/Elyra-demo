@@ -483,6 +483,24 @@ Privacidad y seguridad:
 
 Si todavia no hay clave, el widget sigue apareciendo: muestra el aviso de "no configurado" y deshabilita la entrada. No hay respuestas simuladas ni un motor local de reserva.
 
+### Captcha del login (reCAPTCHA v2)
+
+El formulario de `/login` exige un captcha de Google reCAPTCHA v2 antes de validar las credenciales. La verificacion se hace en el servidor con `POST https://www.google.com/recaptcha/api/siteverify`; la clave secreta nunca llega al navegador y el token no se registra en la bitacora.
+
+- `src/Recaptcha.php`: lectura de claves, envio a Google y resultado de la verificacion.
+- `src/Controller/AuthController.php`: valida el captcha antes de `Auth::login()` y registra `login_captcha_fallido` si falla.
+- `views/auth/login.html` y `public/css/pages/ingreso.css`: widget, mensaje sin JavaScript y ajuste responsive.
+- `src/helpers.php`: el CSP permite los hosts de Google (`www.google.com`, `www.gstatic.com`, `recaptcha.google.com`) solo para el widget.
+
+Configuracion en `.env` o `config/env.php`:
+
+```bash
+RECAPTCHA_SITE_KEY=6L...
+RECAPTCHA_SECRET_KEY=6L...
+```
+
+Las claves se crean en [google.com/recaptcha/admin](https://www.google.com/recaptcha/admin) eligiendo reCAPTCHA v2 ("No soy un robot") y agregando el dominio de la app. Si falta cualquiera de las dos, el captcha no se muestra y el login funciona como antes: eso permite desarrollar sin claves, pero en produccion conviene configurarlo. Si Google no responde o el token es invalido, el login se rechaza con un mensaje generico y se mantiene el rate limiting por IP y por usuario.
+
 ---
 
 ## API de rutas
